@@ -1335,3 +1335,89 @@ input[type="range"] { width: 100%; accent-color: var(--gold-text); height: 5px; 
   from { opacity: 0.4; transform: scale(0.85); }
   to { opacity: 1; transform: scale(1.15); }
 }
+
+/* ==========================================================================
+   🎴 和モダン縦書きヘッダーボタンスタイル (Vertical Luxury Japanese Tag)
+   ========================================================================== */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-vertical-tag {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  min-width: 32px;
+  height: 56px;
+  background: linear-gradient(180deg, rgba(28, 33, 43, 0.95), rgba(16, 18, 23, 0.95));
+  border: 1px solid var(--border-gold);
+  border-radius: 4px;
+  color: var(--gold-text);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 2px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  user-select: none;
+}
+
+.btn-vertical-tag:hover {
+  background: linear-gradient(180deg, rgba(42, 49, 64, 0.95), rgba(24, 27, 35, 0.95));
+  border-color: #ffd54f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+}
+
+.btn-vertical-tag:active {
+  transform: translateY(0);
+}
+
+/* 無料キー / 有料キー 切替タグ */
+.btn-vertical-tag.key-toggle.free {
+  border-color: rgba(76, 175, 80, 0.7);
+  color: #a5d6a7;
+}
+.btn-vertical-tag.key-toggle.free:hover {
+  border-color: #81c784;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.btn-vertical-tag.key-toggle.paid {
+  border-color: rgba(255, 215, 0, 0.85);
+  color: #ffe082;
+}
+.btn-vertical-tag.key-toggle.paid:hover {
+  border-color: #fff9c4;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.35);
+}
+
+/* 同期管理ランプ */
+.btn-vertical-tag .sync-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-bottom: 2px;
+}
+
+/* シスログ件数バッジ */
+.log-pill-v {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--gold-primary);
+  color: #000;
+  font-size: 9px;
+  font-weight: 800;
+  border-radius: 8px;
+  padding: 1px 4px;
+  line-height: 1;
+  writing-mode: horizontal-tb;
+}

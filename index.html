@@ -2,620 +2,574 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>KUWAGATA PREMIUM CARD STUDIO - プレミア血統証明カード作成</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Google Fonts: 高級感あふれる和欧文フォント群 -->
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@600;700;800;900&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Kaisei+Decol:wght@700&family=Montserrat:wght@400;600;700;800&family=Noto+Serif+JP:wght@400;600;700;900&family=Shippori+Mincho:wght@600;800&family=Yuji+Boku&family=Yuji+Mai&family=Zen+Old+Mincho:wght@700;900&display=swap" rel="stylesheet">
-  
-  <!-- Firebase Cloud Sync SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KUWAGATA PREMIUM CARD STUDIO - 最高峰クワガタ血統証明書・カード作成エンジン</title>
   <link rel="stylesheet" href="style.css">
+  <!-- Google Fonts: 高級和文毛筆・明朝 ＆ ラグジュアリー欧文 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800;900&family=Montserrat:wght@500;600;700;800&family=Noto+Serif+JP:wght@400;600;700;900&family=Shippori+Mincho:wght@500;700;800&family=Yuji+Boku&family=Yuji+Mai&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- ===================================================================
-       🔒 パスワード認証ゲート (Authentication Gate)
-       =================================================================== -->
+
+  <!-- 🔒 プライベート合言葉認証ゲート (Auth Gate Overlay) -->
   <div id="authGateOverlay" class="auth-gate-overlay">
     <div class="auth-gate-card">
-      <div class="auth-logo-area">
-        <span class="gold-badge">PRIVATE ACCESS</span>
-        <h2>KUWAGATA STUDIO</h2>
-        <p class="auth-sub">最高峰クワガタ血統証明カード作成スタジオ</p>
-      </div>
-
-      <form id="authGateForm" class="auth-form">
-        <div class="form-group">
-          <label for="authPassInput">合言葉（パスワード）を入力してください</label>
-          <input type="password" id="authPassInput" placeholder="Passcode..." autocomplete="current-password" required>
+      <div class="auth-gate-emblem">👑</div>
+      <h2 class="auth-gate-title">KUWAGATA CARD STUDIO</h2>
+      <p class="auth-gate-subtitle">最高峰クワガタ血統証明・プレミアカード制作システム</p>
+      
+      <form id="authGateForm" class="auth-gate-form">
+        <div class="auth-input-group">
+          <input type="password" id="authPassInput" class="auth-input" placeholder="合言葉を入力してください..." autocomplete="current-password" autofocus required>
         </div>
-        <div id="authErrorMsg" class="auth-error-msg hidden">合言葉が正しくありません</div>
-        <button type="submit" class="btn-primary btn-auth-submit" id="btnAuthSubmit">
-          <span>スタジオに入室する ➔</span>
-        </button>
+        <button type="submit" id="btnAuthSubmit" class="btn-primary auth-submit-btn">スタジオを開放する</button>
+        <p id="authErrorMsg" class="auth-error-msg hidden">合言葉が正しくありません</p>
       </form>
-      <p class="auth-footer-note">※関係者専用の認証ゲートです</p>
     </div>
   </div>
 
-  <div class="app-container mobile-optimized" id="mainAppContainer">
+  <div class="app-container">
     <!-- ヘッダー -->
     <header class="app-header">
-      <div class="header-main-row">
-        <div class="logo-area">
-          <span class="gold-badge">GEMINI AI</span>
-          <h1>CARD STUDIO</h1>
-          <span class="app-version-badge" id="appVersion">v3.2.0</span>
-        </div>
-        <div class="header-actions">
-          <!-- クラウド自動同期ステータスバッジ -->
-          <button type="button" class="btn-sync-status" id="btnHeaderCloudSync" title="クラウド自動同期ステータス">
-            <span class="sync-status-dot online" id="headerSyncDot"></span>
-            <span id="headerSyncText">クラウド同期中</span>
-          </button>
-
-          <!-- 無料/有料キー ワンタップ切り替えスイッチ -->
-          <button type="button" class="btn-key-toggle free" id="btnQuickToggleKey" title="APIキーの無料/有料モードを切り替え">
-            <span class="key-status-dot"></span>
-            <span id="keyModeLabel">無料キー</span>
-          </button>
-
-          <button type="button" class="btn-icon-pill" id="btnOpenBackupModal" title="クラウド同期＆データ管理">
-            <span>同期・管理</span>
-          </button>
-          <button type="button" class="btn-icon-pill" id="btnOpenDictManager" title="プロンプト辞書管理">
-            <span>辞書管理</span>
-          </button>
-          <button type="button" class="btn-icon-pill" id="btnOpenLogModal" title="システムログ">
-            <span>ログ</span>
-            <span class="log-count-pill" id="logCountPill">0</span>
-          </button>
-          <button type="button" class="btn-icon-pill" id="btnOpenApiKeyModal" title="APIキー設定">
-            <span>API設定</span>
-          </button>
+      <div class="header-left">
+        <div class="brand-logo">
+          <span class="logo-mark">𓆣</span>
+          <div class="logo-text-group">
+            <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
+            <p class="tagline">最高峰クワガタ血統証明書・プレミアカード作成エンジン <span class="version-tag">v3.3.0</span></p>
+          </div>
         </div>
       </div>
-      <p class="subtitle">最高峰クワガタのための血統証明カード作成スタジオ</p>
+      
+      <!-- 🎴 和モダン縦書きスマートヘッダーアクション -->
+      <div class="header-actions">
+        <!-- 1. 無料キー / 有料キー 切替 -->
+        <button type="button" id="btnQuickToggleKey" class="btn-vertical-tag key-toggle free" title="クリックで無料/有料切り替え">
+          <span id="keyModeLabel">無料キー</span>
+        </button>
+
+        <!-- 2. 同期管理 (状態ランプ一体型) -->
+        <button type="button" id="btnHeaderCloudSync" class="btn-vertical-tag" title="クラウド同期とデータ管理">
+          <span class="sync-status-dot online" id="headerSyncDot"></span>
+          <span id="headerSyncText">同期管理</span>
+        </button>
+
+        <!-- 3. API設定 -->
+        <button type="button" id="btnOpenApiKeyModal" class="btn-vertical-tag" title="APIキー設定">
+          <span>API設定</span>
+        </button>
+
+        <!-- 4. シスログ -->
+        <button type="button" id="btnOpenLogModal" class="btn-vertical-tag" title="システム通信ログ">
+          <span>シスログ</span>
+          <span class="log-pill-v" id="logCountPill">0</span>
+        </button>
+      </div>
     </header>
 
-    <!-- メインコンテンツ (モバイルファースト・縦型レイアウト) -->
-    <main class="app-main">
-      <!-- プレビューセクション (上部固定/確認用) -->
-      <section class="preview-section">
-        <div class="preview-card-wrapper" id="previewWrapper">
-          <canvas id="cardCanvas"></canvas>
-          <div id="loadingOverlay" class="loading-overlay hidden">
-            <div class="spinner"></div>
-            <span id="loadingText">レンダリング中...</span>
-          </div>
-        </div>
-        <div class="preview-toolbar">
-          <div class="ratio-badge" id="ratioBadge">比率: 5:7 (トレカ)</div>
-          <div class="res-badge" id="resBadge">1500 × 2100 px</div>
-          <button type="button" class="btn-refresh" id="btnRerender" title="再描画">再描画</button>
-        </div>
-      </section>
+    <!-- メインワークスペース -->
+    <main class="main-workspace">
+      <!-- 左側：コントロールパネル（タブ切り替え式） -->
+      <aside class="control-panel">
+        <!-- ナビゲーションタブ -->
+        <nav class="panel-tabs">
+          <button type="button" class="tab-btn active" data-tab="tab-prompt-builder">
+            <span class="tab-icon">✨</span>
+            <span class="tab-label">AI生成・単語</span>
+          </button>
+          <button type="button" class="tab-btn" data-tab="tab-vision-extract">
+            <span class="tab-icon">👁️</span>
+            <span class="tab-label">画像解析抽出</span>
+          </button>
+          <button type="button" class="tab-btn" data-tab="tab-card-edit">
+            <span class="tab-icon">✒️</span>
+            <span class="tab-label">文字・レイアウト</span>
+          </button>
+          <button type="button" class="tab-btn" data-tab="tab-export-archive">
+            <span class="tab-icon">💾</span>
+            <span class="tab-label">保存・出力</span>
+          </button>
+        </nav>
 
-      <!-- 5大機能タブ・ナビゲーション -->
-      <nav class="tab-navigation">
-        <button class="tab-btn active" data-tab="tab-prompt-builder">
-          <span class="tab-label">プロンプト作成</span>
-        </button>
-        <button class="tab-btn" data-tab="tab-vision-extract">
-          <span class="tab-label">画像解析抽出</span>
-        </button>
-        <button class="tab-btn" data-tab="tab-card-edit">
-          <span class="tab-label">文字・背景編集</span>
-        </button>
-        <button class="tab-btn" data-tab="tab-export">
-          <span class="tab-label">保存・出力</span>
-        </button>
-        <button class="tab-btn" data-tab="tab-archive">
-          <span class="tab-label">カード履歴</span>
-        </button>
-      </nav>
-
-      <!-- コントロールセクション -->
-      <section class="control-section">
-
-        <!-- ===================================================================
-             タブ1: プロンプト作成 ＆ 動的カテゴリビルダー
-             =================================================================== -->
-        <div class="tab-content active" id="tab-prompt-builder">
-          <div class="section-card gemini-card">
-            <div class="card-header-with-badge">
-              <h3 class="card-title">プロンプト・パーツビルダー</h3>
-              <button type="button" class="btn-secondary btn-sm" id="btnQuickOpenDict" style="padding:3px 8px!important; font-size:11px!important;">単語・カテゴリ管理</button>
-            </div>
-            <p class="section-desc">
-              タップして選択・解除するとプロンプトが自動で組み上がります。カテゴリや単語の編集は管理画面から自由に変更できます。
-            </p>
-
-            <!-- 動的カテゴリーチップグループ描画コンテナ -->
-            <div id="dynamicChipGroupsContainer">
-              <!-- JSでカテゴリごとに動的生成 -->
-            </div>
-
-            <!-- クイック単語追加フォーム -->
-            <div class="chip-group" style="margin-top: 10px;">
-              <label class="chip-group-label" style="color:var(--text-muted);">新しい単語を直接追加:</label>
-              <div class="add-chip-form">
-                <input type="text" id="newChipInput" placeholder="例: 阿古谷血統のダークグリーン、極太アゴの重厚感...">
-                <button type="button" class="btn-secondary btn-sm" id="btnAddCustomChip">単語追加</button>
+        <div class="panel-scroll-area">
+          <!-- タブ1: AIプロンプトビルダー（動的カテゴリーチップグループ） -->
+          <section id="tab-prompt-builder" class="tab-content active">
+            <div class="section-title-row">
+              <h3>単語クリック合成プロンプト</h3>
+              <div class="dict-btn-group">
+                <button type="button" id="btnQuickOpenDict" class="btn-secondary btn-sm" title="単語やカテゴリを自由に追加・編集・表示切替">
+                  ⚙️ 辞書・カテゴリ管理
+                </button>
               </div>
             </div>
 
-            <!-- 組み立て結果プレビュー & コピーエリア -->
-            <div class="combined-prompt-area">
-              <label class="form-sublabel">組み立てられたプロンプト (自由編集も可能):</label>
-              <textarea id="aiPromptInput" rows="3"></textarea>
-              
-              <div class="prompt-action-row">
-                <button type="button" class="btn-copy-main" id="btnCopyCombinedPrompt">
+            <!-- アスペクト比セレクター -->
+            <div class="control-group">
+              <label class="group-label">カードアスペクト比（規格サイズ）</label>
+              <div class="ratio-selector-grid">
+                <button type="button" class="ratio-btn active" data-ratio="5:7" data-ai-ratio="3:4" data-w="1500" data-h="2100">
+                  <span class="ratio-name">標準縦長 (5:7)</span>
+                  <span class="ratio-desc">TCG/証明書 1500×2100</span>
+                </button>
+                <button type="button" class="ratio-btn" data-ratio="3:4" data-ai-ratio="3:4" data-w="1536" data-h="2048">
+                  <span class="ratio-name">AI標準縦 (3:4)</span>
+                  <span class="ratio-desc">Gemini推奨 1536×2048</span>
+                </button>
+                <button type="button" class="ratio-btn" data-ratio="9:16" data-ai-ratio="9:16" data-w="1440" data-h="2560">
+                  <span class="ratio-name">スマホ縦 (9:16)</span>
+                  <span class="ratio-desc">画面壁紙 1440×2560</span>
+                </button>
+                <button type="button" class="ratio-btn" data-ratio="1:1" data-ai-ratio="1:1" data-w="1800" data-h="1800">
+                  <span class="ratio-name">正方形 (1:1)</span>
+                  <span class="ratio-desc">SNSアイコン 1800×1800</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 動的カテゴリーチップグループコンテナ -->
+            <div id="dynamicChipGroupsContainer" class="dynamic-chip-groups-container">
+              <!-- JSでカテゴリーごとに動的に描画されます -->
+            </div>
+
+            <!-- 単語の簡易クイック追加 -->
+            <div class="custom-chip-adder">
+              <input type="text" id="newChipInput" placeholder="新しい単語を入力して追加...">
+              <button type="button" id="btnAddCustomChip" class="btn-secondary btn-sm">＋ 追加</button>
+            </div>
+
+            <!-- 合成プロンプト確認・編集エリア -->
+            <div class="control-group prompt-preview-group">
+              <label class="group-label">組み合わせプロンプト（編集・コピー可能）</label>
+              <textarea id="aiPromptInput" rows="4" class="prompt-textarea" placeholder="上の単語をクリックするとここにプロンプトが自動生成されます..."></textarea>
+              <div class="prompt-action-bar">
+                <button type="button" id="btnCopyCombinedPrompt" class="btn-secondary btn-sm">
                   <span>組み合わせプロンプトを一括コピー</span>
                 </button>
-                <a href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer" class="btn-gemini-jump">
-                  <span>Web版Geminiを開く ↗</span>
-                </a>
+                <button type="button" id="btnGenerateAiBg" class="btn-primary btn-sm">
+                  <span>✨ Geminiで直接画像を生成</span>
+                </button>
               </div>
-            </div>
-
-            <!-- アプリ内直接生成 (Gemini Image Generation) -->
-            <div class="direct-generate-box">
-              <button type="button" class="btn-generate-ai" id="btnGenerateAiBg">
-                <span class="ai-sparkle">✨</span>
-                <span>Geminiで背景を直接生成</span>
-              </button>
               <div id="aiStatusMsg" class="ai-status-msg hidden"></div>
             </div>
-          </div>
-        </div>
 
-        <!-- ===================================================================
-             タブ2: 画像解析によるプロンプト抽出 (Vision AI)
-             =================================================================== -->
-        <div class="tab-content" id="tab-vision-extract">
-          <div class="section-card gemini-card">
-            <div class="card-header-with-badge">
-              <h3 class="card-title">画像解析プロンプト抽出 (Vision AI)</h3>
-              <span class="ai-badge">Gemini 3.6 Flash</span>
+            <!-- 手動画像アップロード・プリセット -->
+            <div class="control-group">
+              <label class="group-label">または 手持ち画像 / プリセットを使用</label>
+              <div class="bg-upload-zone" id="bgDropZone">
+                <input type="file" id="bgFileInput" accept="image/*" class="hidden-file-input">
+                <div class="upload-prompt">
+                  <span class="upload-icon">📁</span>
+                  <span>生成した画像・写真をドラッグ＆ドロップ</span>
+                  <small>またはここをクリックしてファイル選択</small>
+                </div>
+              </div>
+
+              <div class="preset-bgs-grid">
+                <button type="button" class="preset-btn active" data-src="assets/bg_default.jpg">
+                  <span class="preset-thumb" style="background-image: url('assets/bg_default.jpg');"></span>
+                  <span class="preset-title">標準 翡翠和紙</span>
+                </button>
+                <button type="button" class="preset-btn" data-src="preset_ruby">
+                  <span class="preset-thumb ruby-preview"></span>
+                  <span class="preset-title">深紅 ルビー和紙</span>
+                </button>
+                <button type="button" class="preset-btn" data-src="preset_dark">
+                  <span class="preset-thumb dark-preview"></span>
+                  <span class="preset-title">漆黒 ゴールド</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- タブ2: Vision AI プロンプト抽出エンジン -->
+          <section id="tab-vision-extract" class="tab-content">
+            <div class="section-title-row">
+              <h3>画像からプロンプト解析・抽出</h3>
             </div>
             <p class="section-desc">
-              カード画像をドロップすると、AIが<strong>文字を完全除去して背景スタイルだけを復元再現するプロンプト</strong>を自動抽出し、読点ごとにパーツ分割して辞書に登録できます。
+              お気に入りのカード画像や背景画像をアップロードすると、Gemini Vision AI が色合い・和紙の質感・金箔の散らしなどを高精度に分析し、再現用プロンプトを自動作成します。
             </p>
 
-            <!-- 文字除去復元モードのトグル -->
-            <div class="toggle-option-card">
-              <label class="checkbox-label" style="color:var(--gold-text); font-weight:600;">
+            <div class="vision-drop-zone" id="visionDropZone">
+              <input type="file" id="visionFileInput" accept="image/*" class="hidden-file-input">
+              <div class="vision-prompt" id="visionUploadPrompt">
+                <span class="vision-icon">📷</span>
+                <span class="vision-title">解析したいカード画像をドロップ</span>
+                <small>（※無料枠APIキーで実行可能）</small>
+              </div>
+              <div class="vision-loading hidden" id="visionLoadingInline">
+                <div class="spinner-small"></div>
+                <span>Gemini Vision AI が画像を詳細解析中...</span>
+              </div>
+            </div>
+
+            <!-- 文字なし背景テクスチャのみ復元オプション -->
+            <div class="vision-options-box">
+              <label class="custom-checkbox">
                 <input type="checkbox" id="chkCleanBackgroundOnly" checked>
-                <span>文字・ロゴを完全に除去し、背景テクスチャのみを復元再現する</span>
+                <span class="checkbox-box"></span>
+                <span class="checkbox-label">文字・ロゴを除去して「純粋な背景テクスチャのみ」を抽出する</span>
               </label>
-              <p style="font-size:10px; color:var(--text-muted); margin-top:2px;">
-                ※印字されている「LOJING」「蒼」「77mm」等の文字を無視し、その背後にあるオリジナルの和紙・水彩・金箔背景だけを再生成するプロンプトを作ります。
-              </p>
             </div>
 
-            <!-- ドロップゾーン (インライン解析中ローディング内蔵) -->
-            <div class="vision-upload-box" id="visionDropZone" style="margin-top:10px;">
-              <input type="file" id="visionFileInput" accept="image/*" class="file-input-hidden">
-              
-              <!-- 通常時表示 -->
-              <div class="upload-prompt" id="visionUploadPrompt">
-                <span class="upload-icon">🖼️</span>
-                <p><strong>解析したいカード画像をドラッグ＆ドロップ</strong></p>
-                <p class="upload-sub">またはタップして写真を選択</p>
-              </div>
-
-              <!-- 解析中インライン表示 -->
-              <div class="vision-loading-inline hidden" id="visionLoadingInline">
-                <div class="spinner-purple"></div>
-                <p class="vision-loading-title">Gemini 3.6 Flash が画像を解析中...</p>
-                <p class="vision-loading-sub">文字を除去し、背景の質感・色彩・金箔を抽出しています</p>
-              </div>
-            </div>
-
-            <!-- 解析結果 -->
-            <div id="visionResultArea" class="vision-result-card hidden">
-              <div class="vision-header">
-                <h4>AI解析による再現プロンプト</h4>
-                <button type="button" class="btn-copy-sm" id="btnCopyExtractedPrompt">コピー</button>
+            <!-- 抽出結果エリア -->
+            <div id="visionResultArea" class="vision-result-area hidden">
+              <div class="result-header">
+                <label class="group-label">🎉 解析・抽出されたプロンプト</label>
+                <div class="result-actions">
+                  <button type="button" id="btnApplyExtractedToBuilder" class="btn-primary btn-sm">プロンプトに適用</button>
+                  <button type="button" id="btnCopyExtractedPrompt" class="btn-secondary btn-sm">コピー</button>
+                </div>
               </div>
               <div class="extracted-prompt-box">
-                <p id="extractedPromptJa" class="prompt-text-ja"></p>
-                <p id="extractedPromptEn" class="prompt-text-en"></p>
+                <p id="extractedPromptJa" class="extracted-text-ja"></p>
+                <p id="extractedPromptEn" class="extracted-text-en"></p>
               </div>
-              <div class="extracted-actions">
-                <button type="button" class="btn-primary btn-sm" id="btnApplyExtractedToBuilder">プロンプト作成タブへ送る</button>
-                <button type="button" class="btn-secondary btn-sm" id="btnSaveToLibrary">単語ごとに分割して辞書に保存</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ===================================================================
-             タブ3: 背景セット ＆ 文字・個別情報編集
-             =================================================================== -->
-        <div class="tab-content" id="tab-card-edit">
-          <!-- 1. 背景画像・アスペクト比設定 -->
-          <div class="section-card">
-            <h3 class="card-title">アスペクト比 & 背景画像</h3>
-            
-            <div class="ratio-selector" id="ratioSelector">
-              <button type="button" class="ratio-btn active" data-ratio="5:7" data-w="1500" data-h="2100" data-ai-ratio="3:4">
-                <span class="ratio-name">トレカ</span>
-                <span class="ratio-val">5 : 7</span>
-              </button>
-              <button type="button" class="ratio-btn" data-ratio="2:3" data-w="1400" data-h="2100" data-ai-ratio="3:4">
-                <span class="ratio-name">証明書</span>
-                <span class="ratio-val">2 : 3</span>
-              </button>
-              <button type="button" class="ratio-btn" data-ratio="3:4" data-w="1500" data-h="2000" data-ai-ratio="3:4">
-                <span class="ratio-name">ポスター</span>
-                <span class="ratio-val">3 : 4</span>
-              </button>
-              <button type="button" class="ratio-btn" data-ratio="1:1" data-w="1800" data-h="1800" data-ai-ratio="1:1">
-                <span class="ratio-name">正方形</span>
-                <span class="ratio-val">1 : 1</span>
-              </button>
-              <button type="button" class="ratio-btn" data-ratio="9:16" data-w="1200" data-h="2133" data-ai-ratio="9:16">
-                <span class="ratio-name">スマホ壁紙</span>
-                <span class="ratio-val">9 : 16</span>
+              <button type="button" id="btnSaveToLibrary" class="btn-secondary btn-sm full-width mt-2">
+                ＋ 単語ごとに分割して辞書に保存
               </button>
             </div>
+          </section>
 
-            <!-- 手動画像アップロード / ドロップ -->
-            <div class="bg-upload-box" id="bgDropZone" style="margin-top: 12px;">
-              <input type="file" id="bgFileInput" accept="image/*" class="file-input-hidden">
-              <div class="upload-prompt">
-                <span class="upload-icon">📂</span>
-                <p><strong>Geminiで作成した背景画像や消しゴム加工画像をドロップ</strong></p>
-              </div>
+          <!-- タブ3: 文字・レイアウト編集 -->
+          <section id="tab-card-edit" class="tab-content">
+            <div class="section-title-row">
+              <h3>カード印字テキスト＆装飾編集</h3>
+              <button type="button" id="btnResetSample" class="btn-secondary btn-sm">サンプル復元</button>
             </div>
 
-            <div class="preset-thumbs" style="margin-top: 10px;">
-              <button type="button" class="preset-btn active" data-src="assets/bg_default.jpg">和紙＋緑水彩</button>
-              <button type="button" class="preset-btn" data-src="preset_dark">漆黒＆金箔</button>
-              <button type="button" class="preset-btn" data-src="preset_ruby">和紙＆深紅</button>
-            </div>
-          </div>
-
-          <!-- 2. 文字・個別スペック編集 -->
-          <div class="section-card">
-            <h3 class="card-title">ブランド & 血統名</h3>
-            
-            <div class="form-group">
-              <label for="brandText">ブランド / ブリーダー名</label>
-              <div class="input-with-toggle">
-                <input type="text" id="brandText" value="LOJING" placeholder="例: LOJING">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="brandRedInitial" checked>
-                  <span>頭文字を赤色にする</span>
-                </label>
+            <!-- ① ブランドロゴ・英字 -->
+            <div class="control-card">
+              <div class="card-header-toggle">
+                <h4>1. ブランドヘッダー (上部)</h4>
               </div>
-            </div>
-
-            <div class="grid-2col">
-              <div class="form-group">
-                <label for="kanjiText">メイン血統名 (漢字)</label>
-                <input type="text" id="kanjiText" value="蒼" placeholder="例: 蒼">
-              </div>
-              <div class="form-group">
-                <label for="kanjiFont">漢字フォント</label>
-                <select id="kanjiFont">
-                  <option value="'Yuji Boku', serif">游字（力強い毛筆）</option>
-                  <option value="'Yuji Mai', serif">游字（流麗な行書）</option>
-                  <option value="'Shippori Mincho', serif">しっぽり明朝（重厚）</option>
-                  <option value="'Kaisei Decol', serif">解星デコール（格式）</option>
-                  <option value="'Noto Serif JP', serif">ノト明朝（正統派）</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="grid-2col">
-              <div class="form-group">
-                <label for="romajiText">血統名 (英字)</label>
-                <input type="text" id="romajiText" value="AOI" placeholder="例: AOI">
-              </div>
-              <div class="form-group">
-                <label for="romajiFont">英字フォント</label>
-                <select id="romajiFont">
-                  <option value="'Cinzel', serif">Cinzel（立体ゴールド）</option>
-                  <option value="'Cinzel Decorative', serif">Cinzel Decorative</option>
-                  <option value="'Cormorant Garamond', serif">Cormorant</option>
-                  <option value="'Montserrat', sans-serif">Montserrat</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="section-card">
-            <h3 class="card-title">オーナー & 個体スペック</h3>
-
-            <div class="form-group">
-              <label for="ownerName">オーナー表記</label>
-              <div class="input-combo">
-                <input type="text" id="ownerLabel" value="Owner" class="input-short" placeholder="ラベル">
-                <input type="text" id="ownerName" value="佃 宗行 様" placeholder="例: 佃 宗行 様">
-              </div>
-            </div>
-
-            <div class="grid-2col">
-              <div class="form-group">
-                <label for="serialText">シリアルナンバー</label>
-                <input type="text" id="serialText" value="NO.AS-05" placeholder="例: NO.AS-05">
-              </div>
-              <div class="form-group">
-                <label for="sizeText">性別 & サイズ</label>
-                <input type="text" id="sizeText" value="♂77mm" placeholder="例: ♂77mm">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="extraInfoText">追加スペック (任意: 羽化日・累代・産地など)</label>
-              <input type="text" id="extraInfoText" value="" placeholder="例: 2026.08羽化 / CBF1 阿古谷産">
-            </div>
-
-            <div class="slider-group">
-              <div class="slider-header">
-                <label for="verticalOffset">全体の垂直位置オフセット:</label>
-                <span id="verticalOffsetVal">0px</span>
-              </div>
-              <input type="range" id="verticalOffset" min="-150" max="150" value="0">
-            </div>
-          </div>
-
-          <div class="btn-group-row">
-            <button type="button" class="btn-secondary" id="btnResetSample">サンプルに戻す</button>
-            <button type="button" class="btn-secondary" id="btnClearInputs">入力クリア</button>
-          </div>
-        </div>
-
-        <!-- ===================================================================
-             タブ4: 保存・個別エクスポート ＆ アーカイブ登録
-             =================================================================== -->
-        <div class="tab-content" id="tab-export">
-          <div class="section-card highlight-card">
-            <h3 class="card-title">高解像度 PNG 個別出力</h3>
-            <p class="export-desc">
-              完成したカード画像、または各レイヤーを独立して書き出せます。
-            </p>
-
-            <div class="export-actions">
-              <!-- 出力1: 完成カード -->
-              <div class="export-item">
-                <div class="export-info">
-                  <h4>① 完成版カード画像 (PNG)</h4>
-                  <p>背景＋文字がすべて合成された完成品です。</p>
+              <div class="control-row">
+                <div class="input-col flex-2">
+                  <label>ブランドテキスト</label>
+                  <input type="text" id="brandText" value="LOJING" placeholder="LOJING">
                 </div>
-                <button type="button" class="btn-primary" id="btnDownloadMerged">
-                  <span>ダウンロード (完成PNG)</span>
+                <div class="input-col flex-1">
+                  <label>先頭文字を深紅に</label>
+                  <label class="custom-toggle">
+                    <input type="checkbox" id="brandRedInitial" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- ② メイン漢字銘柄 -->
+            <div class="control-card">
+              <div class="card-header-toggle">
+                <h4>2. メイン漢字銘柄 (中央メイン)</h4>
+              </div>
+              <div class="control-row">
+                <div class="input-col flex-1">
+                  <label>血統名・漢字銘柄</label>
+                  <input type="text" id="kanjiText" value="蒼" placeholder="蒼、極、覇、帝など" maxlength="4">
+                </div>
+                <div class="input-col flex-1">
+                  <label>筆文字フォント</label>
+                  <select id="kanjiFont" class="custom-select">
+                    <option value="'Yuji Boku', serif">游築 墨 (力強い本格毛筆)</option>
+                    <option value="'Yuji Mai', serif">游築 舞 (流麗な筆文字)</option>
+                    <option value="'Shippori Mincho', serif">しっぽり明朝 (重厚明朝)</option>
+                    <option value="'Noto Serif JP', serif">Noto 明朝 (端正)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- ③ ローマ字・英字ルビ -->
+            <div class="control-card">
+              <div class="card-header-toggle">
+                <h4>3. ローマ字・サブタイトル (中央下)</h4>
+              </div>
+              <div class="control-row">
+                <div class="input-col flex-1">
+                  <label>英字・ローマ字表記</label>
+                  <input type="text" id="romajiText" value="AOI" placeholder="AOI">
+                </div>
+                <div class="input-col flex-1">
+                  <label>欧文フォント</label>
+                  <select id="romajiFont" class="custom-select">
+                    <option value="'Cinzel', serif">Cinzel (最高級ゴールド刻印調)</option>
+                    <option value="'Montserrat', sans-serif">Montserrat (モダンゴシック)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- ④ オーナー・証明情報 -->
+            <div class="control-card">
+              <div class="card-header-toggle">
+                <h4>4. オーナー・血統証明情報 (下部)</h4>
+              </div>
+              <div class="control-row">
+                <div class="input-col flex-1">
+                  <label>ラベル</label>
+                  <input type="text" id="ownerLabel" value="Owner" placeholder="Owner">
+                </div>
+                <div class="input-col flex-2">
+                  <label>オーナー名 / ブリーダー名</label>
+                  <input type="text" id="ownerName" value="佃 宗行 様" placeholder="佃 宗行 様">
+                </div>
+              </div>
+
+              <div class="control-row mt-2">
+                <div class="input-col flex-1">
+                  <label>シリアル / 管理No</label>
+                  <input type="text" id="serialText" value="NO.AS-05" placeholder="NO.AS-05">
+                </div>
+                <div class="input-col flex-1">
+                  <label>体長・サイズ (強調表示)</label>
+                  <input type="text" id="sizeText" value="♂77mm" placeholder="♂77mm">
+                </div>
+              </div>
+
+              <div class="control-row mt-2">
+                <div class="input-col flex-1">
+                  <label>追加情報（産地・累代・日付など）</label>
+                  <input type="text" id="extraInfoText" value="" placeholder="例: 能勢産 早期羽化証明 F10">
+                </div>
+              </div>
+            </div>
+
+            <!-- ⑤ 配置微調整スライダー -->
+            <div class="control-card">
+              <div class="card-header-toggle">
+                <h4>5. 全体レイアウト微調整</h4>
+              </div>
+              <div class="slider-control">
+                <div class="slider-label-row">
+                  <span>文字全体の上下位置</span>
+                  <span id="verticalOffsetVal">0px</span>
+                </div>
+                <input type="range" id="verticalOffset" min="-100" max="100" value="0" class="custom-range">
+              </div>
+            </div>
+          </section>
+
+          <!-- タブ4: 保存・出力 ＆ アーカイブ履歴アルバム -->
+          <section id="tab-export-archive" class="tab-content">
+            <div class="section-title-row">
+              <h3>高解像度出力 ＆ アーカイブ管理</h3>
+            </div>
+
+            <div class="export-btn-group">
+              <button type="button" id="btnDownloadMerged" class="btn-primary export-main-btn">
+                <span class="btn-icon">📥</span>
+                <span class="btn-text">
+                  <strong>完成カードを高解像度PNG保存</strong>
+                  <small>背景＋文字レイヤーを統合出力</small>
+                </span>
+              </button>
+
+              <div class="export-sub-row">
+                <button type="button" id="btnDownloadBg" class="btn-secondary">
+                  🖼️ 背景画像のみ保存
                 </button>
-              </div>
-
-              <!-- 出力2: 背景単体 -->
-              <div class="export-item">
-                <div class="export-info">
-                  <h4>② 背景画像単体 (PNG)</h4>
-                  <p>選択比率でトリミングされた背景のみ。</p>
-                </div>
-                <button type="button" class="btn-secondary" id="btnDownloadBg">
-                  <span>ダウンロード (背景PNG)</span>
-                </button>
-              </div>
-
-              <!-- 出力3: 文字レイヤー単体透過 -->
-              <div class="export-item">
-                <div class="export-info">
-                  <h4>③ 文字レイヤー単体 (透過PNG)</h4>
-                  <p>背景透明な文字・ロゴのみの透過画像。</p>
-                </div>
-                <button type="button" class="btn-secondary" id="btnDownloadText">
-                  <span>ダウンロード (文字透過PNG)</span>
+                <button type="button" id="btnDownloadText" class="btn-secondary">
+                  ✨ 文字レイヤーのみ(透過PNG)
                 </button>
               </div>
             </div>
 
-            <!-- アーカイブに保存ボタン -->
-            <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1);">
-              <button type="button" class="btn-archive-save" id="btnSaveToArchive">
-                <span>現在のカードを「カード履歴アルバム」に保存する</span>
+            <hr class="section-divider">
+
+            <!-- アーカイブ保存エリア -->
+            <div class="section-title-row">
+              <h3>発行済みカード履歴アルバム</h3>
+              <button type="button" id="btnSaveToArchive" class="btn-secondary btn-sm">
+                ＋ 現在のカードを履歴アルバムに保存
               </button>
             </div>
+            <p class="section-desc">過去に作成したカードをアルバムとして蓄積・ワンクリックでいつでも復元・再編集できます。</p>
+
+            <div id="archiveGrid" class="archive-cards-grid">
+              <!-- JSで動的に追加されます -->
+            </div>
+          </section>
+        </div>
+      </aside>
+
+      <!-- 右側：リアルタイム プレビューキャンバス -->
+      <section class="preview-stage">
+        <div class="stage-header">
+          <div class="stage-info">
+            <span class="badge" id="ratioBadge">比率: 5:7</span>
+            <span class="badge" id="resBadge">1500 × 2100 px</span>
+            <span class="badge live-badge">リアルタイム連動</span>
+          </div>
+          <div class="stage-tools">
+            <button type="button" id="btnRerender" class="tool-btn" title="再描画">🔄</button>
+            <button type="button" id="btnClearInputs" class="tool-btn" title="文字をすべてクリア">🗑️</button>
           </div>
         </div>
 
-        <!-- ===================================================================
-             タブ5: 完成カード・アーカイブ（読み込み＆再編集モード）
-             =================================================================== -->
-        <div class="tab-content" id="tab-archive">
-          <div class="section-card">
-            <div class="card-header-with-badge">
-              <h3 class="card-title">発行済みカード・アーカイブ</h3>
-              <span class="log-count-tag" id="archiveCountTag">0 件</span>
-            </div>
-            <p class="section-desc">
-              過去に作成したカードの一覧です。カードをタップすると<strong>「当時の背景・文字・設定」が一瞬で復元</strong>され、お名前やサイズだけを打ち替えて即座に新しいカードを発行できます。
-            </p>
-
-            <div class="archive-grid" id="archiveGrid">
-              <!-- 動的生成 -->
-            </div>
+        <div class="canvas-viewport" id="canvasViewport">
+          <div class="card-shadow-wrapper">
+            <canvas id="cardCanvas" width="1500" height="2100"></canvas>
           </div>
         </div>
 
+        <div class="stage-footer">
+          <p class="hint-text">💡 画面左で単語を選んだり文字を編集すると、リアルタイムにプレビューへ反映されます。</p>
+        </div>
       </section>
     </main>
 
-    <!-- ===================================================================
-         モーダル 1: ☁️ クラウド自動同期 ＆ データ管理マネージャー (v3.2.0)
-         =================================================================== -->
-    <div id="backupModal" class="modal-backdrop hidden">
+    <!-- ローディングオーバーレイ -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+      <div class="spinner"></div>
+      <p id="loadingText">Gemini AI で画像を生成中...</p>
+    </div>
+
+    <!-- 🔑 APIキー設定モーダル (永久キー保管庫) -->
+    <div id="apiKeyModal" class="modal-overlay hidden">
       <div class="modal-card">
         <div class="modal-header">
-          <h3>☁️ クラウド自動同期 ＆ データ管理</h3>
-          <button type="button" class="btn-modal-close" id="btnCloseBackupModal">✕</button>
+          <h3>Gemini APIキー管理（端末内永久金庫）</h3>
+          <button type="button" id="btnCloseApiKeyModal" class="btn-close">✕</button>
         </div>
         <div class="modal-body">
-          <!-- クラウド自動同期セクション -->
-          <div class="backup-box cloud-box" style="border-color:var(--border-gold); background:rgba(212,175,55,0.06);">
-            <div class="backup-box-info">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h4 style="color:var(--gold-text); font-size:13px; font-weight:700;">☁️ クラウド自動同期 (リアルタイム共有)</h4>
-                <span class="sync-badge-live" id="modalSyncBadge">🟢 接続中</span>
-              </div>
-              <p style="margin-top:4px;">
-                Mac・iPhone・相方様の端末間で、<strong>「辞書単語」「カテゴリ」「カード履歴」が自動で共有・同期</strong>されます。<br>
-                <span style="color:#81c784; font-weight:600;">※セキュリティ保護: 各端末のAPIキーは一切クラウドに送信されず、端末内だけに厳重隔離されます。</span>
-              </p>
-            </div>
-            <div style="display:flex; gap:8px; margin-top:8px;">
-              <button type="button" class="btn-primary btn-sm" id="btnForceUploadCloud">
-                <span>⬆️ クラウドへ手動上書き送信</span>
-              </button>
-              <button type="button" class="btn-secondary btn-sm" id="btnForceDownloadCloud">
-                <span>⬇️ クラウドから最新を取得</span>
-              </button>
-            </div>
-            <div id="cloudSyncStatusText" style="font-size:10px; color:var(--text-muted); margin-top:4px;">最終同期: 同期準備完了</div>
+          <div class="api-key-intro">
+            <p><strong>💡 端末固定の永久キー金庫（Vault）</strong></p>
+            <p>入力したAPIキーは端末内に永久記憶され、今後アプリがアップデートされても消えることはありません。（※外部へ送信されることも絶対にありません）</p>
           </div>
 
-          <!-- 手動ファイルバックアップ -->
-          <div class="backup-box" style="margin-top:12px;">
-            <div class="backup-box-info">
-              <h4>💾 ファイルバックアップ (JSON保存・復元)</h4>
-              <p>万が一のための手動バックアップファイルの書き出しと読み込みも可能です。</p>
+          <div class="key-slot-card free-slot">
+            <div class="slot-badge">スロット1：無料枠APIキー (画像解析・Vision優先)</div>
+            <p class="slot-desc">Gemini 3.6 Flash のテキスト・画像解析（プロンプト抽出）に使用されます。</p>
+            <input type="password" id="freeApiKeyInput" class="modal-input" placeholder="無料枠の AI Studio APIキー (AIzaSy...)" autocomplete="off">
+          </div>
+
+          <div class="key-slot-card paid-slot mt-3">
+            <div class="slot-badge">スロット2：有料枠APIキー (ネイティブ画像生成用)</div>
+            <p class="slot-desc">Imagen / Nano Banana などの画像生成モデルの直接生成に使用されます。</p>
+            <input type="password" id="paidApiKeyInput" class="modal-input" placeholder="従量課金プロジェクトの APIキー (AIzaSy...)" autocomplete="off">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="btnCancelApiKey" class="btn-secondary">キャンセル</button>
+          <button type="button" id="btnSaveApiKey" class="btn-primary">設定を端末内に保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ☁️ クラウド自動同期 ＆ 手動バックアップモーダル -->
+    <div id="backupModal" class="modal-overlay hidden">
+      <div class="modal-card modal-lg">
+        <div class="modal-header">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3>☁️ クラウド自動同期 ＆ データ管理</h3>
+            <span class="sync-badge-live" id="modalSyncBadge">🟢 自動連動中</span>
+          </div>
+          <button type="button" id="btnCloseBackupModal" class="btn-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="sync-overview-banner">
+            <div class="sync-banner-icon">☁️</div>
+            <div class="sync-banner-text">
+              <h4>完全自動シームレス同期が稼働しています</h4>
+              <p>Macでカードを保存したり単語を編集すると、自動的にCloudflare KVへ保存され、iPhoneや相方様の端末へ即座に共有されます。</p>
+              <div class="sync-meta-status" id="cloudSyncStatusText">最終同期: 自動同期稼働中</div>
             </div>
-            <div style="display:flex; gap:8px; margin-top:6px;">
-              <button type="button" class="btn-secondary btn-sm" id="btnExportBackup">
-                <span>💾 バックアップを書き出す (.json)</span>
-              </button>
-              <input type="file" id="backupFileInput" accept=".json" class="file-input-hidden">
-              <button type="button" class="btn-secondary btn-sm" id="btnTriggerImport">
-                <span>📂 ファイルから復元</span>
-              </button>
+          </div>
+
+          <div class="sync-action-grid mt-3">
+            <div class="sync-action-card">
+              <h5>⬆️ クラウドへ手動上書き送信</h5>
+              <p>現在のMac内の辞書・カード履歴でクラウドを上書き更新します。</p>
+              <button type="button" id="btnForceUploadCloud" class="btn-primary btn-sm full-width">手動上書き送信</button>
+            </div>
+            <div class="sync-action-card">
+              <h5>⬇️ クラウドから最新を取得</h5>
+              <p>クラウド上にある最新の辞書・カード履歴を端末へ読み込みます。</p>
+              <button type="button" id="btnForceDownloadCloud" class="btn-secondary btn-sm full-width">最新を取得</button>
+            </div>
+          </div>
+
+          <hr class="section-divider mt-4">
+
+          <div class="section-title-row">
+            <h4>📁 手動JSONバックアップ（ローカル保存用）</h4>
+          </div>
+          <div class="sync-action-grid">
+            <div class="sync-action-card">
+              <h5>バックアップ書き出し</h5>
+              <button type="button" id="btnExportBackup" class="btn-secondary btn-sm full-width">JSONファイルを保存</button>
+            </div>
+            <div class="sync-action-card">
+              <h5>バックアップ復元</h5>
+              <input type="file" id="backupFileInput" accept=".json" class="hidden-file-input">
+              <button type="button" id="btnTriggerImport" class="btn-secondary btn-sm full-width">JSONファイルを読み込み</button>
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn-primary" id="btnCloseBackupModalBottom">閉じる</button>
+          <button type="button" id="btnCloseBackupModalBottom" class="btn-primary">閉じる</button>
         </div>
       </div>
     </div>
 
-    <!-- モーダル 2: プロンプト単語・カテゴリ管理マネージャー -->
-    <div id="dictManagerModal" class="modal-backdrop hidden">
-      <div class="modal-card dict-modal-card">
+    <!-- 📖 辞書・カテゴリマネージャー モーダル -->
+    <div id="dictManagerModal" class="modal-overlay hidden">
+      <div class="modal-card modal-lg">
         <div class="modal-header">
-          <div class="log-modal-title">
-            <h3>プロンプト単語 ＆ カテゴリ管理</h3>
-            <span class="log-count-tag" id="dictTotalCountTag">0 件</span>
-          </div>
-          <button type="button" class="btn-modal-close" id="btnCloseDictManager">✕</button>
-        </div>
-        <div class="modal-body dict-modal-body">
-          <!-- カテゴリ名自由編集エリア -->
-          <div class="category-editor-card">
-            <h4 class="sub-section-title">カテゴリ名のリネーム・自由編集</h4>
-            <p class="modal-desc" style="margin-bottom:8px;">
-              カテゴリ名を変更すると、メイン画面の見出しやドロップダウンの選択肢がすべてリアルタイムに更新されます。
-            </p>
-            <div class="category-inputs-grid" id="categoryInputsGrid">
-              <!-- JSで動的生成 -->
-            </div>
-          </div>
-
-          <!-- 新規単語登録バー -->
-          <div class="dict-add-bar">
-            <input type="text" id="dictManagerInput" placeholder="新しい単語・表現を追加...">
-            <select id="dictManagerCategory">
-              <!-- JSで動的生成 -->
-            </select>
-            <button type="button" class="btn-primary btn-sm" id="btnDictManagerAdd">追加</button>
-          </div>
-
-          <!-- 単語一覧リスト -->
-          <div class="dict-item-list" id="dictItemList">
-            <!-- JSで動的生成 -->
-          </div>
-        </div>
-        <div class="modal-footer dict-modal-footer">
-          <button type="button" class="btn-secondary" id="btnShowAllChips">すべての単語を表示にする</button>
-          <button type="button" class="btn-primary" id="btnCloseDictModalBottom">完了</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- モーダル 3: 🔑 Gemini API 設定 -->
-    <div id="apiKeyModal" class="modal-backdrop hidden">
-      <div class="modal-card">
-        <div class="modal-header">
-          <h3>🔑 Gemini API 設定（端末内完全隔離・安全仕様）</h3>
-          <button type="button" class="btn-modal-close" id="btnCloseApiKeyModal">✕</button>
+          <h3>単語辞書 ＆ カテゴリ名称の管理</h3>
+          <button type="button" id="btnCloseDictManager" class="btn-close">✕</button>
         </div>
         <div class="modal-body">
-          <p class="modal-desc">
-            ※APIキーはこの端末のブラウザ内部だけに厳重保存され、<strong>クラウドや他者の端末へ同期・送信されることは100%ありません</strong>。
-          </p>
-
-          <!-- スロット1: 無料キー -->
-          <div class="form-group" style="background:rgba(46,125,50,0.1); padding:10px; border-radius:6px; border:1px solid rgba(76,175,80,0.3);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <label for="freeApiKeyInput" style="color:#81c784; font-weight:700; font-size:12px;">🟢 スロット1：無料プロジェクトのAPIキー</label>
-              <span style="font-size:10px; color:#a5d6a7;">画像解析・テキスト用 (完全無料)</span>
-            </div>
-            <input type="password" id="freeApiKeyInput" placeholder="AIzaSy... (無料キー)" autocomplete="off">
+          <div class="dict-tab-section">
+            <h4>1. カテゴリ名称のリネーム（自由に変更可能）</h4>
+            <div id="categoryInputsGrid" class="category-inputs-grid"></div>
           </div>
 
-          <!-- スロット2: 有料キー -->
-          <div class="form-group" style="background:rgba(212,175,55,0.1); padding:10px; border-radius:6px; border:1px solid rgba(212,175,55,0.3); margin-top:8px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <label for="paidApiKeyInput" style="color:var(--gold-text); font-weight:700; font-size:12px;">👑 スロット2：有料課金プロジェクトのAPIキー</label>
-              <span style="font-size:10px; color:#ffd54f;">画像生成専用</span>
-            </div>
-            <input type="password" id="paidApiKeyInput" placeholder="AIzaSy... (課金キー)" autocomplete="off">
-          </div>
+          <hr class="section-divider mt-3">
 
-          <div class="api-help-links" style="margin-top:10px;">
-            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">
-              👉 Google AI Studio でAPIキーを取得・確認する ↗
-            </a>
+          <div class="dict-tab-section">
+            <div class="section-title-row">
+              <h4>2. 登録単語リスト (<span id="dictTotalCountTag">0 件</span>)</h4>
+              <button type="button" id="btnShowAllChips" class="btn-secondary btn-sm">すべての単語を再表示</button>
+            </div>
+
+            <!-- 単語新規追加バー -->
+            <div class="dict-add-bar">
+              <select id="dictManagerCategory" class="custom-select"></select>
+              <input type="text" id="dictManagerInput" placeholder="新しい単語・プロンプト文を入力...">
+              <button type="button" id="btnDictManagerAdd" class="btn-primary btn-sm">＋ 登録</button>
+            </div>
+
+            <div id="dictItemList" class="dict-item-list-scroll"></div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn-secondary" id="btnCancelApiKey">キャンセル</button>
-          <button type="button" class="btn-primary" id="btnSaveApiKey">設定を保存する</button>
+          <button type="button" id="btnCloseDictModalBottom" class="btn-primary">保存して閉じる</button>
         </div>
       </div>
     </div>
 
-    <!-- モーダル 4: システムログ -->
-    <div id="logModal" class="modal-backdrop hidden">
-      <div class="modal-card log-modal-card">
+    <!-- 📜 システムログ モーダル -->
+    <div id="logModal" class="modal-overlay hidden">
+      <div class="modal-card modal-lg">
         <div class="modal-header">
-          <div class="log-modal-title">
-            <h3>システム & 通信ログコンソール</h3>
-            <span class="log-count-tag" id="logModalCount">0 件</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3>システム通信・診断ログ</h3>
+            <span class="modal-tag" id="logModalCount">0 件</span>
           </div>
-          <button type="button" class="btn-modal-close" id="btnCloseLogModal">✕</button>
+          <button type="button" id="btnCloseLogModal" class="btn-close">✕</button>
         </div>
-        <div class="modal-body log-modal-body">
-          <div class="log-terminal-window" id="logTerminal"></div>
+        <div class="modal-body">
+          <div class="log-terminal" id="logTerminal"></div>
         </div>
-        <div class="modal-footer log-modal-footer">
-          <button type="button" class="btn-secondary" id="btnClearLogs">ログ消去</button>
-          <button type="button" class="btn-primary" id="btnCopyLogs">ログを全件コピー</button>
+        <div class="modal-footer">
+          <button type="button" id="btnClearLogs" class="btn-secondary">ログを消去</button>
+          <button type="button" id="btnCopyLogs" class="btn-primary">ログを全件コピー</button>
         </div>
       </div>
     </div>
-
-    <!-- フッター -->
-    <footer class="app-footer">
-      <p>KUWAGATA PREMIUM CARD STUDIO &copy; 2026 | v3.2.0 Cloud Sync Edition</p>
-    </footer>
   </div>
 
   <script src="app.js"></script>

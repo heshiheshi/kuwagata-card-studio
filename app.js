@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v3.2.0 Permanent Vault Edition)
- * Permanent Device-Locked API Key Vault, Zero-Click Auto-Cloud Sync & Dual-Key Architecture
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v3.3.0 Vertical Tag Header Edition)
+ * Permanent Device-Locked API Key Vault, Zero-Click Auto-Cloud Sync & Compact Japanese Tag Header
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v3.2.0';
+  const APP_VERSION = 'v3.3.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
   const CLOUD_SYNC_ENDPOINT = '/api/sync';
 
@@ -218,7 +218,6 @@
       let paid = localStorage.getItem(VAULT_KEYS.PAID_API_KEY) || '';
       let mode = localStorage.getItem(VAULT_KEYS.ACTIVE_KEY_MODE) || 'free';
 
-      // 過去のあらゆる旧バージョンキーから自動救出・統合
       if (!free) {
         for (let i = 35; i >= 20; i--) {
           const old = localStorage.getItem(`kuwagata_free_api_key_v${i}`) || localStorage.getItem('kuwagata_gemini_api_key');
@@ -255,7 +254,7 @@
     }
   }
 
-  // --- 🧹 古いキャッシュの自動クリーンアップ (永久キー金庫は保護) ---
+  // --- 🧹 古いキャッシュの自動クリーンアップ ---
   function cleanupLegacyCache() {
     try {
       const keysToClean = [
@@ -269,7 +268,7 @@
     }
   }
 
-  // --- ☁️ 完全自動シームレス Cloudflare KV 同期エンジン (v3.2.0) ---
+  // --- ☁️ 完全自動シームレス Cloudflare KV 同期エンジン (v3.3.0) ---
   const CloudSyncManager = {
     syncTimer: null,
     isSyncing: false,
@@ -277,10 +276,8 @@
 
     init() {
       this.updateIndicator('online', '自動同期稼働中');
-      // 起動時に自動でCloudflare KVから最新データを取得
       this.pullFromCloud(true);
 
-      // 画面復帰時に自動で最新取得
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
           this.pullFromCloud(true);
@@ -290,13 +287,11 @@
         this.pullFromCloud(true);
       });
 
-      // 20秒ごとの自動バックグラウンド巡回同期
       setInterval(() => {
         this.pullFromCloud(true);
       }, 20000);
     },
 
-    // 🛡️ APIキーを完全除外した安全共有ペイロード
     getSanitizedPayload() {
       const compressedArchive = state.cardArchive.map(item => {
         return {
@@ -354,7 +349,7 @@
     async pushToCloud(silent = true) {
       if (this.isSyncing) return;
       this.isSyncing = true;
-      this.updateIndicator('syncing', 'クラウド同期中...');
+      this.updateIndicator('syncing', '同期中...');
 
       const payload = this.getSanitizedPayload();
       const payloadJson = JSON.stringify(payload);
@@ -391,7 +386,7 @@
     async pullFromCloud(silent = true) {
       if (this.isSyncing) return;
       this.isSyncing = true;
-      this.updateIndicator('syncing', 'クラウド確認中...');
+      this.updateIndicator('syncing', '同期中...');
 
       try {
         const resp = await fetch(CLOUD_SYNC_ENDPOINT);
@@ -448,15 +443,11 @@
 
     updateIndicator(status, text) {
       const dot = document.getElementById('headerSyncDot');
-      const label = document.getElementById('headerSyncText');
       const badge = document.getElementById('modalSyncBadge');
       const statusText = document.getElementById('cloudSyncStatusText');
 
       if (dot) {
         dot.className = `sync-status-dot ${status}`;
-      }
-      if (label) {
-        label.textContent = status === 'syncing' ? '同期中...' : '自動同期中';
       }
       if (badge) {
         badge.textContent = status === 'syncing' ? '🔄 同期中' : '🟢 自動連動中';
@@ -474,8 +465,8 @@
   async function init() {
     cleanupLegacyCache();
     setupAuthGate();
-    loadApiKeyVault(); // 永久金庫からAPIキーをロード
-    Logger.info(`Kuwagata Card Studio ${APP_VERSION} (永久キー金庫) を起動しました。`);
+    loadApiKeyVault();
+    Logger.info(`Kuwagata Card Studio ${APP_VERSION} を起動しました。`);
     loadSavedState();
     setupEventListeners();
     setupDictManager();
@@ -487,7 +478,6 @@
     setupVisionDropZone();
     renderArchiveGrid();
     
-    // ☁️ 完全自動シームレス同期の起動
     CloudSyncManager.init();
     
     if (document.fonts) {
@@ -500,7 +490,7 @@
     renderCard();
   }
 
-  // --- 🔒 パスワード認証ゲート (Auth Gate - 永久記憶) ---
+  // --- 🔒 パスワード認証ゲート ---
   function setupAuthGate() {
     const overlay = document.getElementById('authGateOverlay');
     const form = document.getElementById('authGateForm');
@@ -508,9 +498,7 @@
     const errorMsg = document.getElementById('authErrorMsg');
 
     const isAuth = localStorage.getItem(VAULT_KEYS.AUTH_PASSED) === 'true' ||
-                   sessionStorage.getItem('kuwagata_auth_passed') === 'true' ||
-                   localStorage.getItem('kuwagata_auth_passed_v31') === 'true' ||
-                   localStorage.getItem('kuwagata_auth_passed_v30') === 'true';
+                   sessionStorage.getItem('kuwagata_auth_passed') === 'true';
 
     if (isAuth) {
       localStorage.setItem(VAULT_KEYS.AUTH_PASSED, 'true');
@@ -544,7 +532,7 @@
         bgImageSrc: state.bgImageSrc.startsWith('data:') ? 'assets/bg_default.jpg' : state.bgImageSrc
       }));
       
-      saveApiKeyVault(); // 永久金庫へ保存
+      saveApiKeyVault();
 
       localStorage.setItem('kuwagata_categories_vault', JSON.stringify(state.categories));
       localStorage.setItem('kuwagata_chips_vault', JSON.stringify(state.chips));
@@ -629,7 +617,6 @@
 
   // --- ☁️ 同期＆バックアップUI設定 ---
   function setupBackupManager() {
-    const btnOpen = document.getElementById('btnOpenBackupModal');
     const btnHeaderSync = document.getElementById('btnHeaderCloudSync');
     const btnClose = document.getElementById('btnCloseBackupModal');
     const btnCloseBottom = document.getElementById('btnCloseBackupModalBottom');
@@ -640,9 +627,9 @@
     const btnForceUpload = document.getElementById('btnForceUploadCloud');
     const btnForceDownload = document.getElementById('btnForceDownloadCloud');
 
-    [btnOpen, btnHeaderSync].forEach(btn => {
-      if (btn) btn.addEventListener('click', () => backupModal.classList.remove('hidden'));
-    });
+    if (btnHeaderSync) {
+      btnHeaderSync.addEventListener('click', () => backupModal.classList.remove('hidden'));
+    }
 
     [btnClose, btnCloseBottom].forEach(b => {
       if (b) b.addEventListener('click', () => backupModal.classList.add('hidden'));
@@ -719,15 +706,15 @@
     reader.readAsText(file);
   }
 
-  // --- APIキー切り替えUI ---
+  // --- APIキー切り替えUI (縦書き「無料キー」/「有料キー」) ---
   function updateKeyToggleUI() {
     if (!btnQuickToggleKey || !keyModeLabel) return;
     if (state.activeKeyMode === 'paid') {
-      btnQuickToggleKey.className = 'btn-key-toggle paid';
-      keyModeLabel.textContent = '👑 有料キー';
+      btnQuickToggleKey.className = 'btn-vertical-tag key-toggle paid';
+      keyModeLabel.textContent = '有料キー';
     } else {
-      btnQuickToggleKey.className = 'btn-key-toggle free';
-      keyModeLabel.textContent = '🟢 無料キー';
+      btnQuickToggleKey.className = 'btn-vertical-tag key-toggle free';
+      keyModeLabel.textContent = '無料キー';
     }
   }
 
@@ -836,20 +823,19 @@
 
   // --- 辞書 ＆ カテゴリマネージャー ---
   function setupDictManager() {
-    const btnOpen = document.getElementById('btnOpenDictManager');
     const btnQuickOpen = document.getElementById('btnQuickOpenDict');
     const btnClose = document.getElementById('btnCloseDictManager');
     const btnCloseBottom = document.getElementById('btnCloseDictModalBottom');
     const btnShowAll = document.getElementById('btnShowAllChips');
 
-    [btnOpen, btnQuickOpen].forEach(btn => {
-      if (btn) btn.addEventListener('click', () => {
+    if (btnQuickOpen) {
+      btnQuickOpen.addEventListener('click', () => {
         renderCategoryInputs();
         renderDictCategorySelect();
         renderDictManagerList();
         dictManagerModal.classList.remove('hidden');
       });
-    });
+    }
 
     [btnClose, btnCloseBottom].forEach(btn => {
       if (btn) btn.addEventListener('click', () => dictManagerModal.classList.add('hidden'));
@@ -1076,7 +1062,7 @@
         state.activeKeyMode = state.activeKeyMode === 'free' ? 'paid' : 'free';
         saveApiKeyVault();
         updateKeyToggleUI();
-        Logger.info(`APIキーモード変更: ${state.activeKeyMode === 'paid' ? '👑 有料キー' : '🟢 無料キー'}`);
+        Logger.info(`APIキーモード変更: ${state.activeKeyMode === 'paid' ? '有料キー' : '無料キー'}`);
       });
     }
 
@@ -1085,35 +1071,41 @@
     const btnCancelModal = document.getElementById('btnCancelApiKey');
     const btnSaveModal = document.getElementById('btnSaveApiKey');
 
-    btnOpenModal.addEventListener('click', () => {
-      if (freeApiKeyInput) freeApiKeyInput.value = state.freeApiKey || '';
-      if (paidApiKeyInput) paidApiKeyInput.value = state.paidApiKey || '';
-      apiKeyModal.classList.remove('hidden');
-    });
+    if (btnOpenModal) {
+      btnOpenModal.addEventListener('click', () => {
+        if (freeApiKeyInput) freeApiKeyInput.value = state.freeApiKey || '';
+        if (paidApiKeyInput) paidApiKeyInput.value = state.paidApiKey || '';
+        apiKeyModal.classList.remove('hidden');
+      });
+    }
 
     [btnCloseModal, btnCancelModal].forEach(btn => {
       if (btn) btn.addEventListener('click', () => apiKeyModal.classList.add('hidden'));
     });
 
-    btnSaveModal.addEventListener('click', () => {
-      state.freeApiKey = (freeApiKeyInput ? freeApiKeyInput.value : '').trim();
-      state.paidApiKey = (paidApiKeyInput ? paidApiKeyInput.value : '').trim();
-      saveApiKeyVault(); // 永久金庫へ保存 (アップデートでも消えない)
-      updateKeyToggleUI();
-      apiKeyModal.classList.add('hidden');
-      Logger.success('Gemini APIキーを端末の永久金庫に保存しました。');
-      alert('🎉 APIキーを端末内の永久金庫に保存しました！\n今後アプリがアップデートされても消えることはありません。\n（※変更したい時はいつでも上書き可能です）');
-    });
+    if (btnSaveModal) {
+      btnSaveModal.addEventListener('click', () => {
+        state.freeApiKey = (freeApiKeyInput ? freeApiKeyInput.value : '').trim();
+        state.paidApiKey = (paidApiKeyInput ? paidApiKeyInput.value : '').trim();
+        saveApiKeyVault();
+        updateKeyToggleUI();
+        apiKeyModal.classList.add('hidden');
+        Logger.success('Gemini APIキーを端末の永久金庫に保存しました。');
+        alert('🎉 APIキーを端末内の永久金庫に保存しました！\n今後アプリがアップデートされても消えることはありません。\n（※変更したい時はいつでも上書き可能です）');
+      });
+    }
 
     const btnOpenLog = document.getElementById('btnOpenLogModal');
     const btnCloseLog = document.getElementById('btnCloseLogModal');
     const btnClearLogs = document.getElementById('btnClearLogs');
     const btnCopyLogs = document.getElementById('btnCopyLogs');
 
-    btnOpenLog.addEventListener('click', () => {
-      Logger.updateUI();
-      logModal.classList.remove('hidden');
-    });
+    if (btnOpenLog) {
+      btnOpenLog.addEventListener('click', () => {
+        Logger.updateUI();
+        logModal.classList.remove('hidden');
+      });
+    }
 
     if (btnCloseLog) btnCloseLog.addEventListener('click', () => logModal.classList.add('hidden'));
     if (btnClearLogs) btnClearLogs.addEventListener('click', () => Logger.clear());
@@ -1578,7 +1570,7 @@ JSONフォーマットのみを出力してください:
     }
   }
 
-  // --- 完成カード・アーカイブシステム (v3.2.0 完全自動同期) ---
+  // --- 完成カード・アーカイブシステム ---
   function saveCurrentToArchive() {
     const thumbCanvas = document.createElement('canvas');
     thumbCanvas.width = 320;
