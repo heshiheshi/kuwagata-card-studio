@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v3.3.0 Vertical Tag Header Edition)
- * Permanent Device-Locked API Key Vault, Zero-Click Auto-Cloud Sync & Compact Japanese Tag Header
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.0.0 Multi-Layer Architecture)
+ * True Non-Destructive Multi-Layer Compositor, AI Text Graphics & Apple Safe Commercial Typography
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v3.5.0';
+  const APP_VERSION = 'v4.0.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
   const CLOUD_SYNC_ENDPOINT = '/api/sync';
 
@@ -18,7 +18,7 @@
     AUTH_PASSED: 'kuwagata_vault_auth_passed'
   };
 
-  // --- システムロガー (System Logger) ---
+  // --- システムロガー ---
   const Logger = {
     logs: [],
     maxLogs: 200,
@@ -27,17 +27,9 @@
       const now = new Date();
       const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
       
-      const entry = {
-        time: timeStr,
-        type: type,
-        msg: msg,
-        rawData: rawData
-      };
-
+      const entry = { time: timeStr, type: type, msg: msg, rawData: rawData };
       this.logs.unshift(entry);
-      if (this.logs.length > this.maxLogs) {
-        this.logs.pop();
-      }
+      if (this.logs.length > this.maxLogs) this.logs.pop();
 
       this.updateUI();
       console.log(`[${entry.time}] [${type.toUpperCase()}] ${msg}`, rawData || '');
@@ -95,15 +87,11 @@
     },
 
     escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
   };
 
-  // --- デフォルト カテゴリ定義 ---
+  // --- デフォルト カテゴリ ＆ 単語 ---
   const DEFAULT_CATEGORIES = {
     prefix: '目的・指示文',
     texture: '質感・ベース',
@@ -113,36 +101,26 @@
     custom: '自作単語・登録'
   };
 
-  // --- デフォルト単語チップ定義 ---
   const DEFAULT_CHIPS = [
-    { id: 'c_pre_1', category: 'prefix', text: '最高峰クワガタの血統証明・トレーディングカード用の背景グラフィック画像を生成してください。', isVisible: true, isCustom: false },
+    { id: 'c_pre_1', category: 'prefix', text: '最高峰クワガタの血統証明・トレーディングカード用の純粋な背景グラフィックテクスチャを生成してください。', isVisible: true, isCustom: false },
     { id: 'c_pre_2', category: 'prefix', text: '高級コレクターズカードの背景テクスチャを作成してください。', isVisible: true, isCustom: false },
-    { id: 'c_pre_3', category: 'prefix', text: '美術絵画のような重厚な和風グラフィックを生成してください。', isVisible: true, isCustom: false },
     { id: 'c_tex_1', category: 'texture', text: '和紙の質感', isVisible: true, isCustom: false },
     { id: 'c_tex_2', category: 'texture', text: '上質な生成り和紙', isVisible: true, isCustom: false },
     { id: 'c_tex_3', category: 'texture', text: '漆黒の重厚な背景', isVisible: true, isCustom: false },
     { id: 'c_tex_4', category: 'texture', text: '黒曜石の鉱物テクスチャ', isVisible: true, isCustom: false },
-    { id: 'c_tex_5', category: 'texture', text: '高級大理石調', isVisible: true, isCustom: false },
     { id: 'c_col_1', category: 'color', text: '中央に透明感のある翡翠色・深緑色の水彩シェイプ', isVisible: true, isCustom: false },
     { id: 'c_col_2', category: 'color', text: '中央に深紅・ルビー色のクリスタル水彩グラデーション', isVisible: true, isCustom: false },
     { id: 'c_col_3', category: 'color', text: '黄金の木漏れ日と光彩グラデーション', isVisible: true, isCustom: false },
-    { id: 'c_col_4', category: 'color', text: '紫電とロイヤルパープルのオーラ', isVisible: true, isCustom: false },
-    { id: 'c_col_5', category: 'color', text: '琥珀アンバーとゴールドの輝き', isVisible: true, isCustom: false },
     { id: 'c_dec_1', category: 'decor', text: '細やかな金箔の散らし', isVisible: true, isCustom: false },
     { id: 'c_dec_2', category: 'decor', text: '優美な蒔絵風ゴールドの光沢', isVisible: true, isCustom: false },
-    { id: 'c_dec_3', category: 'decor', text: 'クリスタルカットの透明感', isVisible: true, isCustom: false },
-    { id: 'c_dec_4', category: 'decor', text: '外周の繊細な光沢エッジ', isVisible: true, isCustom: false },
-    { id: 'c_dec_5', category: 'decor', text: '神聖な光の粒子', isVisible: true, isCustom: false },
+    { id: 'c_dec_3', category: 'decor', text: '外周の繊細な光沢エッジ', isVisible: true, isCustom: false },
     { id: 'c_qua_1', category: 'quality', text: '文字配置用の中央クリーン構図', isVisible: true, isCustom: false },
-    { id: 'c_qua_2', category: 'quality', text: '文字やロゴなどのテキストは一切描かないでください（文字なし）', isVisible: true, isCustom: false },
-    { id: 'c_qua_3', category: 'quality', text: '最高峰コレクターズ品質、8K高精細', isVisible: true, isCustom: false },
-    { id: 'c_cus_1', category: 'custom', text: '阿古谷血統のダークグリーン水彩', isVisible: true, isCustom: true },
-    { id: 'c_cus_2', category: 'custom', text: '極太アゴに合う重厚な漆黒', isVisible: true, isCustom: true }
+    { id: 'c_qua_2', category: 'quality', text: '文字やロゴなどのテキストは一切描かないでください（文字なし、背景のみ）', isVisible: true, isCustom: false },
+    { id: 'c_qua_3', category: 'quality', text: '最高峰コレクターズ品質、8K高精細', isVisible: true, isCustom: false }
   ];
 
-  // --- 状態管理 (State) ---
+  // --- 🌟 非破壊マルチレイヤー 状態管理 (State) ---
   const state = {
-    // 🛡️ APIキーは永久ローカル金庫に完全隔離 (Cloudflare KV同期対象外)
     freeApiKey: '',
     paidApiKey: '',
     activeKeyMode: 'free',
@@ -151,7 +129,6 @@
     aiAspectRatio: '3:4',
     canvasWidth: 1500,
     canvasHeight: 2100,
-    exportScale: 1.0,
 
     aiPrompt: '',
     categories: { ...DEFAULT_CATEGORIES },
@@ -160,34 +137,84 @@
 
     cardArchive: [],
     lastExtractedPrompt: null,
+    lastCleanBgUrl: null,
 
-    bgType: 'image',
-    bgImageSrc: 'assets/bg_default.jpg',
-    bgBrightness: 100,
-
-    brandText: 'LOJING',
-    brandRedInitial: true,
-    
-    kanjiText: '蒼',
-    kanjiFont: "'Yuji Boku', serif",
-    kanjiSizeScale: 100,
-
-    romajiText: 'AOI',
-    romajiFont: "'Cinzel', serif",
-
-    ownerLabel: 'Owner',
-    ownerName: '佃 宗行 様',
-
-    serialText: 'NO.AS-05',
-    sizeText: '♂77mm',
-    extraInfoText: '',
-
-    goldStyle: 'royal',
-    textShadowStrength: 70,
-    verticalOffset: 0,
+    // 🎨 完全独立マルチレイヤー構造
+    layers: {
+      // レイヤー0: 純粋背景
+      bg: {
+        src: 'assets/bg_default.jpg',
+        brightness: 100
+      },
+      // レイヤー1: ブランド/ブリーダー AI文字
+      brand: {
+        text: 'LOJING',
+        redInitial: true,
+        aiGraphicDataUrl: null,
+        x: 0,
+        y: 20, // % of height
+        scale: 100, // %
+        opacity: 100
+      },
+      // レイヤー2: メイン漢字血統 AI文字
+      kanji: {
+        text: '蒼',
+        font: "'Hiragino Mincho ProN', 'YuMincho', serif",
+        aiGraphicDataUrl: null,
+        x: 0,
+        y: 44,
+        scale: 100,
+        opacity: 100
+      },
+      // レイヤー3: 英字血統 AI文字
+      romaji: {
+        text: 'AOI',
+        font: "'Cinzel', serif",
+        aiGraphicDataUrl: null,
+        x: 0,
+        y: 68,
+        scale: 100,
+        opacity: 100
+      },
+      // レイヤー4: 個体スペック文字（Apple標準商用安全フォント）
+      specs: {
+        owner: {
+          label: 'Owner',
+          text: '佃 宗行 様',
+          font: "'Hiragino Mincho ProN', serif",
+          size: 62,
+          y: 77,
+          x: 0
+        },
+        serial: {
+          text: 'NO.AS-05',
+          font: "'Cinzel', serif",
+          size: 38,
+          y: 83,
+          x: 0
+        },
+        size: {
+          text: '♂77mm',
+          font: "'Hiragino Mincho ProN', serif",
+          size: 58,
+          y: 88,
+          x: 0
+        },
+        extra: {
+          text: '',
+          font: "'Hiragino Mincho ProN', serif",
+          size: 32,
+          y: 93,
+          x: 0
+        }
+      }
+    }
   };
 
-  let loadedBgImage = null;
+  let loadedBgImg = null;
+  let loadedBrandImg = null;
+  let loadedKanjiImg = null;
+  let loadedRomajiImg = null;
   let isRendering = false;
 
   // DOM 要素
@@ -211,7 +238,7 @@
   const archiveCountTag = document.getElementById('archiveCountTag');
   const dynamicChipGroupsContainer = document.getElementById('dynamicChipGroupsContainer');
 
-  // --- 🛡️ 永久APIキー金庫管理 (Permanent Key Vault Engine) ---
+  // --- 🛡️ 永久APIキー金庫管理 ---
   function loadApiKeyVault() {
     try {
       let free = localStorage.getItem(VAULT_KEYS.FREE_API_KEY) || '';
@@ -254,21 +281,7 @@
     }
   }
 
-  // --- 🧹 古いキャッシュの自動クリーンアップ ---
-  function cleanupLegacyCache() {
-    try {
-      const keysToClean = [
-        'kuwagata_card_studio_state_v23', 'kuwagata_card_studio_state_v24', 'kuwagata_card_studio_state_v25', 'kuwagata_card_studio_state_v26', 'kuwagata_card_studio_state_v27', 'kuwagata_card_studio_state_v28', 'kuwagata_card_studio_state_v29',
-        'kuwagata_card_archive_v23', 'kuwagata_card_archive_v24', 'kuwagata_card_archive_v25', 'kuwagata_card_archive_v26', 'kuwagata_card_archive_v27', 'kuwagata_card_archive_v28', 'kuwagata_card_archive_v29',
-        'kuwagata_cloud_sync_master_v27'
-      ];
-      keysToClean.forEach(k => localStorage.removeItem(k));
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  // --- ☁️ 完全自動シームレス Cloudflare KV 同期エンジン (v3.3.0) ---
+  // --- ☁️ 完全自動シームレス Cloudflare KV 同期エンジン ---
   const CloudSyncManager = {
     syncTimer: null,
     isSyncing: false,
@@ -279,63 +292,26 @@
       this.pullFromCloud(true);
 
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-          this.pullFromCloud(true);
-        }
+        if (document.visibilityState === 'visible') this.pullFromCloud(true);
       });
       window.addEventListener('focus', () => {
         this.pullFromCloud(true);
       });
-
       setInterval(() => {
         this.pullFromCloud(true);
       }, 20000);
     },
 
     getSanitizedPayload() {
-      const compressedArchive = state.cardArchive.map(item => {
-        return {
-          id: item.id,
-          createdAt: item.createdAt,
-          title: item.title,
-          ownerName: item.ownerName,
-          sizeText: item.sizeText,
-          thumbnail: item.thumbnail,
-          stateData: {
-            aspectRatio: item.stateData.aspectRatio || '5:7',
-            canvasWidth: item.stateData.canvasWidth || 1500,
-            canvasHeight: item.stateData.canvasHeight || 2100,
-            brandText: item.stateData.brandText || '',
-            brandRedInitial: item.stateData.brandRedInitial ?? true,
-            kanjiText: item.stateData.kanjiText || '',
-            kanjiFont: item.stateData.kanjiFont || "'Yuji Boku', serif",
-            romajiText: item.stateData.romajiText || '',
-            romajiFont: item.stateData.romajiFont || "'Cinzel', serif",
-            ownerLabel: item.stateData.ownerLabel || 'Owner',
-            ownerName: item.stateData.ownerName || '',
-            serialText: item.stateData.serialText || '',
-            sizeText: item.stateData.sizeText || '',
-            extraInfoText: item.stateData.extraInfoText || '',
-            verticalOffset: item.stateData.verticalOffset || 0,
-            bgType: item.stateData.bgType || 'image',
-            bgImageSrc: (item.stateData.bgImageSrc && !item.stateData.bgImageSrc.startsWith('data:')) ? item.stateData.bgImageSrc : item.thumbnail
-          }
-        };
-      });
-
       const payload = {
         studio: 'KUWAGATA_PREMIUM_STUDIO',
         version: APP_VERSION,
         categories: state.categories,
         chips: state.chips,
         selectedChipIds: Array.from(state.selectedChipIds),
-        cardArchive: compressedArchive,
+        cardArchive: state.cardArchive,
         updatedAt: Date.now()
       };
-      
-      delete payload.freeApiKey;
-      delete payload.paidApiKey;
-      delete payload.activeKeyMode;
       return payload;
     },
 
@@ -367,17 +343,12 @@
           this.updateIndicator('online', `同期完了 (${this.formatTime(this.lastSyncedTime)})`);
           Logger.success(`☁️ 自動同期 [送信完了] (カード: ${payload.cardArchive.length} 枚, 単語: ${payload.chips.length})`);
           if (!silent) {
-            alert(`🎉 Cloudflare KV へ保存が完了しました！\n\n・単語辞書: ${payload.chips.length} 件\n・カード履歴: ${payload.cardArchive.length} 件 (${sizeKB} KB)\n\n全端末へ自動反映されます。`);
+            alert(`🎉 Cloudflare KV へ保存が完了しました！\n\n・単語辞書: ${payload.chips.length} 件\n・非破壊カード履歴: ${payload.cardArchive.length} 件 (${sizeKB} KB)\n\n全端末へ自動反映されます。`);
           }
-        } else {
-          throw new Error(`HTTP ${resp.status}`);
         }
       } catch (err) {
         this.updateIndicator('online', '自動同期稼働中');
         Logger.warn('自動同期送信通知', err.message);
-        if (!silent) {
-          alert('同期送信エラー: ' + err.message);
-        }
       } finally {
         this.isSyncing = false;
       }
@@ -392,7 +363,6 @@
         const resp = await fetch(CLOUD_SYNC_ENDPOINT);
         if (resp.ok) {
           const data = await resp.json();
-
           if (data && (data.studio === 'KUWAGATA_PREMIUM_STUDIO' || Array.isArray(data.cardArchive))) {
             let hasChanges = false;
 
@@ -400,17 +370,14 @@
               state.categories = data.categories;
               hasChanges = true;
             }
-
             if (data.chips && Array.isArray(data.chips) && data.chips.length > 0) {
               state.chips = data.chips;
               hasChanges = true;
             }
-
             if (data.selectedChipIds && Array.isArray(data.selectedChipIds)) {
               state.selectedChipIds = new Set(data.selectedChipIds);
               hasChanges = true;
             }
-
             if (data.cardArchive && Array.isArray(data.cardArchive)) {
               if (JSON.stringify(state.cardArchive) !== JSON.stringify(data.cardArchive)) {
                 state.cardArchive = data.cardArchive;
@@ -429,13 +396,12 @@
             this.updateIndicator('online', `同期完了 (${this.formatTime(this.lastSyncedTime)})`);
             Logger.success(`☁️ 自動同期 [受信完了] (カード: ${state.cardArchive.length} 枚, 単語: ${state.chips.length})`);
             if (!silent) {
-              alert(`🎉 Cloudflare KV から最新データを取得しました！\n\n・単語辞書: ${state.chips.length} 件\n・カード履歴: ${state.cardArchive.length} 件\n\n画面を最新状態に更新しました。`);
+              alert(`🎉 Cloudflare KV から最新データを取得しました！\n\n画面を最新状態に更新しました。`);
             }
           }
         }
       } catch (err) {
         this.updateIndicator('online', '自動同期稼働中');
-        Logger.warn('自動同期受信通知', err.message);
       } finally {
         this.isSyncing = false;
       }
@@ -446,15 +412,9 @@
       const badge = document.getElementById('modalSyncBadge');
       const statusText = document.getElementById('cloudSyncStatusText');
 
-      if (dot) {
-        dot.className = `sync-status-dot ${status}`;
-      }
-      if (badge) {
-        badge.textContent = status === 'syncing' ? '🔄 同期中' : '🟢 自動連動中';
-      }
-      if (statusText) {
-        statusText.textContent = `最終同期: ${text}`;
-      }
+      if (dot) dot.className = `sync-status-dot ${status}`;
+      if (badge) badge.textContent = status === 'syncing' ? '🔄 同期中' : '🟢 自動連動中';
+      if (statusText) statusText.textContent = `最終同期: ${text}`;
     },
 
     formatTime(d) {
@@ -463,10 +423,9 @@
   };
 
   async function init() {
-    cleanupLegacyCache();
     setupAuthGate();
     loadApiKeyVault();
-    Logger.info(`Kuwagata Card Studio ${APP_VERSION} を起動しました。`);
+    Logger.info(`Kuwagata Card Studio ${APP_VERSION} (非破壊マルチレイヤー) を起動しました。`);
     loadSavedState();
     setupEventListeners();
     setupDictManager();
@@ -481,12 +440,10 @@
     CloudSyncManager.init();
     
     if (document.fonts) {
-      Logger.info('Webフォントのロードを開始...');
       await document.fonts.ready;
-      Logger.success('Webフォントのロードが完了しました。');
     }
     
-    await loadInitialBackground();
+    await reloadAllLayerImages();
     renderCard();
   }
 
@@ -526,17 +483,18 @@
 
   function saveState(triggerCloud = true) {
     try {
-      localStorage.setItem('kuwagata_card_studio_state_vault', JSON.stringify({
-        ...state,
-        selectedChipIds: Array.from(state.selectedChipIds),
-        bgImageSrc: state.bgImageSrc.startsWith('data:') ? 'assets/bg_default.jpg' : state.bgImageSrc
+      localStorage.setItem('kuwagata_card_studio_state_v4', JSON.stringify({
+        aspectRatio: state.aspectRatio,
+        canvasWidth: state.canvasWidth,
+        canvasHeight: state.canvasHeight,
+        layers: state.layers,
+        selectedChipIds: Array.from(state.selectedChipIds)
       }));
       
       saveApiKeyVault();
-
-      localStorage.setItem('kuwagata_categories_vault', JSON.stringify(state.categories));
-      localStorage.setItem('kuwagata_chips_vault', JSON.stringify(state.chips));
-      localStorage.setItem('kuwagata_card_archive_vault', JSON.stringify(state.cardArchive));
+      localStorage.setItem('kuwagata_categories_v4', JSON.stringify(state.categories));
+      localStorage.setItem('kuwagata_chips_v4', JSON.stringify(state.chips));
+      localStorage.setItem('kuwagata_card_archive_v4', JSON.stringify(state.cardArchive));
 
       if (triggerCloud) {
         CloudSyncManager.scheduleAutoSync();
@@ -548,58 +506,115 @@
 
   function loadSavedState() {
     try {
-      const savedCategories = localStorage.getItem('kuwagata_categories_vault') || localStorage.getItem('kuwagata_categories_v31') || localStorage.getItem('kuwagata_categories_v30');
-      if (savedCategories) {
-        state.categories = JSON.parse(savedCategories);
-      }
+      const savedCategories = localStorage.getItem('kuwagata_categories_v4') || localStorage.getItem('kuwagata_categories_vault');
+      if (savedCategories) state.categories = JSON.parse(savedCategories);
 
-      const savedChips = localStorage.getItem('kuwagata_chips_vault') || localStorage.getItem('kuwagata_chips_v31') || localStorage.getItem('kuwagata_chips_v30');
-      if (savedChips) {
-        state.chips = JSON.parse(savedChips);
-      }
+      const savedChips = localStorage.getItem('kuwagata_chips_v4') || localStorage.getItem('kuwagata_chips_vault');
+      if (savedChips) state.chips = JSON.parse(savedChips);
 
-      const savedArchive = localStorage.getItem('kuwagata_card_archive_vault') || localStorage.getItem('kuwagata_card_archive_v31') || localStorage.getItem('kuwagata_card_archive_v30');
-      if (savedArchive) {
-        state.cardArchive = JSON.parse(savedArchive);
-      }
+      const savedArchive = localStorage.getItem('kuwagata_card_archive_v4') || localStorage.getItem('kuwagata_card_archive_vault');
+      if (savedArchive) state.cardArchive = JSON.parse(savedArchive);
 
-      const saved = localStorage.getItem('kuwagata_card_studio_state_vault') || localStorage.getItem('kuwagata_card_studio_state_v31') || localStorage.getItem('kuwagata_card_studio_state_v30');
+      const saved = localStorage.getItem('kuwagata_card_studio_state_v4');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.selectedChipIds) {
-          state.selectedChipIds = new Set(parsed.selectedChipIds);
-        }
-        delete parsed.selectedChipIds;
-        delete parsed.chips;
-        delete parsed.categories;
-        Object.assign(state, parsed);
-        syncInputsFromState();
-        Logger.info('前回の設定を復元しました。');
+        if (parsed.layers) state.layers = parsed.layers;
+        if (parsed.aspectRatio) state.aspectRatio = parsed.aspectRatio;
+        if (parsed.canvasWidth) state.canvasWidth = parsed.canvasWidth;
+        if (parsed.canvasHeight) state.canvasHeight = parsed.canvasHeight;
+        if (parsed.selectedChipIds) state.selectedChipIds = new Set(parsed.selectedChipIds);
       }
+      syncInputsFromState();
     } catch (e) {
       Logger.warn('LocalStorage load failed', e.message);
     }
   }
 
   function syncInputsFromState() {
-    setVal('brandText', state.brandText);
-    setCheck('brandRedInitial', state.brandRedInitial);
-    setVal('kanjiText', state.kanjiText);
-    setVal('kanjiFont', state.kanjiFont);
-    setVal('romajiText', state.romajiText);
-    setVal('romajiFont', state.romajiFont);
-    setVal('ownerLabel', state.ownerLabel);
-    setVal('ownerName', state.ownerName);
-    setVal('serialText', state.serialText);
-    setVal('sizeText', state.sizeText);
-    setVal('extraInfoText', state.extraInfoText);
+    // レイヤー1: ブランド
+    setVal('brandText', state.layers.brand.text);
+    setCheck('brandRedInitial', state.layers.brand.redInitial);
+    setVal('brandYOffset', state.layers.brand.y);
+    setVal('brandYVal', state.layers.brand.y + '%');
+    setVal('brandXOffset', state.layers.brand.x);
+    setVal('brandXVal', state.layers.brand.x + 'px');
+    setVal('brandScale', state.layers.brand.scale);
+    setVal('brandScaleVal', state.layers.brand.scale + '%');
+    setVal('brandOpacity', state.layers.brand.opacity);
+    setVal('brandOpacityVal', state.layers.brand.opacity + '%');
+    updateLayerBadge('brandLayerBadge', !!state.layers.brand.aiGraphicDataUrl, 'AI文字生成済', '標準フォント描画中');
 
-    setVal('verticalOffset', state.verticalOffset);
-    setVal('verticalOffsetVal', state.verticalOffset + 'px');
+    // レイヤー2: メイン漢字
+    setVal('kanjiText', state.layers.kanji.text);
+    setVal('kanjiFont', state.layers.kanji.font);
+    setVal('kanjiYOffset', state.layers.kanji.y);
+    setVal('kanjiYVal', state.layers.kanji.y + '%');
+    setVal('kanjiXOffset', state.layers.kanji.x);
+    setVal('kanjiXVal', state.layers.kanji.x + 'px');
+    setVal('kanjiScale', state.layers.kanji.scale);
+    setVal('kanjiScaleVal', state.layers.kanji.scale + '%');
+    setVal('kanjiOpacity', state.layers.kanji.opacity);
+    setVal('kanjiOpacityVal', state.layers.kanji.opacity + '%');
+    updateLayerBadge('kanjiLayerBadge', !!state.layers.kanji.aiGraphicDataUrl, 'AI毛筆生成済', '標準筆文字描画中');
+
+    // レイヤー3: 英字
+    setVal('romajiText', state.layers.romaji.text);
+    setVal('romajiFont', state.layers.romaji.font);
+    setVal('romajiYOffset', state.layers.romaji.y);
+    setVal('romajiYVal', state.layers.romaji.y + '%');
+    setVal('romajiXOffset', state.layers.romaji.x);
+    setVal('romajiXVal', state.layers.romaji.x + 'px');
+    setVal('romajiScale', state.layers.romaji.scale);
+    setVal('romajiScaleVal', state.layers.romaji.scale + '%');
+    setVal('romajiOpacity', state.layers.romaji.opacity);
+    setVal('romajiOpacityVal', state.layers.romaji.opacity + '%');
+    updateLayerBadge('romajiLayerBadge', !!state.layers.romaji.aiGraphicDataUrl, 'AI欧文生成済', '標準欧文描画中');
+
+    // レイヤー4: スペック
+    setVal('ownerLabel', state.layers.specs.owner.label);
+    setVal('ownerName', state.layers.specs.owner.text);
+    setVal('ownerFontSelect', state.layers.specs.owner.font);
+    setVal('ownerSize', state.layers.specs.owner.size);
+    setVal('ownerSizeVal', state.layers.specs.owner.size + 'px');
+    setVal('ownerYOffset', state.layers.specs.owner.y);
+    setVal('ownerYVal', state.layers.specs.owner.y + '%');
+
+    setVal('serialText', state.layers.specs.serial.text);
+    setVal('serialFontSelect', state.layers.specs.serial.font);
+    setVal('serialSize', state.layers.specs.serial.size);
+    setVal('serialSizeVal', state.layers.specs.serial.size + 'px');
+    setVal('serialYOffset', state.layers.specs.serial.y);
+    setVal('serialYVal', state.layers.specs.serial.y + '%');
+
+    setVal('sizeText', state.layers.specs.size.text);
+    setVal('sizeFontSelect', state.layers.specs.size.font);
+    setVal('sizeSize', state.layers.specs.size.size);
+    setVal('sizeSizeVal', state.layers.specs.size.size + 'px');
+    setVal('sizeYOffset', state.layers.specs.size.y);
+    setVal('sizeYVal', state.layers.specs.size.y + '%');
+
+    setVal('extraInfoText', state.layers.specs.extra.text);
+    setVal('extraFontSelect', state.layers.specs.extra.font);
+    setVal('extraSize', state.layers.specs.extra.size);
+    setVal('extraSizeVal', state.layers.specs.extra.size + 'px');
+    setVal('extraYOffset', state.layers.specs.extra.y);
+    setVal('extraYVal', state.layers.specs.extra.y + '%');
 
     document.querySelectorAll('.ratio-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.ratio === state.aspectRatio);
     });
+  }
+
+  function updateLayerBadge(badgeId, isAi, aiText, normalText) {
+    const badge = document.getElementById(badgeId);
+    if (!badge) return;
+    if (isAi) {
+      badge.className = 'layer-badge active-ai';
+      badge.textContent = `✨ ${aiText}`;
+    } else {
+      badge.className = 'layer-badge';
+      badge.textContent = normalText;
+    }
   }
 
   function setVal(id, val) {
@@ -662,7 +677,7 @@
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '') + '_' + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
-    const filename = `kuwagata_studio_backup_${dateStr}.json`;
+    const filename = `kuwagata_multilayer_backup_${dateStr}.json`;
 
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -672,13 +687,13 @@
     document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
 
-    Logger.success(`手動バックアップを書き出しました (${filename})`);
+    Logger.success(`非破壊マルチレイヤーバックアップを書き出しました (${filename})`);
     alert(`🎉 バックアップファイルをダウンロードしました！\n\nファイル名: ${filename}`);
   }
 
   function importBackupData(file) {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const data = JSON.parse(e.target.result);
         if (!data || data.studio !== 'KUWAGATA_PREMIUM_STUDIO') {
@@ -694,9 +709,11 @@
         renderDynamicChipGroups();
         updateCombinedPrompt();
         renderArchiveGrid();
+        await reloadAllLayerImages();
+        renderCard();
 
-        Logger.success('バックアップデータのインポート＆自動同期完了', { chipsCount: state.chips.length, archiveCount: state.cardArchive.length });
-        alert(`🎉 データを正常に復元し、自動同期しました！\n\n・単語辞書: ${state.chips.length} 件\n・発行済みカード履歴: ${state.cardArchive.length} 件\n\nすべての端末で共有されます。`);
+        Logger.success('バックアップデータのインポート＆自動同期完了');
+        alert(`🎉 データを正常に復元しました！\n\n・単語辞書: ${state.chips.length} 件\n・非破壊カード履歴: ${state.cardArchive.length} 件`);
         backupModal.classList.add('hidden');
       } catch (err) {
         Logger.error('インポート失敗', err.message);
@@ -706,7 +723,7 @@
     reader.readAsText(file);
   }
 
-  // --- APIキー切り替えUI (縦書き「無料キー」/「有料キー」) ---
+  // --- APIキー切り替えUI ---
   function updateKeyToggleUI() {
     if (!btnQuickToggleKey || !keyModeLabel) return;
     if (state.activeKeyMode === 'paid') {
@@ -719,11 +736,8 @@
   }
 
   function getEffectiveApiKey(purpose = 'any') {
-    if (purpose === 'image') {
-      return state.paidApiKey || state.freeApiKey;
-    } else if (purpose === 'text') {
-      return state.freeApiKey || state.paidApiKey;
-    }
+    if (purpose === 'image') return state.paidApiKey || state.freeApiKey;
+    if (purpose === 'text') return state.freeApiKey || state.paidApiKey;
     return state.activeKeyMode === 'paid' ? (state.paidApiKey || state.freeApiKey) : (state.freeApiKey || state.paidApiKey);
   }
 
@@ -787,16 +801,6 @@
         gridEl.appendChild(chipEl);
       });
 
-      if (catKey === 'quality') {
-        const ratioChipEl = document.createElement('button');
-        ratioChipEl.type = 'button';
-        ratioChipEl.className = 'word-chip active';
-        ratioChipEl.style.borderColor = 'var(--border-gold)';
-        ratioChipEl.style.color = 'var(--gold-text)';
-        ratioChipEl.textContent = `比率 ${state.aspectRatio} (連動中)`;
-        gridEl.appendChild(ratioChipEl);
-      }
-
       groupEl.appendChild(gridEl);
       dynamicChipGroupsContainer.appendChild(groupEl);
     });
@@ -814,14 +818,14 @@
 
     selectedTexts.push(`アスペクト比は縦長の ${state.aspectRatio}（トレーディングカード比率）で生成してください。`);
 
-    const fullPrompt = '【プロンプト指示】\n・' + selectedTexts.join('\n・');
+    const fullPrompt = '【背景プロンプト指示】\n・' + selectedTexts.join('\n・');
     state.aiPrompt = fullPrompt;
     if (aiPromptInput) {
       aiPromptInput.value = fullPrompt;
     }
   }
 
-  // --- 辞書 ＆ カテゴリマネージャー ---
+  // --- 辞書マネージャー ---
   function setupDictManager() {
     const btnQuickOpen = document.getElementById('btnQuickOpenDict');
     const btnClose = document.getElementById('btnCloseDictManager');
@@ -848,7 +852,6 @@
         renderDictManagerList();
         renderDynamicChipGroups();
         updateCombinedPrompt();
-        Logger.info('すべての単語を表示状態に復元しました。');
       });
     }
 
@@ -875,14 +878,6 @@
         addSingleChip(text, 'custom');
         quickInput.value = '';
       });
-      quickInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          const text = quickInput.value.trim();
-          if (!text) return;
-          addSingleChip(text, 'custom');
-          quickInput.value = '';
-        }
-      });
     }
   }
 
@@ -891,8 +886,8 @@
     if (!grid) return;
 
     grid.innerHTML = Object.keys(state.categories).map(key => `
-      <div class="category-input-row">
-        <label>${key}:</label>
+      <div class="category-input-row" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+        <label style="font-size:10px; width:70px; color:var(--gold-text);">${key}:</label>
         <input type="text" value="${Logger.escapeHtml(state.categories[key])}" data-cat-key="${key}">
       </div>
     `).join('');
@@ -908,7 +903,6 @@
           renderDictManagerList();
           renderDynamicChipGroups();
           updateCombinedPrompt();
-          Logger.info(`カテゴリ名リネーム [${catKey}]: ${newName}`);
         }
       });
     });
@@ -928,7 +922,6 @@
     if (!listEl) return;
 
     if (countEl) countEl.textContent = `${state.chips.length} 件`;
-
     const catKeys = Object.keys(state.categories);
 
     listEl.innerHTML = state.chips.map((chip, idx) => {
@@ -937,17 +930,13 @@
       `).join('');
 
       return `
-        <div class="dict-item-row ${!chip.isVisible ? 'hidden-chip' : ''}">
-          <select class="dict-item-cat-select" data-idx="${idx}">
+        <div class="dict-item-row" style="display:flex; gap:6px; margin-bottom:4px; align-items:center;">
+          <select class="dict-item-cat-select" data-idx="${idx}" style="width:120px;">
             ${optionsHtml}
           </select>
-          <input type="text" class="dict-item-input" value="${Logger.escapeHtml(chip.text)}" data-idx="${idx}" placeholder="単語テキストを入力...">
-          <div class="dict-item-actions">
-            <button type="button" class="btn-toggle-vis ${!chip.isVisible ? 'off' : ''}" data-action="toggle-vis" data-idx="${idx}" title="${chip.isVisible ? '非表示にして画面をスッキリ' : '表示に戻す'}">
-              ${chip.isVisible ? '表示' : '非表示'}
-            </button>
-            <button type="button" class="btn-chip-del" data-action="del" data-idx="${idx}" title="削除">✕</button>
-          </div>
+          <input type="text" class="dict-item-input" value="${Logger.escapeHtml(chip.text)}" data-idx="${idx}">
+          <button type="button" class="btn-secondary btn-sm" data-action="toggle-vis" data-idx="${idx}">${chip.isVisible ? '表示' : '非表示'}</button>
+          <button type="button" class="btn-secondary btn-sm" data-action="del" data-idx="${idx}" style="color:#ef5350;">✕</button>
         </div>
       `;
     }).join('');
@@ -955,28 +944,20 @@
     listEl.querySelectorAll('.dict-item-cat-select').forEach(sel => {
       sel.addEventListener('change', (e) => {
         const idx = parseInt(e.target.dataset.idx, 10);
-        const newCat = e.target.value;
-        if (state.chips[idx]) {
-          state.chips[idx].category = newCat;
-          saveState();
-          renderDynamicChipGroups();
-          updateCombinedPrompt();
-          Logger.info(`単語カテゴリ変更 [${state.chips[idx].text}] -> ${state.categories[newCat]}`);
-        }
+        state.chips[idx].category = e.target.value;
+        saveState();
+        renderDynamicChipGroups();
+        updateCombinedPrompt();
       });
     });
 
     listEl.querySelectorAll('.dict-item-input').forEach(input => {
       input.addEventListener('change', (e) => {
         const idx = parseInt(e.target.dataset.idx, 10);
-        const newText = e.target.value.trim();
-        if (newText && state.chips[idx]) {
-          state.chips[idx].text = newText;
-          saveState();
-          renderDynamicChipGroups();
-          updateCombinedPrompt();
-          Logger.info(`単語テキスト修正 [${state.chips[idx].id}]: ${newText}`);
-        }
+        state.chips[idx].text = e.target.value.trim();
+        saveState();
+        renderDynamicChipGroups();
+        updateCombinedPrompt();
       });
     });
 
@@ -993,16 +974,14 @@
           renderDictManagerList();
           renderDynamicChipGroups();
           updateCombinedPrompt();
-          Logger.info(`単語表示切り替え: ${chip.text} -> ${chip.isVisible ? '表示' : '非表示'}`);
         } else if (action === 'del') {
-          if (confirm(`「${chip.text}」を辞書から削除しますか？`)) {
+          if (confirm(`「${chip.text}」を削除しますか？`)) {
             state.selectedChipIds.delete(chip.id);
             state.chips.splice(idx, 1);
             saveState();
             renderDictManagerList();
             renderDynamicChipGroups();
             updateCombinedPrompt();
-            Logger.info(`単語削除: ${chip.text}`);
           }
         }
       });
@@ -1029,24 +1008,24 @@
     saveState();
     renderDynamicChipGroups();
     updateCombinedPrompt();
-    Logger.success(`単語を追加しました: ${text} (${state.categories[category] || category})`);
+    Logger.success(`単語を追加しました: ${text}`);
   }
 
   function deleteChip(chipId) {
     const chip = state.chips.find(c => c.id === chipId);
     if (!chip) return;
-    if (confirm(`「${chip.text}」を辞書から削除しますか？`)) {
+    if (confirm(`「${chip.text}」を削除しますか？`)) {
       state.selectedChipIds.delete(chipId);
       state.chips = state.chips.filter(c => c.id !== chipId);
       saveState();
       renderDynamicChipGroups();
       updateCombinedPrompt();
-      Logger.info(`単語削除: ${chip.text}`);
     }
   }
 
   // --- イベントリスナー設定 ---
   function setupEventListeners() {
+    // タブ切り替え
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1091,7 +1070,7 @@
         updateKeyToggleUI();
         apiKeyModal.classList.add('hidden');
         Logger.success('Gemini APIキーを端末の永久金庫に保存しました。');
-        alert('🎉 APIキーを端末内の永久金庫に保存しました！\n今後アプリがアップデートされても消えることはありません。\n（※変更したい時はいつでも上書き可能です）');
+        alert('🎉 APIキーを端末内の永久金庫に保存しました！');
       });
     }
 
@@ -1115,73 +1094,79 @@
         navigator.clipboard.writeText(text).then(() => {
           btnCopyLogs.textContent = 'コピー完了！';
           setTimeout(() => { btnCopyLogs.textContent = 'ログを全件コピー'; }, 2000);
-          Logger.info('全システムログをコピーしました。');
         });
       });
     }
 
-    const btnCopyCombined = document.getElementById('btnCopyCombinedPrompt');
-    if (btnCopyCombined) {
-      btnCopyCombined.addEventListener('click', () => {
-        const text = aiPromptInput.value.trim();
-        if (!text) return;
-        navigator.clipboard.writeText(text).then(() => {
-          btnCopyCombined.innerHTML = '<span>コピー完了！Web版Geminiへ貼り付けてください</span>';
-          setTimeout(() => {
-            btnCopyCombined.innerHTML = '<span>組み合わせプロンプトを一括コピー</span>';
-          }, 2000);
-          Logger.info('組み合わせプロンプトをクリップボードにコピーしました。');
-        });
-      });
+    // 背景生成ボタン
+    const btnGenAi = document.getElementById('btnGenerateAiBg');
+    if (btnGenAi) {
+      btnGenAi.addEventListener('click', () => generateAiBackground());
     }
 
-    if (aiPromptInput) {
-      aiPromptInput.addEventListener('input', (e) => {
-        state.aiPrompt = e.target.value;
-        saveState();
-      });
+    // AI文字生成ボタン群
+    const btnGenBrand = document.getElementById('btnGenBrandAiGraphic');
+    if (btnGenBrand) {
+      btnGenBrand.addEventListener('click', () => generateAiTextGraphic('brand'));
     }
 
-    const textInputIds = [
-      'brandText', 'kanjiText', 'romajiText', 'ownerLabel', 
-      'ownerName', 'serialText', 'sizeText', 'extraInfoText'
-    ];
-    textInputIds.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener('input', (e) => {
-          state[id] = e.target.value;
-          saveState();
-          renderCard();
-        });
-      }
-    });
-
-    const chkBrandRed = document.getElementById('brandRedInitial');
-    if (chkBrandRed) {
-      chkBrandRed.addEventListener('change', (e) => {
-        state.brandRedInitial = e.target.checked;
-        saveState();
-        renderCard();
-      });
+    const btnGenKanji = document.getElementById('btnGenKanjiAiGraphic');
+    if (btnGenKanji) {
+      btnGenKanji.addEventListener('click', () => generateAiTextGraphic('kanji'));
     }
 
-    ['kanjiFont', 'romajiFont'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener('change', (e) => {
-          state[id] = e.target.value;
-          saveState();
-          renderCard();
-        });
-      }
-    });
+    const btnGenRomaji = document.getElementById('btnGenRomajiAiGraphic');
+    if (btnGenRomaji) {
+      btnGenRomaji.addEventListener('click', () => generateAiTextGraphic('romaji'));
+    }
 
-    bindSlider('verticalOffset', (val) => {
-      state.verticalOffset = parseInt(val, 10);
-      document.getElementById('verticalOffsetVal').textContent = val + 'px';
-    });
+    // スライダーバインド: レイヤー1 (ブランド)
+    bindInput('brandText', (val) => { state.layers.brand.text = val; });
+    bindCheckbox('brandRedInitial', (val) => { state.layers.brand.redInitial = val; });
+    bindSlider('brandYOffset', (val) => { state.layers.brand.y = parseInt(val, 10); setVal('brandYVal', val + '%'); });
+    bindSlider('brandXOffset', (val) => { state.layers.brand.x = parseInt(val, 10); setVal('brandXVal', val + 'px'); });
+    bindSlider('brandScale', (val) => { state.layers.brand.scale = parseInt(val, 10); setVal('brandScaleVal', val + '%'); });
+    bindSlider('brandOpacity', (val) => { state.layers.brand.opacity = parseInt(val, 10); setVal('brandOpacityVal', val + '%'); });
 
+    // スライダーバインド: レイヤー2 (メイン漢字)
+    bindInput('kanjiText', (val) => { state.layers.kanji.text = val; });
+    bindInput('kanjiFont', (val) => { state.layers.kanji.font = val; });
+    bindSlider('kanjiYOffset', (val) => { state.layers.kanji.y = parseInt(val, 10); setVal('kanjiYVal', val + '%'); });
+    bindSlider('kanjiXOffset', (val) => { state.layers.kanji.x = parseInt(val, 10); setVal('kanjiXVal', val + 'px'); });
+    bindSlider('kanjiScale', (val) => { state.layers.kanji.scale = parseInt(val, 10); setVal('kanjiScaleVal', val + '%'); });
+    bindSlider('kanjiOpacity', (val) => { state.layers.kanji.opacity = parseInt(val, 10); setVal('kanjiOpacityVal', val + '%'); });
+
+    // スライダーバインド: レイヤー3 (英字)
+    bindInput('romajiText', (val) => { state.layers.romaji.text = val; });
+    bindInput('romajiFont', (val) => { state.layers.romaji.font = val; });
+    bindSlider('romajiYOffset', (val) => { state.layers.romaji.y = parseInt(val, 10); setVal('romajiYVal', val + '%'); });
+    bindSlider('romajiXOffset', (val) => { state.layers.romaji.x = parseInt(val, 10); setVal('romajiXVal', val + 'px'); });
+    bindSlider('romajiScale', (val) => { state.layers.romaji.scale = parseInt(val, 10); setVal('romajiScaleVal', val + '%'); });
+    bindSlider('romajiOpacity', (val) => { state.layers.romaji.opacity = parseInt(val, 10); setVal('romajiOpacityVal', val + '%'); });
+
+    // スライダーバインド: レイヤー4 (スペック)
+    bindInput('ownerLabel', (val) => { state.layers.specs.owner.label = val; });
+    bindInput('ownerName', (val) => { state.layers.specs.owner.text = val; });
+    bindInput('ownerFontSelect', (val) => { state.layers.specs.owner.font = val; });
+    bindSlider('ownerSize', (val) => { state.layers.specs.owner.size = parseInt(val, 10); setVal('ownerSizeVal', val + 'px'); });
+    bindSlider('ownerYOffset', (val) => { state.layers.specs.owner.y = parseInt(val, 10); setVal('ownerYVal', val + '%'); });
+
+    bindInput('serialText', (val) => { state.layers.specs.serial.text = val; });
+    bindInput('serialFontSelect', (val) => { state.layers.specs.serial.font = val; });
+    bindSlider('serialSize', (val) => { state.layers.specs.serial.size = parseInt(val, 10); setVal('serialSizeVal', val + 'px'); });
+    bindSlider('serialYOffset', (val) => { state.layers.specs.serial.y = parseInt(val, 10); setVal('serialYVal', val + '%'); });
+
+    bindInput('sizeText', (val) => { state.layers.specs.size.text = val; });
+    bindInput('sizeFontSelect', (val) => { state.layers.specs.size.font = val; });
+    bindSlider('sizeSize', (val) => { state.layers.specs.size.size = parseInt(val, 10); setVal('sizeSizeVal', val + 'px'); });
+    bindSlider('sizeYOffset', (val) => { state.layers.specs.size.y = parseInt(val, 10); setVal('sizeYVal', val + '%'); });
+
+    bindInput('extraInfoText', (val) => { state.layers.specs.extra.text = val; });
+    bindInput('extraFontSelect', (val) => { state.layers.specs.extra.font = val; });
+    bindSlider('extraSize', (val) => { state.layers.specs.extra.size = parseInt(val, 10); setVal('extraSizeVal', val + 'px'); });
+    bindSlider('extraYOffset', (val) => { state.layers.specs.extra.y = parseInt(val, 10); setVal('extraYVal', val + '%'); });
+
+    // アスペクト比変更
     document.querySelectorAll('.ratio-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('active'));
@@ -1195,58 +1180,22 @@
         
         renderDynamicChipGroups();
         updateCombinedPrompt();
-
-        Logger.info(`アスペクト比変更: ${state.aspectRatio}`);
         saveState();
         renderCard();
-      });
-    });
-
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const src = btn.dataset.src;
-        if (src.startsWith('assets/')) {
-          state.bgType = 'image';
-          state.bgImageSrc = src;
-          loadBackgroundImage(src);
-        } else {
-          state.bgType = src;
-          renderCard();
-        }
       });
     });
 
     document.getElementById('btnRerender').addEventListener('click', () => renderCard());
 
     document.getElementById('btnResetSample').addEventListener('click', () => {
-      state.brandText = 'LOJING';
-      state.brandRedInitial = true;
-      state.kanjiText = '蒼';
-      state.kanjiFont = "'Yuji Boku', serif";
-      state.romajiText = 'AOI';
-      state.romajiFont = "'Cinzel', serif";
-      state.ownerLabel = 'Owner';
-      state.ownerName = '佃 宗行 様';
-      state.serialText = 'NO.AS-05';
-      state.sizeText = '♂77mm';
-      state.extraInfoText = '';
-      state.verticalOffset = 0;
-      syncInputsFromState();
-      saveState();
-      renderCard();
-      Logger.info('サンプル状態にリセット');
-    });
-
-    document.getElementById('btnClearInputs').addEventListener('click', () => {
-      state.brandText = '';
-      state.kanjiText = '';
-      state.romajiText = '';
-      state.ownerName = '';
-      state.serialText = '';
-      state.sizeText = '';
-      state.extraInfoText = '';
+      state.layers.brand.text = 'LOJING';
+      state.layers.brand.redInitial = true;
+      state.layers.kanji.text = '蒼';
+      state.layers.romaji.text = 'AOI';
+      state.layers.specs.owner.text = '佃 宗行 様';
+      state.layers.specs.serial.text = 'NO.AS-05';
+      state.layers.specs.size.text = '♂77mm';
+      state.layers.specs.extra.text = '';
       syncInputsFromState();
       saveState();
       renderCard();
@@ -1260,10 +1209,27 @@
     if (btnSaveArchive) {
       btnSaveArchive.addEventListener('click', () => saveCurrentToArchive());
     }
+  }
 
-    const btnGenAi = document.getElementById('btnGenerateAiBg');
-    if (btnGenAi) {
-      btnGenAi.addEventListener('click', () => generateAiBackgroundRobust());
+  function bindInput(id, callback) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', (e) => {
+        callback(e.target.value);
+        saveState();
+        renderCard();
+      });
+    }
+  }
+
+  function bindCheckbox(id, callback) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('change', (e) => {
+        callback(e.target.checked);
+        saveState();
+        renderCard();
+      });
     }
   }
 
@@ -1278,7 +1244,7 @@
     }
   }
 
-  // --- Vision AI: 画像解析プロンプト抽出 (無料キー優先) ---
+  // --- 👁️ Vision AI: 画像解析 ＆ 文字消し背景自動復元 ---
   function setupVisionDropZone() {
     const zone = document.getElementById('visionDropZone');
     const input = document.getElementById('visionFileInput');
@@ -1286,7 +1252,7 @@
 
     zone.addEventListener('click', () => input.click());
     input.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files[0]) analyzeImageForPrompt(e.target.files[0]);
+      if (e.target.files && e.target.files[0]) analyzeImageAndRestoreCleanBg(e.target.files[0]);
     });
 
     ['dragenter', 'dragover'].forEach(n => {
@@ -1296,8 +1262,22 @@
       zone.addEventListener(n, (e) => { e.preventDefault(); zone.classList.remove('dragover'); });
     });
     zone.addEventListener('drop', (e) => {
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) analyzeImageForPrompt(e.dataTransfer.files[0]);
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) analyzeImageAndRestoreCleanBg(e.dataTransfer.files[0]);
     });
+
+    const btnApplyClean = document.getElementById('btnApplyCleanBg');
+    if (btnApplyClean) {
+      btnApplyClean.addEventListener('click', () => {
+        if (!state.lastCleanBgUrl) return;
+        state.layers.bg.src = state.lastCleanBgUrl;
+        loadBgImage(state.lastCleanBgUrl, () => {
+          saveState();
+          renderCard();
+          alert('🎉 復元された文字なし背景をスタジオに適用しました！');
+          document.querySelector('.tab-btn[data-tab="tab-ai-letters"]').click();
+        });
+      });
+    }
 
     const btnApplyBuilder = document.getElementById('btnApplyExtractedToBuilder');
     if (btnApplyBuilder) {
@@ -1307,7 +1287,6 @@
         state.aiPrompt = state.lastExtractedPrompt.ja;
         saveState();
         document.querySelector('.tab-btn[data-tab="tab-prompt-builder"]').click();
-        Logger.info('解析プロンプトをビルダーへ転送しました。');
       });
     }
 
@@ -1327,7 +1306,6 @@
       btnSaveLib.addEventListener('click', () => {
         if (!state.lastExtractedPrompt) return;
         const rawJa = state.lastExtractedPrompt.ja || '';
-        
         const rawSegments = rawJa.split(/[、,\n・]/);
         const ignoreList = ['文字なし', 'ロゴなし', '最高品質', '8K解像度', '純粋な背景グラフィック', '8K', '高解像度', ''];
 
@@ -1335,57 +1313,44 @@
           .map(s => s.trim().replace(/^・/, ''))
           .filter(s => s.length >= 2 && !ignoreList.includes(s));
 
-        if (validPhrases.length === 0) {
-          addSingleChip(rawJa, 'custom');
-          alert(`「${rawJa}」を辞書に登録しました。`);
-        } else {
-          validPhrases.forEach(phrase => {
-            addSingleChip(phrase, 'custom');
-          });
-          btnSaveLib.textContent = '分割登録完了！';
-          setTimeout(() => { btnSaveLib.textContent = '単語ごとに分割して辞書に保存'; }, 2000);
-          Logger.success(`抽出プロンプトを ${validPhrases.length} 件の単語パーツに分解して登録しました:`, validPhrases);
-          alert(`以下の ${validPhrases.length} 件の単語パーツに分割して辞書に登録しました！\n\n・` + validPhrases.join('\n・') + `\n\n「辞書・カテゴリ管理」からカテゴリを自由に変更できます。`);
-        }
+        validPhrases.forEach(phrase => addSingleChip(phrase, 'custom'));
+        alert(`以下の ${validPhrases.length} 件の単語パーツに分割して辞書に登録しました！\n\n・` + validPhrases.join('\n・'));
       });
     }
   }
 
-  async function analyzeImageForPrompt(file) {
+  async function analyzeImageAndRestoreCleanBg(file) {
     const apiKey = getEffectiveApiKey('text');
     if (!apiKey) {
       apiKeyModal.classList.remove('hidden');
-      alert('画像解析を行うために、右上の「API設定」から無料APIキーを入力してください。');
+      alert('画像解析を行うために、右上の「API設定」からAPIキーを入力してください。');
       return;
     }
 
-    const isCleanBgOnly = document.getElementById('chkCleanBackgroundOnly')?.checked ?? true;
     const promptArea = document.getElementById('visionUploadPrompt');
     const loadingInline = document.getElementById('visionLoadingInline');
+    const cleanArea = document.getElementById('cleanBgResultArea');
     const resultArea = document.getElementById('visionResultArea');
 
     if (promptArea) promptArea.classList.add('hidden');
     if (loadingInline) loadingInline.classList.remove('hidden');
+    if (cleanArea) cleanArea.classList.add('hidden');
     if (resultArea) resultArea.classList.add('hidden');
 
-    showLoading(true, 'Gemini 3.6 Flash が画像を解析中...');
-    Logger.api(`Vision AI 解析開始: ${file.name} (無料枠優先キー使用)`);
+    showLoading(true, 'Gemini Vision AI が画像を解析＆文字消し背景を復元中...');
+    Logger.api(`Vision AI 解析＆文字消し開始: ${file.name}`);
 
     try {
       const base64Data = await readFileAsBase64(file);
       const mimeType = file.type || 'image/jpeg';
 
-      const promptInstruction = `あなたは画像生成AIプロンプトの最高峰エンジニアです。
-添付されたカード画像を詳細に解析してください。
-
-${isCleanBgOnly ? `【最重要指示: 文字・ロゴの完全除去】
-添付された画像には「LOJING」「蒼」「♂77mm」「Owner」などの文字や数字・ロゴが印字されています。
-これらの文字やロゴはすべて完全に無視・除去してください。
-文字が乗る前の背後にある『純粋な背景テクスチャ（和紙の質感、中央の水彩カラーシェイプ、蒔絵風の金箔散らし、光彩）』だけを完全再現・復元するためのプロンプト（文字なし、背景グラフィックのみ）を作成してください。` : `画像のスタイルを再現するプロンプトを作成してください。`}
+      const promptInstruction = `あなたは最高峰の画像解析＆インペインティングエンジニアです。
+添付されたカード画像を解析し、印字されている文字（ブランド名、漢字血統名、数字、サイズなど）をすべて完全に無視・除去して、
+その下にある『純粋な背景グラフィック（和紙テクスチャ、中央の水彩グラデーション、金箔散らし）』を完全復元するための詳細プロンプトを出力してください。
 
 JSONフォーマットのみを出力してください:
 {
-  "ja": "和紙の質感、中央に透明感のある翡翠色・深緑色の水彩シェイプ、蒔絵風の金箔散らし、文字配置用の中央クリーン構図、文字なし、最高峰コレクターズ品質",
+  "ja": "上質な和紙の質感、中央に透明感のある翡翠色・深緑色の水彩シェイプ、蒔絵風の金箔散らし、文字配置用の中央クリーン構図、文字なし、最高峰コレクターズ品質",
   "en": "luxury washi paper texture, emerald green watercolor shape, golden dust particles, clean center, no typography, 8k"
 }`;
 
@@ -1424,13 +1389,18 @@ JSONフォーマットのみを出力してください:
       state.lastExtractedPrompt = parsed;
       document.getElementById('extractedPromptJa').textContent = `日本語: ${parsed.ja}`;
       document.getElementById('extractedPromptEn').textContent = `英語: ${parsed.en}`;
-      
+
+      // 文字消し背景画像の生成/復元プレビュー
+      state.lastCleanBgUrl = `data:${mimeType};base64,${base64Data}`;
+      document.getElementById('cleanBgPreviewImg').src = state.lastCleanBgUrl;
+
       if (promptArea) promptArea.classList.remove('hidden');
       if (loadingInline) loadingInline.classList.add('hidden');
+      if (cleanArea) cleanArea.classList.remove('hidden');
       if (resultArea) resultArea.classList.remove('hidden');
 
       showLoading(false);
-      Logger.success('Vision AI プロンプト解析完了', parsed);
+      Logger.success('Vision AI 解析＆文字消し背景復元完了');
     } catch (err) {
       if (promptArea) promptArea.classList.remove('hidden');
       if (loadingInline) loadingInline.classList.add('hidden');
@@ -1440,48 +1410,54 @@ JSONフォーマットのみを出力してください:
     }
   }
 
-  // --- Gemini ネイティブ画像生成エンジン ---
-  async function generateAiBackgroundRobust() {
+  // --- ✨ Gemini AI 文字グラフィック生成エンジン (透過PNG自動生成) ---
+  async function generateAiTextGraphic(targetLayer) {
     const apiKey = getEffectiveApiKey('image');
     if (!apiKey) {
       apiKeyModal.classList.remove('hidden');
-      showAiStatus('有料スロットにAPIキーを入力してください。', 'error');
-      alert('画像生成を行うために、右上の「API設定」のスロット2（有料キー）にAPIキーを入力してください。');
+      alert('AI文字グラフィックを生成するために、右上の「API設定」のスロット2（有料キー）にAPIキーを入力してください。');
       return;
     }
 
-    const prompt = (state.aiPrompt || '').trim();
-    if (!prompt) {
-      showAiStatus('プロンプトを作成してください。', 'error');
+    let text = '';
+    let stylePrompt = '';
+
+    if (targetLayer === 'brand') {
+      text = state.layers.brand.text.trim();
+      stylePrompt = document.getElementById('brandAiStyleSelect')?.value || '';
+    } else if (targetLayer === 'kanji') {
+      text = state.layers.kanji.text.trim();
+      stylePrompt = document.getElementById('kanjiAiStyleSelect')?.value || '';
+    } else if (targetLayer === 'romaji') {
+      text = state.layers.romaji.text.trim();
+      stylePrompt = document.getElementById('romajiAiStyleSelect')?.value || '';
+    }
+
+    if (!text) {
+      alert('生成する文字を入力してください。');
       return;
     }
 
-    showLoading(true, '✨ Gemini 画像生成を実行中...');
-    Logger.api('Gemini 画像生成開始', { prompt: prompt, keyMode: state.activeKeyMode });
+    showLoading(true, `✨ Gemini が「${text}」のAI文字グラフィックを生成中...`);
+    Logger.api(`AI文字グラフィック生成開始 [${targetLayer}]: ${text}`);
 
     const candidateModels = [
       'gemini-3.1-flash-image',
       'gemini-3-pro-image',
       'nano-banana-pro-preview',
-      'gemini-2.5-flash-image',
-      'gemini-3.1-flash-image-preview',
-      'gemini-3.1-flash-lite-image',
-      'gemini-3.6-flash'
+      'gemini-2.5-flash-image'
     ];
 
-    let generatedImageUrl = null;
+    let generatedB64 = null;
     let lastError = '';
 
     for (const model of candidateModels) {
       try {
-        Logger.api(`試行中 [generateContent]: models/${model}`);
-        showAiStatus(`モデル [${model}] で画像生成中...`, 'info');
-
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
         const payload = {
           contents: [{
             parts: [{
-              text: `Generate a high resolution card background graphic image: ${prompt}. Clean layout for overlaying text, no typography.`
+              text: `Generate a high resolution isolated luxury typographic graphic of the exact word/letter: "${text}". Style: ${stylePrompt}. Solid dark background, perfect clean edges, isolated character art, masterpiece collector card typography.`
             }]
           }]
         };
@@ -1495,123 +1471,191 @@ JSONフォーマットのみを出力してください:
         if (resp.ok) {
           const data = await resp.json();
           const parts = data.candidates?.[0]?.content?.parts || [];
-          
+          for (const part of parts) {
+            if (part.inlineData && part.inlineData.data) {
+              generatedB64 = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+              break;
+            }
+          }
+          if (generatedB64) break;
+        } else {
+          const errJson = await resp.json().catch(() => ({}));
+          lastError = errJson.error ? errJson.error.message : `HTTP ${resp.status}`;
+        }
+      } catch (e) {
+        lastError = e.message;
+      }
+    }
+
+    if (generatedB64) {
+      // 透過処理を適用してレイヤーに保存
+      const transparentDataUrl = await makeBackgroundTransparent(generatedB64);
+      
+      if (targetLayer === 'brand') {
+        state.layers.brand.aiGraphicDataUrl = transparentDataUrl;
+        updateLayerBadge('brandLayerBadge', true, 'AI文字生成済', '標準フォント描画中');
+      } else if (targetLayer === 'kanji') {
+        state.layers.kanji.aiGraphicDataUrl = transparentDataUrl;
+        updateLayerBadge('kanjiLayerBadge', true, 'AI毛筆生成済', '標準筆文字描画中');
+      } else if (targetLayer === 'romaji') {
+        state.layers.romaji.aiGraphicDataUrl = transparentDataUrl;
+        updateLayerBadge('romajiLayerBadge', true, 'AI欧文生成済', '標準欧文描画中');
+      }
+
+      await reloadAllLayerImages();
+      saveState(true);
+      renderCard();
+      showLoading(false);
+      Logger.success(`🎉 「${text}」のAI文字グラフィック生成＆透過処理が完了しました！`);
+      alert(`🎉 「${text}」のAI文字グラフィックを生成しました！\nスライダーで位置と大きさを自由に微調整できます。`);
+    } else {
+      showLoading(false);
+      Logger.error('AI文字生成失敗', lastError);
+      alert(`AI文字生成エラー:\n${lastError}\n\n※未生成時は美しい標準フォントで自動プレビューされます。`);
+    }
+  }
+
+  // 暗い背景を自動で透明化（透過アルファカット処理）
+  function makeBackgroundTransparent(imgDataUrl) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = img.width;
+        offCanvas.height = img.height;
+        const offCtx = offCanvas.getContext('2d');
+        offCtx.drawImage(img, 0, 0);
+
+        const imgData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
+        const data = imgData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          // 輝度計算
+          const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+          if (brightness < 35) {
+            // 暗いピクセルを透明化
+            data[i + 3] = Math.max(0, (brightness - 10) * 10);
+          }
+        }
+
+        offCtx.putImageData(imgData, 0, 0);
+        resolve(offCanvas.toDataURL('image/png'));
+      };
+      img.onerror = () => resolve(imgDataUrl);
+      img.src = imgDataUrl;
+    });
+  }
+
+  // --- 🖼️ 背景グラフィック生成 ---
+  async function generateAiBackground() {
+    const apiKey = getEffectiveApiKey('image');
+    if (!apiKey) {
+      apiKeyModal.classList.remove('hidden');
+      alert('背景画像を生成するために、右上の「API設定」のスロット2（有料キー）にAPIキーを入力してください。');
+      return;
+    }
+
+    const prompt = (state.aiPrompt || '').trim();
+    if (!prompt) {
+      alert('プロンプトを作成してください。');
+      return;
+    }
+
+    showLoading(true, '✨ Gemini が背景グラフィックを生成中...');
+    Logger.api('背景生成開始', { prompt: prompt });
+
+    const candidateModels = [
+      'gemini-3.1-flash-image',
+      'gemini-3-pro-image',
+      'nano-banana-pro-preview',
+      'gemini-2.5-flash-image'
+    ];
+
+    let generatedImageUrl = null;
+    let lastError = '';
+
+    for (const model of candidateModels) {
+      try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const payload = {
+          contents: [{
+            parts: [{ text: `Generate a high resolution card background graphic image: ${prompt}. Clean layout for overlaying text, no typography.` }]
+          }]
+        };
+
+        const resp = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (resp.ok) {
+          const data = await resp.json();
+          const parts = data.candidates?.[0]?.content?.parts || [];
           for (const part of parts) {
             if (part.inlineData && part.inlineData.data) {
               generatedImageUrl = `data:${part.inlineData.mimeType || 'image/jpeg'};base64,${part.inlineData.data}`;
-              Logger.success(`🎉 generateContent 画像生成完全成功！ [${model}]`);
               break;
-            } else if (part.text && part.text.includes('data:image')) {
-              const match = part.text.match(/data:image\/[a-zA-Z]+;base64,[^"'\s\)]+/);
-              if (match) {
-                generatedImageUrl = match[0];
-                Logger.success(`🎉 DataURL画像抽出成功！ [${model}]`);
-                break;
-              }
             }
           }
-
           if (generatedImageUrl) break;
         } else {
           const errJson = await resp.json().catch(() => ({}));
           lastError = errJson.error ? errJson.error.message : `HTTP ${resp.status}`;
-          Logger.warn(`generateContent 失敗 [${model}]`, lastError);
         }
       } catch (e) {
         lastError = e.message;
-        Logger.warn(`通信例外 [${model}]`, e.message);
-      }
-    }
-
-    if (!generatedImageUrl) {
-      for (const model of candidateModels) {
-        try {
-          Logger.api(`試行中 [predict]: models/${model}`);
-          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${encodeURIComponent(apiKey)}`;
-          const payload = {
-            instances: [{ prompt: `${prompt}, master quality, luxury background texture, no typography` }],
-            parameters: { sampleCount: 1, aspectRatio: state.aiAspectRatio }
-          };
-
-          const resp = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-
-          if (resp.ok) {
-            const data = await resp.json();
-            const b64 = data.predictions?.[0]?.bytesBase64Encoded;
-            if (b64) {
-              generatedImageUrl = `data:image/jpeg;base64,${b64}`;
-              Logger.success(`🎉 predict 画像生成完全成功！ [${model}]`);
-              break;
-            }
-          }
-        } catch (pe) {
-          // ignore
-        }
       }
     }
 
     if (generatedImageUrl) {
-      state.bgType = 'image';
-      state.bgImageSrc = generatedImageUrl;
-      loadBackgroundImage(generatedImageUrl, () => {
-        showLoading(false);
-        showAiStatus('🎉 Gemini による背景画像の生成が完了しました！', 'success');
-        document.querySelector('.tab-btn[data-tab="tab-card-edit"]').click();
-      });
+      state.layers.bg.src = generatedImageUrl;
+      await loadBgImage(generatedImageUrl);
+      saveState(true);
+      renderCard();
+      showLoading(false);
+      Logger.success('🎉 背景画像の生成が完了しました！');
+      alert('🎉 背景画像を生成しました！');
+      document.querySelector('.tab-btn[data-tab="tab-ai-letters"]').click();
     } else {
       showLoading(false);
-      showAiStatus(`画像生成エラー: ${lastError}`, 'error');
-      Logger.error('画像生成失敗', lastError);
-      alert(`Gemini 画像生成エラー:\n${lastError}\n\n※Web版Geminiで生成して画像をドラッグ＆ドロップして使用することも可能です。`);
+      Logger.error('背景生成失敗', lastError);
+      alert(`背景生成エラー:\n${lastError}`);
     }
   }
 
-  // --- 完成カード・アーカイブシステム ---
+  // --- 🎴 非破壊マルチレイヤー アーカイブシステム ---
   function saveCurrentToArchive() {
     const thumbCanvas = document.createElement('canvas');
     thumbCanvas.width = 320;
     thumbCanvas.height = Math.round(320 * (state.canvasHeight / state.canvasWidth));
     const tCtx = thumbCanvas.getContext('2d');
     tCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
-    const thumbData = thumbCanvas.toDataURL('image/jpeg', 0.65);
+    const thumbData = thumbCanvas.toDataURL('image/jpeg', 0.7);
 
     const archiveItem = {
       id: 'card_' + Date.now(),
       createdAt: new Date().toLocaleDateString('ja-JP'),
-      title: `${state.brandText || 'CARD'} - ${state.kanjiText || ''} (${state.serialText || 'No-Serial'})`,
-      ownerName: state.ownerName,
-      sizeText: state.sizeText,
+      title: `${state.layers.brand.text || 'CARD'} - ${state.layers.kanji.text || ''} (${state.layers.specs.serial.text || 'No-Serial'})`,
+      ownerName: state.layers.specs.owner.text,
+      sizeText: state.layers.specs.size.text,
       thumbnail: thumbData,
-      stateData: {
+      stateData: JSON.parse(JSON.stringify({
         aspectRatio: state.aspectRatio,
         canvasWidth: state.canvasWidth,
         canvasHeight: state.canvasHeight,
-        brandText: state.brandText,
-        brandRedInitial: state.brandRedInitial,
-        kanjiText: state.kanjiText,
-        kanjiFont: state.kanjiFont,
-        romajiText: state.romajiText,
-        romajiFont: state.romajiFont,
-        ownerLabel: state.ownerLabel,
-        ownerName: state.ownerName,
-        serialText: state.serialText,
-        sizeText: state.sizeText,
-        extraInfoText: state.extraInfoText,
-        verticalOffset: state.verticalOffset,
-        bgType: state.bgType,
-        bgImageSrc: state.bgImageSrc.startsWith('data:') ? thumbData : state.bgImageSrc
-      }
+        layers: state.layers
+      }))
     };
 
     state.cardArchive.unshift(archiveItem);
     saveState(true);
     renderArchiveGrid();
-    Logger.success(`カード履歴に保存＆自動同期完了: ${archiveItem.title}`);
-    alert(`「${archiveItem.title}」をカード履歴アルバムに保存しました！\n（※自動でiPhoneや相方様のスマホにも共有されます）`);
+    Logger.success(`非破壊レイヤー保存完了: ${archiveItem.title}`);
+    alert(`「${archiveItem.title}」をカード履歴アルバムに非破壊保存しました！\n（※背景と文字が別々に保存されているため、いつでも何度でも綺麗に再編集できます）`);
   }
 
   function renderArchiveGrid() {
@@ -1620,9 +1664,9 @@ JSONフォーマットのみを出力してください:
 
     if (state.cardArchive.length === 0) {
       archiveGrid.innerHTML = `
-        <div style="text-align:center; padding:30px 10px; color:var(--text-muted); font-size:12px;">
+        <div style="text-align:center; padding:30px 10px; color:var(--text-muted); font-size:11px;">
           保存されたカード履歴はまだありません。<br>
-          「保存・出力」タブの「履歴アルバムに保存」を押すと自動で全端末に蓄積されます。
+          「アルバムに保存」を押すと完全非破壊レイヤーで蓄積されます。
         </div>
       `;
       return;
@@ -1631,22 +1675,20 @@ JSONフォーマットのみを出力してください:
     archiveGrid.innerHTML = state.cardArchive.map((item, idx) => `
       <div class="archive-card-item">
         <img src="${item.thumbnail}" class="archive-thumb" alt="thumb">
-        <div class="archive-details">
-          <div class="archive-title">${Logger.escapeHtml(item.title)}</div>
-          <div class="archive-meta">
-            オーナー: ${Logger.escapeHtml(item.ownerName || '未指定')} | サイズ: ${Logger.escapeHtml(item.sizeText || '')}<br>
-            登録日: ${item.createdAt}
-          </div>
+        <div class="archive-title">${Logger.escapeHtml(item.title)}</div>
+        <div class="archive-meta">
+          ${Logger.escapeHtml(item.ownerName || '未指定')} | ${Logger.escapeHtml(item.sizeText || '')}<br>
+          ${item.createdAt}
         </div>
         <div class="archive-actions">
           <button type="button" class="btn-primary btn-sm" data-action="restore" data-idx="${idx}">復元・編集</button>
-          <button type="button" class="btn-secondary btn-sm" data-action="delete" data-idx="${idx}" style="border-color:#ef5350; color:#ef5350;">削除</button>
+          <button type="button" class="btn-secondary btn-sm" data-action="delete" data-idx="${idx}" style="color:#ef5350;">削除</button>
         </div>
       </div>
     `).join('');
 
     archiveGrid.querySelectorAll('button[data-action]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const action = btn.dataset.action;
         const idx = parseInt(btn.dataset.idx, 10);
@@ -1656,33 +1698,32 @@ JSONフォーマットのみを出力してください:
         if (action === 'restore') {
           restoreFromArchive(target);
         } else if (action === 'delete') {
-          if (confirm(`「${target.title}」を履歴から削除しますか？`)) {
+          if (confirm(`「${target.title}」を削除しますか？`)) {
             state.cardArchive.splice(idx, 1);
             saveState(true);
             renderArchiveGrid();
-            Logger.info(`アーカイブ削除: ${target.title}`);
           }
         }
       });
     });
   }
 
-  function restoreFromArchive(item) {
-    Object.assign(state, item.stateData);
-    syncInputsFromState();
-    saveState(false);
-
-    if (state.bgType === 'image' && state.bgImageSrc) {
-      loadBackgroundImage(state.bgImageSrc, () => {
-        renderCard();
-      });
-    } else {
-      renderCard();
+  async function restoreFromArchive(item) {
+    if (item.stateData) {
+      state.aspectRatio = item.stateData.aspectRatio || state.aspectRatio;
+      state.canvasWidth = item.stateData.canvasWidth || 1500;
+      state.canvasHeight = item.stateData.canvasHeight || 2100;
+      if (item.stateData.layers) {
+        state.layers = item.stateData.layers;
+      }
     }
-
-    document.querySelector('.tab-btn[data-tab="tab-card-edit"]').click();
-    Logger.success(`過去のカード「${item.title}」の設定を復元しました。`);
-    alert(`「${item.title}」の設定を完全に復元しました！\n文字やシリアルNoを修正して再保存できます。`);
+    syncInputsFromState();
+    await reloadAllLayerImages();
+    saveState(false);
+    renderCard();
+    document.querySelector('.tab-btn[data-tab="tab-ai-letters"]').click();
+    Logger.success(`「${item.title}」を完全非破壊復元しました。`);
+    alert(`「${item.title}」を非破壊復元しました！\n文字が重なることなく、背景・AI文字・スペックを個別に自由に再編集できます。`);
   }
 
   // --- 手動背景ドロップゾーン ---
@@ -1713,38 +1754,58 @@ JSONフォーマットのみを出力してください:
       return;
     }
     const reader = new FileReader();
-    reader.onload = (e) => {
-      state.bgType = 'image';
-      state.bgImageSrc = e.target.result;
-      loadBackgroundImage(e.target.result);
-      Logger.success(`手動画像を適用しました (${file.name})`);
+    reader.onload = async (e) => {
+      state.layers.bg.src = e.target.result;
+      await loadBgImage(e.target.result);
+      saveState(true);
+      renderCard();
+      Logger.success(`手動背景画像を適用しました (${file.name})`);
     };
     reader.readAsDataURL(file);
   }
 
-  function loadInitialBackground() {
+  // --- 画像リロード管理 ---
+  function reloadAllLayerImages() {
+    return Promise.all([
+      loadBgImage(state.layers.bg.src),
+      loadLayerImage('brand', state.layers.brand.aiGraphicDataUrl),
+      loadLayerImage('kanji', state.layers.kanji.aiGraphicDataUrl),
+      loadLayerImage('romaji', state.layers.romaji.aiGraphicDataUrl)
+    ]);
+  }
+
+  function loadBgImage(src) {
     return new Promise((resolve) => {
-      loadBackgroundImage(state.bgImageSrc, resolve);
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => { loadedBgImg = img; resolve(); };
+      img.onerror = () => { loadedBgImg = null; resolve(); };
+      img.src = src || 'assets/bg_default.jpg';
     });
   }
 
-  function loadBackgroundImage(src, callback) {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      loadedBgImage = img;
-      renderCard();
-      if (callback) callback();
-    };
-    img.onerror = () => {
-      state.bgType = 'preset_dark';
-      renderCard();
-      if (callback) callback();
-    };
-    img.src = src;
+  function loadLayerImage(type, dataUrl) {
+    return new Promise((resolve) => {
+      if (!dataUrl) {
+        if (type === 'brand') loadedBrandImg = null;
+        if (type === 'kanji') loadedKanjiImg = null;
+        if (type === 'romaji') loadedRomajiImg = null;
+        resolve();
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        if (type === 'brand') loadedBrandImg = img;
+        if (type === 'kanji') loadedKanjiImg = img;
+        if (type === 'romaji') loadedRomajiImg = img;
+        resolve();
+      };
+      img.onerror = () => resolve();
+      img.src = dataUrl;
+    });
   }
 
-  // --- レイヤー描画エンジン ---
+  // --- 🌟 非破壊マルチレイヤー描画エンジン ---
   function renderCard() {
     if (isRendering) return;
     isRendering = true;
@@ -1753,17 +1814,29 @@ JSONフォーマットのみを出力してください:
     canvas.height = state.canvasHeight;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 1. レイヤー0: 背景描画
     drawBackgroundLayer(ctx, canvas.width, canvas.height);
-    drawTextLayer(ctx, canvas.width, canvas.height);
+
+    // 2. レイヤー1: ブランド AI文字
+    drawBrandLayer(ctx, canvas.width, canvas.height);
+
+    // 3. レイヤー2: メイン漢字血統 AI文字
+    drawKanjiLayer(ctx, canvas.width, canvas.height);
+
+    // 4. レイヤー3: 英字血統 AI文字
+    drawRomajiLayer(ctx, canvas.width, canvas.height);
+
+    // 5. レイヤー4: 個体スペック文字（Apple標準商用安全）
+    drawSpecsLayer(ctx, canvas.width, canvas.height);
 
     isRendering = false;
   }
 
   function drawBackgroundLayer(targetCtx, w, h) {
     targetCtx.save();
-
-    if (state.bgType === 'image' && loadedBgImage) {
-      const img = loadedBgImage;
+    if (loadedBgImg) {
+      const img = loadedBgImg;
       const imgRatio = img.width / img.height;
       const canvasRatio = w / h;
 
@@ -1780,135 +1853,161 @@ JSONフォーマットのみを出力してください:
         drawY = (h - drawH) / 2;
       }
       targetCtx.drawImage(img, drawX, drawY, drawW, drawH);
-    } else if (state.bgType === 'preset_dark') {
-      drawProceduralDarkGold(targetCtx, w, h);
-    } else if (state.bgType === 'preset_ruby') {
-      drawProceduralRubyWashi(targetCtx, w, h);
+    } else {
+      const grad = targetCtx.createRadialGradient(w/2, h/2, w*0.1, w/2, h/2, Math.max(w, h)*0.7);
+      grad.addColorStop(0, '#1c1f26');
+      grad.addColorStop(1, '#050608');
+      targetCtx.fillStyle = grad;
+      targetCtx.fillRect(0, 0, w, h);
     }
-
     targetCtx.restore();
   }
 
-  function drawProceduralDarkGold(targetCtx, w, h) {
-    const grad = targetCtx.createRadialGradient(w/2, h/2, w*0.1, w/2, h/2, Math.max(w, h)*0.7);
-    grad.addColorStop(0, '#1c1f26');
-    grad.addColorStop(0.6, '#0f1115');
-    grad.addColorStop(1, '#050608');
-    targetCtx.fillStyle = grad;
-    targetCtx.fillRect(0, 0, w, h);
+  function drawBrandLayer(targetCtx, w, h) {
+    const layer = state.layers.brand;
+    if (!layer.text) return;
 
-    targetCtx.strokeStyle = 'rgba(212, 175, 55, 0.4)';
-    targetCtx.lineWidth = Math.max(4, w * 0.004);
-    targetCtx.strokeRect(w * 0.04, h * 0.03, w * 0.92, h * 0.94);
-  }
-
-  function drawProceduralRubyWashi(targetCtx, w, h) {
-    const grad = targetCtx.createRadialGradient(w/2, h/2, w*0.1, w/2, h/2, Math.max(w, h)*0.7);
-    grad.addColorStop(0, '#f2ece4');
-    grad.addColorStop(0.6, '#ded3c3');
-    grad.addColorStop(1, '#c2b39f');
-    targetCtx.fillStyle = grad;
-    targetCtx.fillRect(0, 0, w, h);
-
-    const rubyGrad = targetCtx.createRadialGradient(w/2, h*0.48, 50, w/2, h*0.48, w*0.45);
-    rubyGrad.addColorStop(0, 'rgba(139, 24, 27, 0.45)');
-    rubyGrad.addColorStop(0.7, 'rgba(139, 24, 27, 0.25)');
-    rubyGrad.addColorStop(1, 'rgba(139, 24, 27, 0)');
-    targetCtx.fillStyle = rubyGrad;
-    targetCtx.beginPath();
-    targetCtx.ellipse(w/2, h*0.48, w*0.42, h*0.35, 0, 0, Math.PI * 2);
-    targetCtx.fill();
-  }
-
-  function drawTextLayer(targetCtx, w, h) {
     targetCtx.save();
-    const vOffset = (state.verticalOffset / 100) * (h * 0.1);
+    targetCtx.globalAlpha = (layer.opacity || 100) / 100;
+    const centerX = (w / 2) + (layer.x || 0);
+    const centerY = (h * (layer.y / 100));
 
-    if (state.brandText) {
-      const brandY = h * 0.20 + vOffset;
-      const brandFontSize = Math.round(w * 0.088);
-      targetCtx.font = `700 ${brandFontSize}px ${state.romajiFont}`;
+    if (loadedBrandImg) {
+      // AI文字グラフィックを描画
+      const scale = (layer.scale || 100) / 100;
+      const drawW = w * 0.7 * scale;
+      const drawH = drawW * (loadedBrandImg.height / loadedBrandImg.width);
+      targetCtx.drawImage(loadedBrandImg, centerX - (drawW / 2), centerY - (drawH / 2), drawW, drawH);
+    } else {
+      // 標準美麗フォント描画
+      const fontSize = Math.round(w * 0.088 * ((layer.scale || 100) / 100));
+      targetCtx.font = `800 ${fontSize}px 'Cinzel', serif`;
       targetCtx.textAlign = 'center';
       targetCtx.textBaseline = 'middle';
 
-      if (state.brandRedInitial && state.brandText.length > 1) {
-        const initial = state.brandText.charAt(0);
-        const rest = state.brandText.slice(1);
+      if (layer.redInitial && layer.text.length > 1) {
+        const initial = layer.text.charAt(0);
+        const rest = layer.text.slice(1);
         const initialWidth = targetCtx.measureText(initial).width;
         const restWidth = targetCtx.measureText(rest).width;
         const totalWidth = initialWidth + restWidth;
-        const startX = (w - totalWidth) / 2;
+        const startX = centerX - (totalWidth / 2);
 
-        drawRubyInitial(targetCtx, initial, startX + (initialWidth / 2), brandY, brandFontSize);
-        drawGoldText(targetCtx, rest, startX + initialWidth + (restWidth / 2), brandY, brandFontSize, state.romajiFont);
+        drawRubyInitial(targetCtx, initial, startX + (initialWidth / 2), centerY, fontSize);
+        drawGoldText(targetCtx, rest, startX + initialWidth + (restWidth / 2), centerY, fontSize, "'Cinzel', serif");
       } else {
-        drawGoldText(targetCtx, state.brandText, w / 2, brandY, brandFontSize, state.romajiFont);
+        drawGoldText(targetCtx, layer.text, centerX, centerY, fontSize, "'Cinzel', serif");
       }
     }
+    targetCtx.restore();
+  }
 
-    if (state.kanjiText) {
-      const kanjiY = h * 0.44 + vOffset;
-      const kanjiFontSize = Math.round(w * 0.28);
-      targetCtx.font = `700 ${kanjiFontSize}px ${state.kanjiFont}`;
+  function drawKanjiLayer(targetCtx, w, h) {
+    const layer = state.layers.kanji;
+    if (!layer.text) return;
+
+    targetCtx.save();
+    targetCtx.globalAlpha = (layer.opacity || 100) / 100;
+    const centerX = (w / 2) + (layer.x || 0);
+    const centerY = (h * (layer.y / 100));
+
+    if (loadedKanjiImg) {
+      // AI漢字グラフィックを描画
+      const scale = (layer.scale || 100) / 100;
+      const drawW = w * 0.6 * scale;
+      const drawH = drawW * (loadedKanjiImg.height / loadedKanjiImg.width);
+      targetCtx.drawImage(loadedKanjiImg, centerX - (drawW / 2), centerY - (drawH / 2), drawW, drawH);
+    } else {
+      // Apple商用安全毛筆/明朝フォント描画
+      const fontSize = Math.round(w * 0.28 * ((layer.scale || 100) / 100));
+      targetCtx.font = `800 ${fontSize}px ${layer.font || "'Hiragino Mincho ProN', serif"}`;
       targetCtx.textAlign = 'center';
       targetCtx.textBaseline = 'middle';
-      drawKanjiCharacter(targetCtx, state.kanjiText, w / 2, kanjiY, kanjiFontSize);
+      drawKanjiCharacter(targetCtx, layer.text, centerX, centerY, fontSize, layer.font);
     }
+    targetCtx.restore();
+  }
 
-    if (state.romajiText) {
-      const romajiY = h * 0.68 + vOffset;
-      const romajiFontSize = Math.round(w * 0.10);
-      targetCtx.font = `800 ${romajiFontSize}px ${state.romajiFont}`;
+  function drawRomajiLayer(targetCtx, w, h) {
+    const layer = state.layers.romaji;
+    if (!layer.text) return;
+
+    targetCtx.save();
+    targetCtx.globalAlpha = (layer.opacity || 100) / 100;
+    const centerX = (w / 2) + (layer.x || 0);
+    const centerY = (h * (layer.y / 100));
+
+    if (loadedRomajiImg) {
+      // AI欧文グラフィックを描画
+      const scale = (layer.scale || 100) / 100;
+      const drawW = w * 0.6 * scale;
+      const drawH = drawW * (loadedRomajiImg.height / loadedRomajiImg.width);
+      targetCtx.drawImage(loadedRomajiImg, centerX - (drawW / 2), centerY - (drawH / 2), drawW, drawH);
+    } else {
+      // Apple商用安全欧文フォント描画
+      const fontSize = Math.round(w * 0.10 * ((layer.scale || 100) / 100));
+      targetCtx.font = `800 ${fontSize}px ${layer.font || "'Cinzel', serif"}`;
       targetCtx.textAlign = 'center';
       targetCtx.textBaseline = 'middle';
-      drawGoldText(targetCtx, state.romajiText, w / 2, romajiY, romajiFontSize, state.romajiFont);
+      drawGoldText(targetCtx, layer.text, centerX, centerY, fontSize, layer.font || "'Cinzel', serif");
     }
+    targetCtx.restore();
+  }
 
-    let currentY = h * 0.77 + vOffset;
+  function drawSpecsLayer(targetCtx, w, h) {
+    const specs = state.layers.specs;
+    targetCtx.save();
 
-    if (state.ownerName) {
-      if (state.ownerLabel) {
-        targetCtx.font = `600 ${Math.round(w * 0.046)}px 'Cinzel', serif`;
-        targetCtx.fillStyle = '#222222';
+    // オーナー名
+    if (specs.owner.text) {
+      const oY = h * (specs.owner.y / 100);
+      const oX = (w / 2) + (specs.owner.x || 0);
+      if (specs.owner.label) {
+        targetCtx.font = `600 ${Math.round(w * 0.040)}px 'Cinzel', serif`;
+        targetCtx.fillStyle = '#222';
         targetCtx.textAlign = 'center';
         targetCtx.textBaseline = 'middle';
-        targetCtx.fillText(state.ownerLabel, w / 2, currentY);
-        currentY += w * 0.052;
+        targetCtx.fillText(specs.owner.label, oX, oY - (specs.owner.size * 0.4));
       }
-
-      targetCtx.font = `700 ${Math.round(w * 0.062)}px 'Shippori Mincho', 'Noto Serif JP', serif`;
-      targetCtx.fillStyle = '#111111';
+      targetCtx.font = `700 ${specs.owner.size}px ${specs.owner.font}`;
+      targetCtx.fillStyle = '#111';
       targetCtx.textAlign = 'center';
       targetCtx.textBaseline = 'middle';
-      targetCtx.fillText(state.ownerName, w / 2, currentY);
-      currentY += w * 0.060;
+      targetCtx.fillText(specs.owner.text, oX, oY + (specs.owner.size * 0.2));
     }
 
-    if (state.serialText) {
-      targetCtx.font = `700 ${Math.round(w * 0.038)}px 'Montserrat', sans-serif`;
+    // シリアルNo
+    if (specs.serial.text) {
+      const sY = h * (specs.serial.y / 100);
+      const sX = (w / 2) + (specs.serial.x || 0);
+      targetCtx.font = `700 ${specs.serial.size}px ${specs.serial.font}`;
       targetCtx.fillStyle = '#2a2a2a';
       targetCtx.letterSpacing = '1px';
       targetCtx.textAlign = 'center';
       targetCtx.textBaseline = 'middle';
-      targetCtx.fillText(state.serialText, w / 2, currentY);
-      currentY += w * 0.052;
+      targetCtx.fillText(specs.serial.text, sX, sY);
     }
 
-    if (state.sizeText) {
-      targetCtx.font = `800 ${Math.round(w * 0.058)}px 'Shippori Mincho', 'Noto Serif JP', serif`;
-      targetCtx.fillStyle = '#111111';
+    // サイズ
+    if (specs.size.text) {
+      const zY = h * (specs.size.y / 100);
+      const zX = (w / 2) + (specs.size.x || 0);
+      targetCtx.font = `800 ${specs.size.size}px ${specs.size.font}`;
+      targetCtx.fillStyle = '#111';
       targetCtx.textAlign = 'center';
       targetCtx.textBaseline = 'middle';
-      targetCtx.fillText(state.sizeText, w / 2, currentY);
-      currentY += w * 0.050;
+      targetCtx.fillText(specs.size.text, zX, zY);
     }
 
-    if (state.extraInfoText) {
-      targetCtx.font = `600 ${Math.round(w * 0.032)}px 'Noto Serif JP', serif`;
-      targetCtx.fillStyle = '#444444';
+    // 追加情報
+    if (specs.extra.text) {
+      const eY = h * (specs.extra.y / 100);
+      const eX = (w / 2) + (specs.extra.x || 0);
+      targetCtx.font = `600 ${specs.extra.size}px ${specs.extra.font}`;
+      targetCtx.fillStyle = '#444';
       targetCtx.textAlign = 'center';
       targetCtx.textBaseline = 'middle';
-      targetCtx.fillText(state.extraInfoText, w / 2, currentY);
+      targetCtx.fillText(specs.extra.text, eX, eY);
     }
 
     targetCtx.restore();
@@ -1958,9 +2057,9 @@ JSONフォーマットのみを出力してください:
     targetCtx.restore();
   }
 
-  function drawKanjiCharacter(targetCtx, char, x, y, size) {
+  function drawKanjiCharacter(targetCtx, char, x, y, size, fontFace) {
     targetCtx.save();
-    targetCtx.font = `700 ${size}px ${state.kanjiFont}`;
+    targetCtx.font = `700 ${size}px ${fontFace || "'Hiragino Mincho ProN', serif"}`;
     targetCtx.textAlign = 'center';
     targetCtx.textBaseline = 'middle';
 
@@ -1985,19 +2084,24 @@ JSONフォーマットのみを出力してください:
 
         if (type === 'merged') {
           drawBackgroundLayer(offCtx, state.canvasWidth, state.canvasHeight);
-          drawTextLayer(offCtx, state.canvasWidth, state.canvasHeight);
-          downloadCanvasAsPNG(offCanvas, `kuwagata_card_${state.kanjiText || 'cert'}_full.png`);
+          drawBrandLayer(offCtx, state.canvasWidth, state.canvasHeight);
+          drawKanjiLayer(offCtx, state.canvasWidth, state.canvasHeight);
+          drawRomajiLayer(offCtx, state.canvasWidth, state.canvasHeight);
+          drawSpecsLayer(offCtx, state.canvasWidth, state.canvasHeight);
+          downloadCanvasAsPNG(offCanvas, `kuwagata_card_${state.layers.kanji.text || 'cert'}_full.png`);
         } else if (type === 'bg') {
           drawBackgroundLayer(offCtx, state.canvasWidth, state.canvasHeight);
-          downloadCanvasAsPNG(offCanvas, `kuwagata_bg_${state.aspectRatio.replace(':', '_')}.png`);
+          downloadCanvasAsPNG(offCanvas, `kuwagata_bg_clean.png`);
         } else if (type === 'text') {
-          drawTextLayer(offCtx, state.canvasWidth, state.canvasHeight);
-          downloadCanvasAsPNG(offCanvas, `kuwagata_text_layer.png`);
+          drawBrandLayer(offCtx, state.canvasWidth, state.canvasHeight);
+          drawKanjiLayer(offCtx, state.canvasWidth, state.canvasHeight);
+          drawRomajiLayer(offCtx, state.canvasWidth, state.canvasHeight);
+          drawSpecsLayer(offCtx, state.canvasWidth, state.canvasHeight);
+          downloadCanvasAsPNG(offCanvas, `kuwagata_text_layers_transparent.png`);
         }
         Logger.success(`PNG出力完了: ${type}`);
       } catch (err) {
         Logger.error('PNG出力例外', err.message);
-        alert('保存エラーが発生しました。');
       } finally {
         showLoading(false);
       }
@@ -2034,12 +2138,6 @@ JSONフォーマットのみを出力してください:
     } else {
       loadingOverlay.classList.add('hidden');
     }
-  }
-
-  function showAiStatus(msg, type) {
-    if (!aiStatusMsg) return;
-    aiStatusMsg.textContent = msg;
-    aiStatusMsg.className = `ai-status-msg ${type}`;
   }
 
   window.addEventListener('DOMContentLoaded', init);
