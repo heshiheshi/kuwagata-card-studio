@@ -1279,3 +1279,59 @@ input[type="range"] { width: 100%; accent-color: var(--gold-text); height: 5px; 
   font-size: 11px;
   color: var(--text-muted);
 }
+
+/* ==========================================================================
+   v2.7.0 Cloud Sync Header & Status Styles
+   ========================================================================== */
+.btn-sync-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(30, 26, 20, 0.85);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-sync-status:hover {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: #ffd54f;
+}
+
+.sync-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #757575;
+}
+
+.sync-status-dot.online {
+  background: #66bb6a;
+  box-shadow: 0 0 6px #66bb6a;
+}
+
+.sync-status-dot.syncing {
+  background: #ffd54f;
+  box-shadow: 0 0 6px #ffd54f;
+  animation: pulse-sync 1s infinite alternate;
+}
+
+.sync-badge-live {
+  font-size: 11px;
+  color: #81c784;
+  font-weight: 700;
+  padding: 2px 8px;
+  background: rgba(76, 175, 80, 0.15);
+  border-radius: 4px;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+@keyframes pulse-sync {
+  from { opacity: 0.4; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1.15); }
+}

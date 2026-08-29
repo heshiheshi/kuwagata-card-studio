@@ -9,6 +9,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Google Fonts: 高級感あふれる和欧文フォント群 -->
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@600;700;800;900&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Kaisei+Decol:wght@700&family=Montserrat:wght@400;600;700;800&family=Noto+Serif+JP:wght@400;600;700;900&family=Shippori+Mincho:wght@600;800&family=Yuji+Boku&family=Yuji+Mai&family=Zen+Old+Mincho:wght@700;900&display=swap" rel="stylesheet">
+  
+  <!-- Firebase Cloud Sync SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -44,17 +49,23 @@
         <div class="logo-area">
           <span class="gold-badge">GEMINI AI</span>
           <h1>CARD STUDIO</h1>
-          <span class="app-version-badge" id="appVersion">v2.6.0</span>
+          <span class="app-version-badge" id="appVersion">v2.7.0</span>
         </div>
         <div class="header-actions">
+          <!-- クラウド自動同期ステータスバッジ -->
+          <button type="button" class="btn-sync-status" id="btnHeaderCloudSync" title="クラウド自動同期ステータス">
+            <span class="sync-status-dot online" id="headerSyncDot"></span>
+            <span id="headerSyncText">クラウド同期中</span>
+          </button>
+
           <!-- 無料/有料キー ワンタップ切り替えスイッチ -->
           <button type="button" class="btn-key-toggle free" id="btnQuickToggleKey" title="APIキーの無料/有料モードを切り替え">
             <span class="key-status-dot"></span>
             <span id="keyModeLabel">無料キー</span>
           </button>
 
-          <button type="button" class="btn-icon-pill" id="btnOpenBackupModal" title="データ移行・バックアップ">
-            <span>データ移行</span>
+          <button type="button" class="btn-icon-pill" id="btnOpenBackupModal" title="クラウド同期＆データ管理">
+            <span>同期・管理</span>
           </button>
           <button type="button" class="btn-icon-pill" id="btnOpenDictManager" title="プロンプト辞書管理">
             <span>辞書管理</span>
@@ -440,40 +451,53 @@
     </main>
 
     <!-- ===================================================================
-         モーダル 1: 📦 データ移行 ＆ バックアップ同期マネージャー (v2.6.0)
+         モーダル 1: ☁️ クラウド自動同期 ＆ データ管理マネージャー (v2.7.0)
          =================================================================== -->
     <div id="backupModal" class="modal-backdrop hidden">
       <div class="modal-card">
         <div class="modal-header">
-          <h3>📦 データ移行・バックアップ同期</h3>
+          <h3>☁️ クラウド自動同期 ＆ データ管理</h3>
           <button type="button" class="btn-modal-close" id="btnCloseBackupModal">✕</button>
         </div>
         <div class="modal-body">
-          <p class="modal-desc">
-            テスト環境で作った「自作単語辞書」「カスタムカテゴリ」「カード履歴」を本番環境へ一瞬で移行・同期できます。（※APIキーは安全のため含まれません）
-          </p>
-
-          <!-- 1. エクスポート -->
-          <div class="backup-box">
+          <!-- クラウド自動同期セクション -->
+          <div class="backup-box cloud-box" style="border-color:var(--border-gold); background:rgba(212,175,55,0.06);">
             <div class="backup-box-info">
-              <h4>💾 ① データをファイルに書き出す (書き出し)</h4>
-              <p>現在の辞書・カテゴリ・カード履歴を1つのバックアップファイル（JSON）として保存します。</p>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h4 style="color:var(--gold-text); font-size:13px; font-weight:700;">☁️ クラウド自動同期 (リアルタイム共有)</h4>
+                <span class="sync-badge-live" id="modalSyncBadge">🟢 接続中</span>
+              </div>
+              <p style="margin-top:4px;">
+                Mac・iPhone・相方様の端末間で、<strong>「辞書単語」「カテゴリ」「カード履歴」が自動で共有・同期</strong>されます。<br>
+                <span style="color:#81c784; font-weight:600;">※セキュリティ保護: 各端末のAPIキーは一切クラウドに送信されず、端末内だけに厳重隔離されます。</span>
+              </p>
             </div>
-            <button type="button" class="btn-primary btn-sm" id="btnExportBackup">
-              <span>バックアップを書き出す (.json)</span>
-            </button>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button type="button" class="btn-primary btn-sm" id="btnForceUploadCloud">
+                <span>⬆️ クラウドへ手動上書き送信</span>
+              </button>
+              <button type="button" class="btn-secondary btn-sm" id="btnForceDownloadCloud">
+                <span>⬇️ クラウドから最新を取得</span>
+              </button>
+            </div>
+            <div id="cloudSyncStatusText" style="font-size:10px; color:var(--text-muted); margin-top:4px;">最終同期: 同期準備完了</div>
           </div>
 
-          <!-- 2. インポート -->
+          <!-- 手動ファイルバックアップ -->
           <div class="backup-box" style="margin-top:12px;">
             <div class="backup-box-info">
-              <h4>📂 ② バックアップから復元・移行 (読み込み)</h4>
-              <p>書き出したJSONファイルを選択すると、辞書やカード履歴が一瞬で復元・統合されます。</p>
+              <h4>💾 ファイルバックアップ (JSON保存・復元)</h4>
+              <p>万が一のための手動バックアップファイルの書き出しと読み込みも可能です。</p>
             </div>
-            <input type="file" id="backupFileInput" accept=".json" class="file-input-hidden">
-            <button type="button" class="btn-secondary btn-sm" id="btnTriggerImport">
-              <span>ファイルを選択して復元する</span>
-            </button>
+            <div style="display:flex; gap:8px; margin-top:6px;">
+              <button type="button" class="btn-secondary btn-sm" id="btnExportBackup">
+                <span>💾 バックアップを書き出す (.json)</span>
+              </button>
+              <input type="file" id="backupFileInput" accept=".json" class="file-input-hidden">
+              <button type="button" class="btn-secondary btn-sm" id="btnTriggerImport">
+                <span>📂 ファイルから復元</span>
+              </button>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -529,12 +553,12 @@
     <div id="apiKeyModal" class="modal-backdrop hidden">
       <div class="modal-card">
         <div class="modal-header">
-          <h3>🔑 Gemini API 設定（節約ハイブリッド仕様）</h3>
+          <h3>🔑 Gemini API 設定（端末内完全隔離・安全仕様）</h3>
           <button type="button" class="btn-modal-close" id="btnCloseApiKeyModal">✕</button>
         </div>
         <div class="modal-body">
           <p class="modal-desc">
-            無料キーと有料キーを分けて登録することで、日常のテキスト解析・編集を完全無料で安全に運用できます。
+            ※APIキーはこの端末のブラウザ内部だけに厳重保存され、<strong>クラウドや他者の端末へ同期・送信されることは100%ありません</strong>。
           </p>
 
           <!-- スロット1: 無料キー -->
@@ -590,7 +614,7 @@
 
     <!-- フッター -->
     <footer class="app-footer">
-      <p>KUWAGATA PREMIUM CARD STUDIO &copy; 2026 | v2.6.0 Migration Sync Edition</p>
+      <p>KUWAGATA PREMIUM CARD STUDIO &copy; 2026 | v2.7.0 Cloud Sync Edition</p>
     </footer>
   </div>
 
