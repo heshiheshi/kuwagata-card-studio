@@ -1,3 +1,7 @@
 name = "kuwagata-card-studio"
 compatibility_date = "2024-01-01"
 pages_build_output_dir = "./"
+
+[[kv_namespaces]]
+binding = "STUDIO_KV"
+id = "02332652fb154337bd94117bced86648"
