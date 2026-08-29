@@ -710,10 +710,10 @@
   function updateKeyToggleUI() {
     if (!btnQuickToggleKey || !keyModeLabel) return;
     if (state.activeKeyMode === 'paid') {
-      btnQuickToggleKey.className = 'btn-header-v key-toggle paid';
+      btnQuickToggleKey.className = 'btn-header-tag paid-tag';
       keyModeLabel.textContent = '有料キー';
     } else {
-      btnQuickToggleKey.className = 'btn-header-v key-toggle free';
+      btnQuickToggleKey.className = 'btn-header-tag free-tag';
       keyModeLabel.textContent = '無料キー';
     }
   }

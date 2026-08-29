@@ -52,25 +52,25 @@
           <span class="app-version-badge" id="appVersion">v3.3.0</span>
         </div>
         <div class="header-actions">
-          <!-- 1. 無料キー / 有料キー 切替 -->
-          <button type="button" class="btn-header-v key-toggle free" id="btnQuickToggleKey" title="クリックで無料/有料切り替え">
-            <span id="keyModeLabel">無料キー</span>
+          <!-- 1. 無料キー / 有料キー 切替札 -->
+          <button type="button" class="btn-header-tag free-tag" id="btnQuickToggleKey" title="クリックで無料/有料切り替え">
+            <span class="tag-text" id="keyModeLabel">無料キー</span>
           </button>
 
-          <!-- 2. 同期管理 (状態ランプ一体型・クラウド管理モーダル展開) -->
-          <button type="button" class="btn-header-v" id="btnHeaderCloudSync" title="クラウド自動同期 ＆ データ管理">
+          <!-- 2. 同期管理 札 (状態ランプ一体型) -->
+          <button type="button" class="btn-header-tag" id="btnHeaderCloudSync" title="クラウド自動同期 ＆ データ管理">
             <span class="sync-status-dot online" id="headerSyncDot"></span>
-            <span id="headerSyncText">同期管理</span>
+            <span class="tag-text" id="headerSyncText">同期管理</span>
           </button>
 
-          <!-- 3. API設定 (永久キー保管庫) -->
-          <button type="button" class="btn-header-v" id="btnOpenApiKeyModal" title="Gemini APIキー設定">
-            <span>API設定</span>
+          <!-- 3. API設定 札 (永久キー保管庫) -->
+          <button type="button" class="btn-header-tag" id="btnOpenApiKeyModal" title="Gemini APIキー設定">
+            <span class="tag-text">API設定</span>
           </button>
 
-          <!-- 4. シスログ (通信ログ確認) -->
-          <button type="button" class="btn-header-v" id="btnOpenLogModal" title="システム通信ログ">
-            <span>シスログ</span>
+          <!-- 4. シスログ 札 (通信ログ確認) -->
+          <button type="button" class="btn-header-tag" id="btnOpenLogModal" title="システム通信ログ">
+            <span class="tag-text">シスログ</span>
             <span class="log-count-pill" id="logCountPill">0</span>
           </button>
         </div>

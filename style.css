@@ -1,27 +1,27 @@
 /* ==========================================================================
-   KUWAGATA PREMIUM CARD STUDIO - STYLESHEET (v2.0.0 Mobile First Edition)
-   Luxury Obsidian & Gold Theme with Responsive Touch Architecture
+   KUWAGATA PREMIUM CARD STUDIO - STYLESHEET (v3.4.0 Luxury Edition)
+   Luxury Obsidian & 24K Gold Senshafuda Tag Architecture
    ========================================================================== */
 
 :root {
-  --bg-main: #0a0b0e;
-  --bg-panel: #13161c;
-  --bg-card: #1b1e26;
-  --bg-input: #0e1015;
-  --border-subtle: rgba(212, 175, 55, 0.2);
-  --border-gold: rgba(212, 175, 55, 0.6);
-  --gold-gradient: linear-gradient(135deg, #f7e29c 0%, #caa049 50%, #845b18 100%);
-  --gold-text: #e6ca65;
-  --gold-glow: rgba(212, 175, 55, 0.35);
+  --bg-main: #08090c;
+  --bg-panel: #11141a;
+  --bg-card: #161922;
+  --bg-input: #0b0d11;
+  --border-subtle: rgba(212, 175, 55, 0.25);
+  --border-gold: rgba(212, 175, 55, 0.7);
+  --gold-gradient: linear-gradient(180deg, #fff7d6 0%, #dfb44f 45%, #9b7227 100%);
+  --gold-text: #f0d57e;
+  --gold-glow: rgba(212, 175, 55, 0.45);
   --gemini-gradient: linear-gradient(135deg, #4285f4 0%, #9b72cb 50%, #d96570 100%);
   --gemini-btn: linear-gradient(135deg, #1a73e8 0%, #8e24aa 100%);
   --accent-red: #8b181b;
-  --text-main: #f0f2f5;
+  --text-main: #f2f4f8;
   --text-muted: #9ba3b0;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --shadow-main: 0 10px 30px rgba(0, 0, 0, 0.7);
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --shadow-main: 0 10px 30px rgba(0, 0, 0, 0.8);
 }
 
 * {
@@ -32,10 +32,10 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Shippori Mincho', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background: var(--bg-main);
   background-image: 
-    radial-gradient(circle at 10% 10%, rgba(212, 175, 55, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 10% 10%, rgba(212, 175, 55, 0.06) 0%, transparent 40%),
     radial-gradient(circle at 90% 90%, rgba(66, 133, 244, 0.05) 0%, transparent 40%);
   color: var(--text-main);
   min-height: 100vh;
@@ -44,22 +44,24 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* アプリ全体コンテナ (モバイルファースト: スマホで最も美しく操作可能) */
+/* アプリ全体コンテナ (モバイルファースト) */
 .app-container {
   max-width: 680px;
   margin: 0 auto;
-  padding: 12px 14px;
+  padding: 10px 12px;
   width: 100%;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-/* ヘッダー */
+/* ==========================================================================
+   ヘッダー ＆ 🎴 漆黒・24K純金箔 千社札（木札）タグ
+   ========================================================================== */
 .app-header {
-  padding: 8px 0 14px;
+  padding: 6px 0 12px;
   border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .header-main-row {
@@ -70,138 +72,216 @@ body {
 }
 
 .logo-area {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.logo-badge-row {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .gold-badge {
-  background: var(--gemini-gradient);
-  color: #ffffff;
-  font-size: 10px;
+  background: linear-gradient(135deg, #caa049, #68450e);
+  color: #fff9e6;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 1px;
   padding: 2px 6px;
   border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .app-header h1 {
-  font-family: 'Cinzel', serif;
-  font-size: 18px;
+  font-family: 'Cinzel', 'Shippori Mincho', serif;
+  font-size: 17px;
+  font-weight: 900;
   letter-spacing: 1px;
   background: var(--gold-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  line-height: 1.1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .app-version-badge {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   background: rgba(212, 175, 55, 0.15);
   color: var(--gold-text);
   border: 1px solid var(--border-gold);
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: var(--radius-sm);
 }
 
 .app-header .subtitle {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: 3px;
+  letter-spacing: 0.5px;
 }
 
+/* 🎴 4連・千社札（木札）タグボタンコンテナ */
 .header-actions {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-/* 🎴 和モダン縦書きスマートボタンスタイル (5文字以下) */
-.btn-header-v {
+.btn-header-tag {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 6px 3px;
-  min-width: 30px;
-  height: 52px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-gold);
-  border-radius: var(--radius-sm);
-  color: var(--gold-text);
-  font-size: 11px;
-  font-weight: 700;
+  width: 32px;
+  height: 66px;
+  background: linear-gradient(180deg, #181c26 0%, #0d0f14 100%);
+  border: 1px solid #c89b3c;
+  border-radius: 3px;
+  box-shadow: 
+    inset 0 0 6px rgba(212, 175, 55, 0.2),
+    0 3px 8px rgba(0, 0, 0, 0.7);
   cursor: pointer;
+  position: relative;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  padding: 4px 0;
+}
+
+/* 木札の上下飾り鋲（スタッド） */
+.btn-header-tag::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  width: 14px;
+  height: 1.5px;
+  background: #c89b3c;
+  border-radius: 1px;
+  opacity: 0.8;
+}
+
+.btn-header-tag::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  width: 14px;
+  height: 1.5px;
+  background: #c89b3c;
+  border-radius: 1px;
+  opacity: 0.8;
+}
+
+/* 縦書き文字スタイル */
+.btn-header-tag .tag-text {
+  font-family: 'Shippori Mincho', 'Noto Serif JP', serif;
+  font-size: 10.5px;
+  font-weight: 800;
   writing-mode: vertical-rl;
   text-orientation: upright;
-  letter-spacing: 1px;
-  line-height: 1.1;
-  position: relative;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-  transition: all 0.15s ease;
-  user-select: none;
+  letter-spacing: 1.5px;
+  line-height: 1;
+  background: linear-gradient(180deg, #ffffff 0%, #f3d789 50%, #be8e2d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
 }
 
-.btn-header-v:hover {
-  background: #252a36;
-  border-color: #ffd54f;
-  transform: translateY(-1px);
+.btn-header-tag:hover {
+  transform: translateY(-2px);
+  border-color: #ffd76a;
+  box-shadow: 
+    inset 0 0 10px rgba(255, 215, 0, 0.35),
+    0 0 12px rgba(212, 175, 55, 0.5),
+    0 6px 14px rgba(0, 0, 0, 0.9);
 }
 
-.btn-header-v:active {
+.btn-header-tag:active {
   transform: translateY(0);
 }
 
-.btn-header-v.free {
-  border-color: rgba(76, 175, 80, 0.7);
-  color: #a5d6a7;
+/* 翡翠札 (無料キー) */
+.btn-header-tag.free-tag {
+  border-color: #4caf50;
+  box-shadow: inset 0 0 6px rgba(76, 175, 80, 0.25), 0 3px 8px rgba(0, 0, 0, 0.7);
+}
+.btn-header-tag.free-tag::before,
+.btn-header-tag.free-tag::after {
+  background: #4caf50;
+}
+.btn-header-tag.free-tag .tag-text {
+  background: linear-gradient(180deg, #ffffff 0%, #a5d6a7 50%, #66bb6a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.btn-header-tag.free-tag:hover {
+  border-color: #81c784;
+  box-shadow: inset 0 0 10px rgba(76, 175, 80, 0.4), 0 0 12px rgba(76, 175, 80, 0.5);
 }
 
-.btn-header-v.paid {
-  border-color: rgba(255, 215, 0, 0.85);
-  color: #ffe082;
+/* 黄金札 (有料キー) */
+.btn-header-tag.paid-tag {
+  border-color: #ffd700;
+  box-shadow: inset 0 0 8px rgba(255, 215, 0, 0.35), 0 3px 8px rgba(0, 0, 0, 0.7);
+}
+.btn-header-tag.paid-tag::before,
+.btn-header-tag.paid-tag::after {
+  background: #ffd700;
+}
+.btn-header-tag.paid-tag .tag-text {
+  background: linear-gradient(180deg, #ffffff 0%, #fff176 40%, #fbc02d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.btn-header-tag.paid-tag:hover {
+  border-color: #ffffff;
+  box-shadow: inset 0 0 12px rgba(255, 215, 0, 0.5), 0 0 14px rgba(255, 215, 0, 0.6);
 }
 
-.btn-header-v .sync-status-dot {
-  width: 6px;
-  height: 6px;
+/* 同期管理ランプ */
+.btn-header-tag .sync-status-dot {
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  margin-bottom: 2px;
-}
-
-.btn-header-v .log-count-pill {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  background: var(--gold-text);
-  color: #000;
-  font-size: 9px;
-  font-weight: 800;
-  padding: 1px 4px;
-  border-radius: 8px;
-  line-height: 1;
-  writing-mode: horizontal-tb;
+  top: 5px;
+  box-shadow: 0 0 6px currentColor;
+}
+.btn-header-tag .sync-status-dot.online {
+  background: #4caf50;
+  color: #4caf50;
+}
+.btn-header-tag .sync-status-dot.syncing {
+  background: #29b6f6;
+  color: #29b6f6;
+  animation: pulseSync 1s infinite;
 }
 
-/* メインエリア */
-.app-main {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  flex: 1;
+/* シスログ件数バッジ (木札の落款印調) */
+.btn-header-tag .log-count-pill {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: #8b181b;
+  border: 1px solid #ffd54f;
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 0 4px;
+  border-radius: 6px;
+  line-height: 1.2;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
 /* ==========================================================================
    プレビューセクション (上部固定表示)
    ========================================================================== */
 .preview-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   background: var(--bg-panel);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 14px;
+  border-radius: var(--radius-md);
+  padding: 10px;
   box-shadow: var(--shadow-main);
 }
 
@@ -210,47 +290,39 @@ body {
   width: 100%;
   max-width: 320px;
   margin: 0 auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.85), 0 0 15px rgba(212, 175, 55, 0.15);
+  aspect-ratio: 5 / 7;
   background: #000;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(212, 175, 55, 0.3);
 }
 
 #cardCanvas {
+  width: 100%;
+  height: 100%;
   display: block;
-  max-width: 100%;
-  height: auto;
-  border-radius: var(--radius-md);
+  object-fit: contain;
 }
 
 .loading-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(10, 11, 14, 0.88);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 10px;
-  color: var(--gold-text);
-  font-size: 13px;
-  font-weight: 600;
-  z-index: 10;
+  z-index: 20;
   backdrop-filter: blur(4px);
 }
 
-.loading-overlay.hidden {
-  display: none;
-}
-
 .spinner {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border: 3px solid rgba(212, 175, 55, 0.2);
-  border-top-color: var(--gold-text);
+  border-top-color: #f0d57e;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -263,970 +335,292 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
-  max-width: 320px;
-  margin-top: 10px;
-  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .ratio-badge, .res-badge {
-  font-size: 11px;
-  padding: 3px 8px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  font-size: 10px;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 6px;
   border-radius: var(--radius-sm);
-  color: var(--gold-text);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .btn-refresh {
-  background: transparent;
-  border: 1px solid var(--border-subtle);
-  color: var(--text-main);
-  padding: 3px 8px;
-  border-radius: var(--radius-sm);
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid var(--border-gold);
+  color: var(--gold-text);
   font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
 /* ==========================================================================
-   タブナビゲーション (5大機能・横スクロール対応)
+   5大機能タブ・ナビゲーション
    ========================================================================== */
 .tab-navigation {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.tab-navigation::-webkit-scrollbar {
-  display: none;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  margin: 10px 0;
 }
 
 .tab-btn {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
   background: var(--bg-panel);
   border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: var(--radius-md);
+  padding: 8px 2px;
+  font-size: 11px;
+  font-weight: 700;
   cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
+  text-align: center;
 }
 
 .tab-btn.active {
-  background: linear-gradient(180deg, #2a313e 0%, #1e232d 100%);
+  background: linear-gradient(180deg, #2a2416 0%, #171510 100%);
+  border-color: #ffd54f;
   color: var(--gold-text);
-  border-color: var(--border-gold);
-  box-shadow: 0 2px 10px rgba(212, 175, 55, 0.2);
+  box-shadow: inset 0 0 8px rgba(212, 175, 55, 0.2);
 }
 
-/* コントロールセクション */
-.control-section {
-  display: flex;
-  flex-direction: column;
-}
-
+/* タブコンテンツ */
 .tab-content {
   display: none;
-  flex-direction: column;
-  gap: 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-bottom: 16px;
 }
 
 .tab-content.active {
-  display: flex;
+  display: block;
+  animation: fadeIn 0.2s ease;
 }
 
-.section-card {
-  background: var(--bg-panel);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  box-shadow: var(--shadow-main);
-}
-
-.section-card.gemini-card {
-  border-color: rgba(155, 114, 203, 0.4);
-  background: linear-gradient(180deg, rgba(66, 133, 244, 0.05) 0%, rgba(19, 22, 28, 0.95) 100%);
-}
-
-.section-card.highlight-card {
-  border-color: var(--border-gold);
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.05) 0%, rgba(19, 22, 28, 0.95) 100%);
-}
-
-.card-header-with-badge {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.card-title {
-  font-size: 14px;
-  color: var(--gold-text);
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.card-header-with-badge .card-title {
-  margin-bottom: 0;
-}
-
-.ai-badge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 12px;
-  background: var(--gemini-gradient);
-  color: #fff;
-}
-
-.section-desc {
-  font-size: 12px;
-  color: var(--text-muted);
-  line-height: 1.4;
-  margin-bottom: 12px;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ==========================================================================
-   単語トグル式 プロンプト・パーツビルダー (②)
+   コントロールカード ＆ 入力フォーム共通
    ========================================================================== */
+.control-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.card-header-toggle h4 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold-text);
+  margin-bottom: 8px;
+}
+
+.control-row {
+  display: flex;
+  gap: 8px;
+}
+
+.input-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-col label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 12px; }
+
+input[type="text"], input[type="password"], textarea, select {
+  background: var(--bg-input);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  padding: 7px 9px;
+  font-size: 12px;
+  font-family: inherit;
+  width: 100%;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #ffd54f;
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
+}
+
+/* 単語チップ */
 .chip-group {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .chip-group-label {
   font-size: 11px;
+  font-weight: 700;
   color: var(--gold-text);
-  font-weight: 600;
+  margin-bottom: 4px;
   display: block;
-  margin-bottom: 6px;
 }
 
 .chip-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
 }
 
 .word-chip {
-  background: var(--bg-input);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text-muted);
-  padding: 6px 10px;
-  border-radius: 18px;
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  padding: 4px 8px;
   font-size: 11px;
   cursor: pointer;
-  transition: all 0.15s;
-}
-
-.word-chip:hover {
-  border-color: rgba(212, 175, 55, 0.5);
-  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
 }
 
 .word-chip.active {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: var(--border-gold);
-  color: var(--gold-text);
-  font-weight: 700;
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
-}
-
-.combined-prompt-area {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.form-sublabel {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-  display: block;
-}
-
-.prompt-action-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.btn-copy-main {
-  flex: 1;
-  background: var(--gold-gradient);
-  color: #111;
-  font-size: 12px;
-  font-weight: 700;
-  border: none;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  box-shadow: 0 2px 8px var(--gold-glow);
-}
-
-.btn-gemini-jump {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 12px;
-  background: rgba(66, 133, 244, 0.15);
-  border: 1px solid rgba(66, 133, 244, 0.4);
-  color: #90caf9;
-  text-decoration: none;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-}
-
-.direct-generate-box {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.btn-generate-ai {
-  width: 100%;
-  padding: 11px 16px;
-  background: var(--gemini-btn);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(139, 24, 27, 0.25));
+  border-color: #ffd54f;
   color: #fff;
-  font-size: 13px;
   font-weight: 700;
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
 }
 
-/* ==========================================================================
-   Vision AI & フォーム要素
-   ========================================================================== */
-.vision-upload-box, .bg-upload-box {
-  border: 2px dashed rgba(155, 114, 203, 0.4);
-  border-radius: var(--radius-md);
-  padding: 18px 12px;
-  text-align: center;
-  background: rgba(155, 114, 203, 0.05);
-  cursor: pointer;
+.word-chip.custom {
+  border-left: 2px solid #81c784;
 }
 
-.bg-upload-box {
-  border-color: var(--border-subtle);
-  background: rgba(0, 0, 0, 0.2);
+.chip-del-btn {
+  font-size: 9px;
+  color: #ef5350;
+  margin-left: 2px;
 }
 
-.file-input-hidden { display: none; }
-.upload-icon { font-size: 22px; margin-bottom: 4px; display: block; }
-.upload-prompt p { font-size: 12px; }
-.upload-prompt .upload-sub { font-size: 10px; color: var(--text-muted); }
-
-.vision-result-card {
-  margin-top: 12px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(155, 114, 203, 0.5);
-  border-radius: var(--radius-md);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.vision-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.vision-header h4 { font-size: 12px; color: #ce93d8; }
-
-.extracted-prompt-box {
-  background: #090a0e;
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-  font-size: 12px;
-  line-height: 1.4;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.prompt-text-ja { font-weight: 500; margin-bottom: 4px; }
-.prompt-text-en { font-size: 10px; color: var(--text-muted); }
-
-.extracted-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.btn-sm { padding: 5px 10px !important; font-size: 11px !important; }
-.btn-copy-sm {
-  background: rgba(66, 133, 244, 0.2);
-  border: 1px solid rgba(66, 133, 244, 0.5);
-  color: #90caf9;
-  font-size: 11px;
-  padding: 3px 6px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-/* フォーム */
-.form-group {
-  margin-bottom: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-label { font-size: 12px; color: var(--text-muted); }
-
-input[type="text"], input[type="password"], select, textarea {
-  width: 100%;
-  padding: 8px 10px;
-  background: var(--bg-input);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-sm);
-  color: var(--text-main);
-  font-size: 13px;
-  outline: none;
-  font-family: inherit;
-}
-
-input:focus, select:focus, textarea:focus {
-  border-color: var(--gold-text);
-}
-
-.grid-2col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.input-with-toggle {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.checkbox-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.input-combo { display: flex; gap: 6px; }
-.input-short { width: 70px !important; flex-shrink: 0; text-align: center; }
-
-.slider-group { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
-.slider-header { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); }
-.slider-header span { color: var(--gold-text); }
-input[type="range"] { width: 100%; accent-color: var(--gold-text); height: 5px; }
-
-/* アスペクト比 */
-.ratio-selector {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
-}
-
-.ratio-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 6px 2px;
-  background: var(--bg-input);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.ratio-btn .ratio-name { font-size: 10px; white-space: nowrap; }
-.ratio-btn .ratio-val { font-size: 12px; font-weight: 700; margin-top: 2px; }
-.ratio-btn.active {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: var(--border-gold);
-  color: var(--gold-text);
-}
-
-.preset-thumbs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-}
-
-.preset-btn {
-  padding: 6px;
-  background: var(--bg-input);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  font-size: 10px;
-  cursor: pointer;
-}
-
-.preset-btn.active {
-  border-color: var(--border-gold);
-  color: var(--gold-text);
-  background: rgba(212, 175, 55, 0.15);
-}
-
-/* ==========================================================================
-   エクスポート ＆ アーカイブギャラリー (⑥⑦)
-   ========================================================================== */
-.export-actions { display: flex; flex-direction: column; gap: 10px; }
-.export-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--bg-input);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  gap: 10px;
-}
-
-.export-info h4 { font-size: 12px; margin-bottom: 2px; }
-.export-info p { font-size: 10px; color: var(--text-muted); }
-
-.btn-primary, .btn-secondary {
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
+/* ボタン */
 .btn-primary {
-  background: var(--gold-gradient);
+  background: linear-gradient(180deg, #d4af37 0%, #8b6b18 100%);
+  border: 1px solid #ffd54f;
+  border-radius: var(--radius-sm);
   color: #111;
-  border: none;
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 8px 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+.btn-primary:hover {
+  background: linear-gradient(180deg, #f5d57a 0%, #aa8425 100%);
 }
 
 .btn-secondary {
   background: var(--bg-card);
-  border: 1px solid var(--border-gold);
-  color: var(--gold-text);
-}
-
-.btn-archive-save {
-  width: 100%;
-  padding: 10px;
-  background: rgba(212, 175, 55, 0.12);
-  border: 1px dashed var(--border-gold);
-  color: var(--gold-text);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  color: var(--gold-text);
+  font-size: 11px;
   font-weight: 700;
+  padding: 6px 10px;
   cursor: pointer;
 }
 
-.btn-archive-save:hover {
-  background: rgba(212, 175, 55, 0.25);
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 11px;
 }
 
-.btn-group-row { display: flex; gap: 8px; margin-top: 6px; }
-.btn-group-row button { flex: 1; }
-
-/* アーカイブ一覧 */
-.archive-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 480px;
-  overflow-y: auto;
-}
-
-.archive-card-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--bg-input);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-md);
-  padding: 8px 10px;
-}
-
-.archive-thumb {
-  width: 48px;
-  height: 68px;
-  object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid var(--border-subtle);
-  background: #000;
-  flex-shrink: 0;
-}
-
-.archive-details {
-  flex: 1;
-  min-width: 0;
-}
-
-.archive-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--gold-text);
-  margin-bottom: 2px;
-}
-
-.archive-meta {
-  font-size: 10px;
-  color: var(--text-muted);
-  line-height: 1.3;
-}
-
-.archive-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-/* ==========================================================================
-   モーダル ＆ ログ
-   ========================================================================== */
+/* モーダル */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
   backdrop-filter: blur(4px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 16px;
-  z-index: 100;
+  padding: 12px;
 }
 
-.modal-backdrop.hidden { display: none; }
-
-.modal-card {
-  background: var(--bg-panel);
-  border: 1px solid var(--border-gold);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 500px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.modal-header h3 { font-size: 14px; color: var(--gold-text); }
-.btn-modal-close { background: transparent; border: none; color: #aaa; font-size: 16px; cursor: pointer; }
-
-.modal-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
-.modal-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 10px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: var(--bg-card);
-}
-
-.log-terminal-window {
-  background: #090a0d;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-sm);
-  padding: 10px;
-  font-family: monospace;
-  font-size: 11px;
-  line-height: 1.5;
-  max-height: 320px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.log-entry { display: flex; gap: 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.03); padding-bottom: 2px; }
-.log-time { color: #666; font-size: 10px; flex-shrink: 0; }
-.log-tag { font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 3px; }
-.log-tag.info { background: #1a365d; color: #90caf9; }
-.log-tag.api { background: #3b1b54; color: #ce93d8; }
-.log-tag.success { background: #143d24; color: #81c784; }
-.log-tag.warn { background: #4a3800; color: #ffe082; }
-.log-tag.error { background: #4c1d1d; color: #ef9a9a; }
-.log-msg { color: #ddd; flex: 1; }
-
-.ai-status-msg { margin-top: 8px; padding: 8px 10px; border-radius: 4px; font-size: 11px; }
-.ai-status-msg.hidden { display: none; }
-.ai-status-msg.info { background: rgba(66, 133, 244, 0.15); color: #90caf9; }
-.ai-status-msg.success { background: rgba(40, 167, 69, 0.15); color: #a5d6a7; }
-.ai-status-msg.error { background: rgba(220, 53, 69, 0.15); color: #ff8a80; }
-
-.app-footer {
-  text-align: center;
-  padding: 16px 0 8px;
-  font-size: 11px;
-  color: #555c68;
-}
-
-/* ==========================================================================
-   v2.1.0 Custom Dictionary & Clean Background Options
-   ========================================================================== */
-.toggle-option-card {
-  background: rgba(155, 114, 203, 0.1);
-  border: 1px solid rgba(155, 114, 203, 0.4);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  margin-bottom: 8px;
-}
-
-.custom-chip-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.custom-chip-count {
-  font-size: 10px;
-  color: var(--gold-text);
-  background: var(--bg-card);
-  padding: 1px 6px;
-  border-radius: 10px;
-  border: 1px solid var(--border-subtle);
-}
-
-.add-chip-form {
-  display: flex;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.add-chip-form input {
-  flex: 1;
-  padding: 6px 10px;
-  font-size: 12px;
-}
-
-.word-chip.custom {
-  position: relative;
-  padding-right: 22px;
-}
-
-.chip-del-btn {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 10px;
-  color: #ef5350;
-  cursor: pointer;
-  padding: 2px;
-}
-
-.chip-del-btn:hover {
-  color: #ff8a80;
-}
-
-/* ==========================================================================
-   v2.2.0 Prompt Dictionary Manager Styles
-   ========================================================================== */
-.dict-modal-card {
-  max-width: 620px;
-  max-height: 85vh;
-}
-
-.dict-modal-body {
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.dict-add-bar {
-  display: flex;
-  gap: 6px;
-  background: var(--bg-card);
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
-}
-
-.dict-add-bar input {
-  flex: 1;
-  font-size: 12px;
-  padding: 6px 8px;
-}
-
-.dict-add-bar select {
-  width: 130px;
-  font-size: 11px;
-  padding: 6px 4px;
-}
-
-.dict-item-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 380px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.dict-item-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-input);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-sm);
-  padding: 6px 10px;
-  transition: all 0.15s;
-}
-
-.dict-item-row.hidden-chip {
-  opacity: 0.5;
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.dict-item-cat {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 700;
-  white-space: nowrap;
-  background: rgba(255, 255, 255, 0.07);
-  color: var(--text-muted);
-}
-
-.dict-item-cat.prefix { color: #90caf9; }
-.dict-item-cat.texture { color: #ffe082; }
-.dict-item-cat.color { color: #a5d6a7; }
-.dict-item-cat.decor { color: #ffd54f; }
-.dict-item-cat.quality { color: #ce93d8; }
-.dict-item-cat.custom { color: #f48fb1; border: 1px solid rgba(244, 143, 177, 0.3); }
-
-.dict-item-input {
-  flex: 1;
-  font-size: 12px;
-  background: transparent !important;
-  border: 1px solid transparent !important;
-  color: var(--text-main);
-  padding: 4px 6px !important;
-}
-
-.dict-item-input:focus {
-  border-color: var(--border-gold) !important;
-  background: #111 !important;
-}
-
-.dict-item-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.btn-toggle-vis {
-  font-size: 11px;
-  padding: 3px 7px;
-  border-radius: 4px;
-  cursor: pointer;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-main);
-}
-
-.btn-toggle-vis.off {
-  color: #777;
-  border-color: rgba(255, 255, 255, 0.05);
-}
-
-.btn-chip-del {
-  color: #ef5350;
-  background: transparent;
-  border: none;
-  font-size: 12px;
-  cursor: pointer;
-  padding: 2px 5px;
-}
-
-.dict-modal-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-/* ==========================================================================
-   v2.2.1 Inline Dropzone Loading Styles
-   ========================================================================== */
-.vision-loading-inline {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px;
-}
-
-.vision-loading-inline.hidden {
+.modal-backdrop.hidden {
   display: none;
 }
 
-.spinner-purple {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(155, 114, 203, 0.25);
-  border-top-color: #ce93d8;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.modal-card {
+  background: #151821;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
 }
 
-.vision-loading-title {
+.modal-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
   font-size: 13px;
-  font-weight: 700;
-  color: #ce93d8;
-  letter-spacing: 0.5px;
-}
-
-.vision-loading-sub {
-  font-size: 10px;
-  color: var(--text-muted);
-}
-
-/* ==========================================================================
-   v2.3.0 Dynamic Category Architecture Styles
-   ========================================================================== */
-.category-editor-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-}
-
-.sub-section-title {
-  font-size: 12px;
   color: var(--gold-text);
-  margin-bottom: 4px;
-  font-weight: 700;
 }
 
-.category-inputs-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-.category-input-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--bg-input);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-sm);
-  padding: 2px 6px;
-}
-
-.category-input-row label {
-  font-size: 10px;
-  color: var(--text-muted);
-  width: 55px;
-  flex-shrink: 0;
-}
-
-.category-input-row input {
-  flex: 1;
-  font-size: 11px;
-  background: transparent !important;
-  border: none !important;
-  color: var(--gold-text);
-  padding: 3px 4px !important;
-  font-weight: 600;
-}
-
-.dict-item-cat-select {
-  width: 110px;
-  font-size: 11px;
-  padding: 3px 4px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  color: var(--gold-text);
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-
-.dict-item-cat-select:focus {
-  border-color: var(--border-gold);
-}
-
-/* ==========================================================================
-   v2.4.0 Dual-Key Switcher Styles
-   ========================================================================== */
-.btn-key-toggle {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 9px;
-  border-radius: 20px;
+.btn-modal-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 16px;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
-.btn-key-toggle.free {
-  background: rgba(46, 125, 50, 0.2);
-  border: 1px solid rgba(76, 175, 80, 0.5);
-  color: #a5d6a7;
+.modal-body {
+  padding: 14px 16px;
+  overflow-y: auto;
 }
 
-.btn-key-toggle.paid {
-  background: rgba(212, 175, 55, 0.2);
-  border: 1px solid rgba(212, 175, 55, 0.6);
-  color: var(--gold-text);
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+.modal-footer {
+  padding: 10px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
-.key-status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #4caf50;
-}
-
-.btn-key-toggle.paid .key-status-dot {
-  background: #ffd54f;
-  box-shadow: 0 0 6px #ffd54f;
-}
-
-/* ==========================================================================
-   v2.5.0 Authentication Gate Styles
-   ========================================================================== */
+/* 🔒 認証ゲート */
 .auth-gate-overlay {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at center, #1a1610 0%, #080706 100%);
-  z-index: 9999;
+  background: #090a0d;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  z-index: 9999;
   padding: 16px;
-  backdrop-filter: blur(10px);
 }
 
 .auth-gate-overlay.authenticated {
@@ -1234,236 +628,46 @@ input[type="range"] { width: 100%; accent-color: var(--gold-text); height: 5px; 
 }
 
 .auth-gate-card {
-  background: var(--bg-card);
+  background: #141720;
   border: 1px solid var(--border-gold);
   border-radius: var(--radius-md);
-  padding: 30px 24px;
-  max-width: 400px;
+  padding: 24px 20px;
   width: 100%;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.2);
+  max-width: 380px;
   text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.9);
 }
 
-.auth-logo-area h2 {
+.auth-gate-card h2 {
   font-family: 'Cinzel', serif;
-  color: var(--gold-text);
-  font-size: 20px;
-  letter-spacing: 2px;
-  margin: 8px 0 4px;
+  font-size: 18px;
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 6px 0;
 }
 
 .auth-sub {
   font-size: 11px;
   color: var(--text-muted);
-  margin-bottom: 20px;
-}
-
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  text-align: left;
-}
-
-.auth-form label {
-  font-size: 11px;
-  color: var(--text-main);
-  font-weight: 600;
+  margin-bottom: 16px;
 }
 
 .auth-form input {
-  font-size: 14px;
-  letter-spacing: 2px;
   text-align: center;
+  font-size: 14px;
   padding: 10px;
-  background: #0d0e11 !important;
-  border-color: var(--border-gold) !important;
+  margin-bottom: 10px;
+}
+
+.btn-auth-submit {
+  width: 100%;
+  padding: 10px;
 }
 
 .auth-error-msg {
   color: #ef5350;
   font-size: 11px;
-  font-weight: 700;
-  text-align: center;
+  margin-bottom: 8px;
 }
-
-.btn-auth-submit {
-  width: 100%;
-  padding: 12px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-
-.auth-footer-note {
-  font-size: 10px;
-  color: #666;
-  margin-top: 16px;
-}
-
-/* ==========================================================================
-   v2.6.0 Data Backup & Cloud Migration Styles
-   ========================================================================== */
-.backup-box {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.backup-box-info h4 {
-  font-size: 13px;
-  color: var(--gold-text);
-  margin-bottom: 2px;
-  font-weight: 700;
-}
-
-.backup-box-info p {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-/* ==========================================================================
-   v2.7.0 Cloud Sync Header & Status Styles
-   ========================================================================== */
-.btn-sync-status {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: rgba(30, 26, 20, 0.85);
-  border: 1px solid var(--border-gold);
-  border-radius: var(--radius-pill);
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--gold-text);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-sync-status:hover {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #ffd54f;
-}
-
-.sync-status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #757575;
-}
-
-.sync-status-dot.online {
-  background: #66bb6a;
-  box-shadow: 0 0 6px #66bb6a;
-}
-
-.sync-status-dot.syncing {
-  background: #ffd54f;
-  box-shadow: 0 0 6px #ffd54f;
-  animation: pulse-sync 1s infinite alternate;
-}
-
-.sync-badge-live {
-  font-size: 11px;
-  color: #81c784;
-  font-weight: 700;
-  padding: 2px 8px;
-  background: rgba(76, 175, 80, 0.15);
-  border-radius: 4px;
-  border: 1px solid rgba(76, 175, 80, 0.3);
-}
-
-@keyframes pulse-sync {
-  from { opacity: 0.4; transform: scale(0.85); }
-  to { opacity: 1; transform: scale(1.15); }
-}
-
-/* ==========================================================================
-   🎴 和モダン縦書きヘッダーボタンスタイル (Vertical Luxury Japanese Tag)
-   ========================================================================== */
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-vertical-tag {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 4px;
-  min-width: 32px;
-  height: 56px;
-  background: linear-gradient(180deg, rgba(28, 33, 43, 0.95), rgba(16, 18, 23, 0.95));
-  border: 1px solid var(--border-gold);
-  border-radius: 4px;
-  color: var(--gold-text);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  writing-mode: vertical-rl;
-  text-orientation: upright;
-  letter-spacing: 2px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-  user-select: none;
-}
-
-.btn-vertical-tag:hover {
-  background: linear-gradient(180deg, rgba(42, 49, 64, 0.95), rgba(24, 27, 35, 0.95));
-  border-color: #ffd54f;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
-}
-
-.btn-vertical-tag:active {
-  transform: translateY(0);
-}
-
-/* 無料キー / 有料キー 切替タグ */
-.btn-vertical-tag.key-toggle.free {
-  border-color: rgba(76, 175, 80, 0.7);
-  color: #a5d6a7;
-}
-.btn-vertical-tag.key-toggle.free:hover {
-  border-color: #81c784;
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-}
-
-.btn-vertical-tag.key-toggle.paid {
-  border-color: rgba(255, 215, 0, 0.85);
-  color: #ffe082;
-}
-.btn-vertical-tag.key-toggle.paid:hover {
-  border-color: #fff9c4;
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.35);
-}
-
-/* 同期管理ランプ */
-.btn-vertical-tag .sync-status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin-bottom: 2px;
-}
-
-/* シスログ件数バッジ */
-.log-pill-v {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: var(--gold-primary);
-  color: #000;
-  font-size: 9px;
-  font-weight: 800;
-  border-radius: 8px;
-  padding: 1px 4px;
-  line-height: 1;
-  writing-mode: horizontal-tb;
-}
+.auth-error-msg.hidden { display: none; }
