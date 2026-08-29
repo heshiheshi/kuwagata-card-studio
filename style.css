@@ -1254,3 +1254,28 @@ input[type="range"] { width: 100%; accent-color: var(--gold-text); height: 5px; 
   color: #666;
   margin-top: 16px;
 }
+
+/* ==========================================================================
+   v2.6.0 Data Backup & Cloud Migration Styles
+   ========================================================================== */
+.backup-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.backup-box-info h4 {
+  font-size: 13px;
+  color: var(--gold-text);
+  margin-bottom: 2px;
+  font-weight: 700;
+}
+
+.backup-box-info p {
+  font-size: 11px;
+  color: var(--text-muted);
+}

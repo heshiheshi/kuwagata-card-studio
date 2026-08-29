@@ -44,7 +44,7 @@
         <div class="logo-area">
           <span class="gold-badge">GEMINI AI</span>
           <h1>CARD STUDIO</h1>
-          <span class="app-version-badge" id="appVersion">v2.5.0</span>
+          <span class="app-version-badge" id="appVersion">v2.6.0</span>
         </div>
         <div class="header-actions">
           <!-- 無料/有料キー ワンタップ切り替えスイッチ -->
@@ -53,6 +53,9 @@
             <span id="keyModeLabel">無料キー</span>
           </button>
 
+          <button type="button" class="btn-icon-pill" id="btnOpenBackupModal" title="データ移行・バックアップ">
+            <span>データ移行</span>
+          </button>
           <button type="button" class="btn-icon-pill" id="btnOpenDictManager" title="プロンプト辞書管理">
             <span>辞書管理</span>
           </button>
@@ -437,8 +440,49 @@
     </main>
 
     <!-- ===================================================================
-         モーダル 1: プロンプト単語・カテゴリ管理マネージャー
+         モーダル 1: 📦 データ移行 ＆ バックアップ同期マネージャー (v2.6.0)
          =================================================================== -->
+    <div id="backupModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>📦 データ移行・バックアップ同期</h3>
+          <button type="button" class="btn-modal-close" id="btnCloseBackupModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-desc">
+            テスト環境で作った「自作単語辞書」「カスタムカテゴリ」「カード履歴」を本番環境へ一瞬で移行・同期できます。（※APIキーは安全のため含まれません）
+          </p>
+
+          <!-- 1. エクスポート -->
+          <div class="backup-box">
+            <div class="backup-box-info">
+              <h4>💾 ① データをファイルに書き出す (書き出し)</h4>
+              <p>現在の辞書・カテゴリ・カード履歴を1つのバックアップファイル（JSON）として保存します。</p>
+            </div>
+            <button type="button" class="btn-primary btn-sm" id="btnExportBackup">
+              <span>バックアップを書き出す (.json)</span>
+            </button>
+          </div>
+
+          <!-- 2. インポート -->
+          <div class="backup-box" style="margin-top:12px;">
+            <div class="backup-box-info">
+              <h4>📂 ② バックアップから復元・移行 (読み込み)</h4>
+              <p>書き出したJSONファイルを選択すると、辞書やカード履歴が一瞬で復元・統合されます。</p>
+            </div>
+            <input type="file" id="backupFileInput" accept=".json" class="file-input-hidden">
+            <button type="button" class="btn-secondary btn-sm" id="btnTriggerImport">
+              <span>ファイルを選択して復元する</span>
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-primary" id="btnCloseBackupModalBottom">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- モーダル 2: プロンプト単語・カテゴリ管理マネージャー -->
     <div id="dictManagerModal" class="modal-backdrop hidden">
       <div class="modal-card dict-modal-card">
         <div class="modal-header">
@@ -481,9 +525,7 @@
       </div>
     </div>
 
-    <!-- ===================================================================
-         モーダル 2: 🔑 Gemini API 設定 (2スロット・ハイブリッド節約仕様)
-         =================================================================== -->
+    <!-- モーダル 3: 🔑 Gemini API 設定 -->
     <div id="apiKeyModal" class="modal-backdrop hidden">
       <div class="modal-card">
         <div class="modal-header">
@@ -526,7 +568,7 @@
       </div>
     </div>
 
-    <!-- モーダル 3: システムログ -->
+    <!-- モーダル 4: システムログ -->
     <div id="logModal" class="modal-backdrop hidden">
       <div class="modal-card log-modal-card">
         <div class="modal-header">
@@ -548,7 +590,7 @@
 
     <!-- フッター -->
     <footer class="app-footer">
-      <p>KUWAGATA PREMIUM CARD STUDIO &copy; 2026 | v2.5.0 Production Edition</p>
+      <p>KUWAGATA PREMIUM CARD STUDIO &copy; 2026 | v2.6.0 Migration Sync Edition</p>
     </footer>
   </div>
 

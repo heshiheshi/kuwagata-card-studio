@@ -1,13 +1,13 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v2.5.0 Production Edition)
- * Private Authentication Gate, Dual-Key Defense & Native Gemini Image Generation
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v2.6.0 Production & Migration Edition)
+ * Data Backup & Cloud Migration Sync, Private Auth Gate, Dual-Key Defense & Gemini Image Generation
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v2.5.0';
-  const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777']; // デフォルト認証パスワード
+  const APP_VERSION = 'v2.6.0';
+  const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // --- システムロガー (System Logger) ---
   const Logger = {
@@ -135,7 +135,7 @@
   const state = {
     freeApiKey: '',
     paidApiKey: '',
-    activeKeyMode: 'free', // 'free' | 'paid'
+    activeKeyMode: 'free',
 
     aspectRatio: '5:7',
     aiAspectRatio: '3:4',
@@ -188,6 +188,7 @@
   const ratioBadge = document.getElementById('ratioBadge');
   const resBadge = document.getElementById('resBadge');
   const apiKeyModal = document.getElementById('apiKeyModal');
+  const backupModal = document.getElementById('backupModal');
   const freeApiKeyInput = document.getElementById('freeApiKeyInput');
   const paidApiKeyInput = document.getElementById('paidApiKeyInput');
   const btnQuickToggleKey = document.getElementById('btnQuickToggleKey');
@@ -206,6 +207,7 @@
     loadSavedState();
     setupEventListeners();
     setupDictManager();
+    setupBackupManager();
     renderDynamicChipGroups();
     updateCombinedPrompt();
     updateKeyToggleUI();
@@ -230,7 +232,9 @@
     const input = document.getElementById('authPassInput');
     const errorMsg = document.getElementById('authErrorMsg');
 
-    const isAuth = localStorage.getItem('kuwagata_auth_passed_v25') === 'true' || sessionStorage.getItem('kuwagata_auth_passed_v25') === 'true';
+    const isAuth = localStorage.getItem('kuwagata_auth_passed_v26') === 'true' || 
+                   sessionStorage.getItem('kuwagata_auth_passed_v26') === 'true' ||
+                   localStorage.getItem('kuwagata_auth_passed_v25') === 'true';
 
     if (isAuth) {
       if (overlay) overlay.classList.add('authenticated');
@@ -242,8 +246,8 @@
         e.preventDefault();
         const pass = (input.value || '').trim();
         if (VALID_PASSCODES.includes(pass.toLowerCase())) {
-          localStorage.setItem('kuwagata_auth_passed_v25', 'true');
-          sessionStorage.setItem('kuwagata_auth_passed_v25', 'true');
+          localStorage.setItem('kuwagata_auth_passed_v26', 'true');
+          sessionStorage.setItem('kuwagata_auth_passed_v26', 'true');
           overlay.classList.add('authenticated');
           Logger.success('合言葉認証に成功しました。スタジオを開放します。');
         } else {
@@ -257,19 +261,19 @@
 
   function saveState() {
     try {
-      localStorage.setItem('kuwagata_card_studio_state_v25', JSON.stringify({
+      localStorage.setItem('kuwagata_card_studio_state_v26', JSON.stringify({
         ...state,
         selectedChipIds: Array.from(state.selectedChipIds),
         bgImageSrc: state.bgImageSrc.startsWith('data:') ? 'assets/bg_default.jpg' : state.bgImageSrc
       }));
       
-      localStorage.setItem('kuwagata_free_api_key_v25', state.freeApiKey);
-      localStorage.setItem('kuwagata_paid_api_key_v25', state.paidApiKey);
-      localStorage.setItem('kuwagata_active_key_mode_v25', state.activeKeyMode);
+      localStorage.setItem('kuwagata_free_api_key_v26', state.freeApiKey);
+      localStorage.setItem('kuwagata_paid_api_key_v26', state.paidApiKey);
+      localStorage.setItem('kuwagata_active_key_mode_v26', state.activeKeyMode);
 
-      localStorage.setItem('kuwagata_categories_v25', JSON.stringify(state.categories));
-      localStorage.setItem('kuwagata_chips_v25', JSON.stringify(state.chips));
-      localStorage.setItem('kuwagata_card_archive_v25', JSON.stringify(state.cardArchive));
+      localStorage.setItem('kuwagata_categories_v26', JSON.stringify(state.categories));
+      localStorage.setItem('kuwagata_chips_v26', JSON.stringify(state.chips));
+      localStorage.setItem('kuwagata_card_archive_v26', JSON.stringify(state.cardArchive));
     } catch (e) {
       Logger.warn('LocalStorage save failed', e.message);
     }
@@ -277,30 +281,30 @@
 
   function loadSavedState() {
     try {
-      const savedFree = localStorage.getItem('kuwagata_free_api_key_v25') || localStorage.getItem('kuwagata_free_api_key_v24') || localStorage.getItem('kuwagata_gemini_api_key') || '';
-      const savedPaid = localStorage.getItem('kuwagata_paid_api_key_v25') || localStorage.getItem('kuwagata_paid_api_key_v24') || '';
-      const savedMode = localStorage.getItem('kuwagata_active_key_mode_v25') || 'free';
+      const savedFree = localStorage.getItem('kuwagata_free_api_key_v26') || localStorage.getItem('kuwagata_free_api_key_v25') || localStorage.getItem('kuwagata_gemini_api_key') || '';
+      const savedPaid = localStorage.getItem('kuwagata_paid_api_key_v26') || localStorage.getItem('kuwagata_paid_api_key_v25') || '';
+      const savedMode = localStorage.getItem('kuwagata_active_key_mode_v26') || 'free';
 
       state.freeApiKey = savedFree;
       state.paidApiKey = savedPaid;
       state.activeKeyMode = savedMode;
 
-      const savedCategories = localStorage.getItem('kuwagata_categories_v25') || localStorage.getItem('kuwagata_categories_v24') || localStorage.getItem('kuwagata_categories_v23');
+      const savedCategories = localStorage.getItem('kuwagata_categories_v26') || localStorage.getItem('kuwagata_categories_v25') || localStorage.getItem('kuwagata_categories_v24');
       if (savedCategories) {
         state.categories = JSON.parse(savedCategories);
       }
 
-      const savedChips = localStorage.getItem('kuwagata_chips_v25') || localStorage.getItem('kuwagata_chips_v24') || localStorage.getItem('kuwagata_chips_v23');
+      const savedChips = localStorage.getItem('kuwagata_chips_v26') || localStorage.getItem('kuwagata_chips_v25') || localStorage.getItem('kuwagata_chips_v24');
       if (savedChips) {
         state.chips = JSON.parse(savedChips);
       }
 
-      const savedArchive = localStorage.getItem('kuwagata_card_archive_v25') || localStorage.getItem('kuwagata_card_archive_v24');
+      const savedArchive = localStorage.getItem('kuwagata_card_archive_v26') || localStorage.getItem('kuwagata_card_archive_v25');
       if (savedArchive) {
         state.cardArchive = JSON.parse(savedArchive);
       }
 
-      const saved = localStorage.getItem('kuwagata_card_studio_state_v25') || localStorage.getItem('kuwagata_card_studio_state_v24');
+      const saved = localStorage.getItem('kuwagata_card_studio_state_v26') || localStorage.getItem('kuwagata_card_studio_state_v25') || localStorage.getItem('kuwagata_card_studio_state_v24');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.selectedChipIds) {
@@ -350,6 +354,93 @@
   function setCheck(id, val) {
     const el = document.getElementById(id);
     if (el) el.checked = !!val;
+  }
+
+  // --- 📦 データ移行 ＆ バックアップ同期マネージャー (v2.6.0) ---
+  function setupBackupManager() {
+    const btnOpen = document.getElementById('btnOpenBackupModal');
+    const btnClose = document.getElementById('btnCloseBackupModal');
+    const btnCloseBottom = document.getElementById('btnCloseBackupModalBottom');
+    const btnExport = document.getElementById('btnExportBackup');
+    const btnTriggerImport = document.getElementById('btnTriggerImport');
+    const fileInput = document.getElementById('backupFileInput');
+
+    if (btnOpen) btnOpen.addEventListener('click', () => backupModal.classList.remove('hidden'));
+    [btnClose, btnCloseBottom].forEach(b => {
+      if (b) b.addEventListener('click', () => backupModal.classList.add('hidden'));
+    });
+
+    if (btnExport) {
+      btnExport.addEventListener('click', () => exportBackupData());
+    }
+
+    if (btnTriggerImport && fileInput) {
+      btnTriggerImport.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          importBackupData(e.target.files[0]);
+          fileInput.value = '';
+        }
+      });
+    }
+  }
+
+  function exportBackupData() {
+    const backupBundle = {
+      app: 'KUWAGATA_PREMIUM_CARD_STUDIO',
+      version: APP_VERSION,
+      exportedAt: new Date().toISOString(),
+      categories: state.categories,
+      chips: state.chips,
+      selectedChipIds: Array.from(state.selectedChipIds),
+      cardArchive: state.cardArchive
+    };
+
+    const blob = new Blob([JSON.stringify(backupBundle, null, 2)], { type: 'application/json' });
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '') + '_' + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+    const filename = `kuwagata_studio_backup_${dateStr}.json`;
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+
+    Logger.success(`バックアップを書き出しました (${filename})`);
+    alert(`🎉 バックアップファイルをダウンロードしました！\n\nファイル名: ${filename}\n\n本番環境（クラウドURL）でこのファイルを読み込むと、すべての辞書やカード履歴が一瞬で反映されます。`);
+  }
+
+  function importBackupData(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!data || data.app !== 'KUWAGATA_PREMIUM_CARD_STUDIO') {
+          throw new Error('クワガタカードスタジオのバックアップファイルではありません。');
+        }
+
+        if (data.categories) state.categories = data.categories;
+        if (data.chips && Array.isArray(data.chips)) state.chips = data.chips;
+        if (data.selectedChipIds && Array.isArray(data.selectedChipIds)) state.selectedChipIds = new Set(data.selectedChipIds);
+        if (data.cardArchive && Array.isArray(data.cardArchive)) state.cardArchive = data.cardArchive;
+
+        saveState();
+        renderDynamicChipGroups();
+        updateCombinedPrompt();
+        renderArchiveGrid();
+
+        Logger.success('バックアップデータのインポート完了', { chipsCount: state.chips.length, archiveCount: state.cardArchive.length });
+        alert(`🎉 データを正常に移行・復元しました！\n\n・単語辞書: ${state.chips.length} 件\n・発行済みカード履歴: ${state.cardArchive.length} 件\n\nすべての設定が即座に反映されました。`);
+        backupModal.classList.add('hidden');
+      } catch (err) {
+        Logger.error('インポート失敗', err.message);
+        alert('バックアップ読み込みエラー: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
   }
 
   // --- APIキー切り替えUI ---
