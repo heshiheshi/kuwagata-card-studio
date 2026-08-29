@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.0.0">
+  <link rel="stylesheet" href="style.css?v=4.1.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -46,7 +46,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.0.0</span>
+            <span class="app-version-badge" id="appVersion">v4.1.0</span>
           </div>
           <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
         </div>
@@ -78,8 +78,8 @@
 
     <!-- メインコンテンツ (モバイルファースト・縦型レイアウト) -->
     <main class="app-main">
-      <!-- プレビューセクション (上部固定/リアルタイム合成表示) -->
-      <section class="preview-section">
+      <!-- 🌟 スティッキー・追従ライブプレビューHUD (常に画像を見ながら調整可能) -->
+      <section class="preview-section sticky-preview" id="stickyPreviewSection">
         <div class="preview-card-wrapper" id="previewWrapper">
           <canvas id="cardCanvas" width="1500" height="2100"></canvas>
           <div id="loadingOverlay" class="loading-overlay hidden">
@@ -143,7 +143,6 @@
           </div>
         </div>
 
-        <!-- 動的単語チップグループコンテナ -->
         <div id="dynamicChipGroupsContainer" class="dynamic-chip-groups-container"></div>
 
         <div class="custom-chip-adder">
@@ -197,7 +196,6 @@
           </div>
         </div>
 
-        <!-- 復元された文字消し背景プレビュー ＆ 適用エリア -->
         <div id="cleanBgResultArea" class="clean-bg-result-card hidden mt-3">
           <div class="clean-bg-header">
             <h4>✨ 復元された文字なし純粋背景</h4>
@@ -208,7 +206,6 @@
           </div>
         </div>
 
-        <!-- 抽出プロンプト結果エリア -->
         <div id="visionResultArea" class="vision-result-area hidden mt-3">
           <div class="result-header">
             <label class="group-label">🎉 抽出された背景プロンプト</label>
@@ -233,7 +230,7 @@
           <h3>✨ ブランド ＆ 血統名 AI文字グラフィック</h3>
         </div>
         <p class="section-desc">
-          フォントではなく、Gemini AIでプロンプト選択式の「立体文字グラフィック（透過PNG）」を生成し、位置と大きさを個別にミリ単位調整できます。
+          プロンプトチップの選択やフリー編集で、Gemini AIによる<strong>100%完全透過の立体文字グラフィック</strong>を個別生成・位置調整できます。
         </p>
 
         <!-- ① ブランド / ブリーダー名 AI文字 -->
@@ -256,18 +253,26 @@
             </div>
           </div>
 
-          <div class="ai-style-selector-row mt-2">
-            <label>AI文字スタイル:</label>
-            <select id="brandAiStyleSelect" class="custom-select">
-              <option value="24K pure gold embossed metallic lettering with ruby initial, 3D luxury typography, isolated on dark background">24K純金立体エンボス (先頭深紅ルビー)</option>
-              <option value="luxury platinum chrome 3D letters with obsidian shadows, ultra clean typography">プラチナクローム 3D刻印</option>
-              <option value="black obsidian crystal typography with subtle gold leaf edging">黒曜石クリスタル 蒔絵ゴールドエッジ</option>
-            </select>
+          <!-- ブランド専用プロンプトチップ -->
+          <div class="letter-chip-container mt-2">
+            <label class="chip-group-label">文字スタイルチップ (クリックでプロンプトに追加):</label>
+            <div class="chip-grid">
+              <button type="button" class="letter-chip" data-target="brand" data-text="24K pure gold 3D embossed metallic typography, ruby crimson initial">24K純金立体 (先頭深紅)</button>
+              <button type="button" class="letter-chip" data-target="brand" data-text="luxury platinum chrome metallic 3D typography, mirror reflections">プラチナクローム</button>
+              <button type="button" class="letter-chip" data-target="brand" data-text="obsidian black crystal letters with gold leaf foil edging">黒曜石ゴールドエッジ</button>
+              <button type="button" class="letter-chip" data-target="brand" data-text="royal gold foil stamping on dark matte plate">金箔押しロイヤル</button>
+            </div>
+          </div>
+
+          <!-- 編集可能プロンプトエリア -->
+          <div class="mt-2">
+            <label class="chip-group-label">AI生成用プロンプト (直接編集可能):</label>
+            <textarea id="brandAiPromptInput" rows="2" class="prompt-textarea">24K pure gold embossed metallic lettering with ruby initial, 3D luxury typography, isolated cutout</textarea>
           </div>
 
           <div class="ai-gen-btn-row mt-2">
             <button type="button" id="btnGenBrandAiGraphic" class="btn-primary btn-sm full-width">
-              ✨ ブランドAI文字グラフィックを生成
+              ✨ ブランドAI文字グラフィックを生成 (自動スクロール)
             </button>
           </div>
 
@@ -313,19 +318,26 @@
             </div>
           </div>
 
-          <div class="ai-style-selector-row mt-2">
-            <label>AI文字スタイル:</label>
-            <select id="kanjiAiStyleSelect" class="custom-select">
-              <option value="legendary master calligraphy of Japanese kanji character, heavy sumi black ink wash with gold leaf dust, powerful brush strokes, isolated">重厚な漆黒墨毛筆 ＆ 金箔散らし</option>
-              <option value="24K pure gold 3D embossed Japanese kanji character, luxury maki-e gold texture, dramatic lighting">24K純金立体彫刻 蒔絵ゴールド</option>
-              <option value="emerald jade crystal Japanese kanji calligraphy, translucent gemstone texture with golden sparks">翡翠クリスタル和風文字 (ジェムストーン)</option>
-              <option value="ruby crimson crystal Japanese kanji calligraphy, deep royal aura">深紅ルビークリスタル (王者オーラ)</option>
-            </select>
+          <!-- 漢字専用プロンプトチップ -->
+          <div class="letter-chip-container mt-2">
+            <label class="chip-group-label">漢字スタイルチップ (クリックでプロンプトに追加):</label>
+            <div class="chip-grid">
+              <button type="button" class="letter-chip" data-target="kanji" data-text="legendary master Japanese calligraphy, heavy sumi black ink with gold leaf dust">漆黒墨毛筆 ＆ 金箔散らし</button>
+              <button type="button" class="letter-chip" data-target="kanji" data-text="24K pure gold 3D embossed Japanese kanji character, luxury maki-e texture">24K純金立体 蒔絵彫刻</button>
+              <button type="button" class="letter-chip" data-target="kanji" data-text="translucent emerald green jade crystal gemstone calligraphy with gold sparks">翡翠クリスタル和風</button>
+              <button type="button" class="letter-chip" data-target="kanji" data-text="crimson ruby gemstone Japanese kanji character, deep royal aura">深紅ルビークリスタル</button>
+            </div>
+          </div>
+
+          <!-- 編集可能プロンプトエリア -->
+          <div class="mt-2">
+            <label class="chip-group-label">AI生成用プロンプト (直接編集可能):</label>
+            <textarea id="kanjiAiPromptInput" rows="2" class="prompt-textarea">legendary master calligraphy of Japanese kanji character, heavy sumi black ink wash with gold leaf dust, powerful brush strokes, isolated</textarea>
           </div>
 
           <div class="ai-gen-btn-row mt-2">
             <button type="button" id="btnGenKanjiAiGraphic" class="btn-primary btn-sm full-width">
-              ✨ メイン漢字AIグラフィックを生成
+              ✨ メイン漢字AIグラフィックを生成 (自動スクロール)
             </button>
           </div>
 
@@ -372,18 +384,25 @@
             </div>
           </div>
 
-          <div class="ai-style-selector-row mt-2">
-            <label>AI文字スタイル:</label>
-            <select id="romajiAiStyleSelect" class="custom-select">
-              <option value="royal gold serif 3D typography, luxury gold foil stamping, elegant letter spacing, isolated">24K純金箔押し ロイヤルセリフ</option>
-              <option value="modern obsidian dark glass 3D typography with gold rim reflections">黒曜石ダークガラス ゴールドリム</option>
-              <option value="platinum silver luxury engraved metallic typography">プラチナシルバー ラグジュアリー刻印</option>
-            </select>
+          <!-- 英字専用プロンプトチップ -->
+          <div class="letter-chip-container mt-2">
+            <label class="chip-group-label">英字スタイルチップ (クリックでプロンプトに追加):</label>
+            <div class="chip-grid">
+              <button type="button" class="letter-chip" data-target="romaji" data-text="royal 24K gold foil stamping 3D serif typography, luxury elegant letter spacing">24K純金箔押し ロイヤルセリフ</button>
+              <button type="button" class="letter-chip" data-target="romaji" data-text="obsidian black glass 3D typography with gold rim reflections">黒曜石ダークガラス ゴールドリム</button>
+              <button type="button" class="letter-chip" data-target="romaji" data-text="platinum silver luxury engraved metallic typography">プラチナシルバー ラグジュアリー刻印</button>
+            </div>
+          </div>
+
+          <!-- 編集可能プロンプトエリア -->
+          <div class="mt-2">
+            <label class="chip-group-label">AI生成用プロンプト (直接編集可能):</label>
+            <textarea id="romajiAiPromptInput" rows="2" class="prompt-textarea">royal gold serif 3D typography, luxury gold foil stamping, elegant letter spacing, isolated</textarea>
           </div>
 
           <div class="ai-gen-btn-row mt-2">
             <button type="button" id="btnGenRomajiAiGraphic" class="btn-primary btn-sm full-width">
-              ✨ 英字AI文字グラフィックを生成
+              ✨ 英字AI文字グラフィックを生成 (自動スクロール)
             </button>
           </div>
 

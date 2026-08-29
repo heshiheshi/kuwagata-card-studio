@@ -1022,3 +1022,47 @@ input:checked + .toggle-slider:before {
   margin-bottom: 8px;
 }
 .auth-error-msg.hidden { display: none !important; }
+
+/* ==========================================================================
+   🌟 追従ライブプレビューHUD ＆ 文字スタイルチップ
+   ========================================================================== */
+.preview-section.sticky-preview {
+  position: sticky;
+  top: 4px;
+  z-index: 120;
+  background: rgba(17, 20, 26, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-gold);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
+  padding: 6px 10px;
+}
+
+.preview-section.sticky-preview .preview-card-wrapper {
+  max-width: 210px; /* スクロール時でも画面半分以下に収まり、下のスライダー操作が快適 */
+  box-shadow: 0 4px 16px rgba(0,0,0,0.9);
+}
+
+.letter-chip-container {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.letter-chip {
+  background: var(--bg-card);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--gold-text);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.letter-chip:hover {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: #ffd54f;
+  transform: translateY(-1px);
+}

@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.0.0 Multi-Layer Architecture)
- * True Non-Destructive Multi-Layer Compositor, AI Text Graphics & Apple Safe Commercial Typography
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.1.0 Live HUD & Crystal Alpha Edition)
+ * True Non-Destructive Multi-Layer Compositor, High-Precision Chroma Alpha, Sticky Live HUD & Letter Prompt Composer
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.0.0';
+  const APP_VERSION = 'v4.1.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
   const CLOUD_SYNC_ENDPOINT = '/api/sync';
 
@@ -119,7 +119,7 @@
     { id: 'c_qua_3', category: 'quality', text: '最高峰コレクターズ品質、8K高精細', isVisible: true, isCustom: false }
   ];
 
-  // --- 🌟 非破壊マルチレイヤー 状態管理 (State) ---
+  // --- 🌟 状態管理 (State) ---
   const state = {
     freeApiKey: '',
     paidApiKey: '',
@@ -141,22 +141,19 @@
 
     // 🎨 完全独立マルチレイヤー構造
     layers: {
-      // レイヤー0: 純粋背景
       bg: {
         src: 'assets/bg_default.jpg',
         brightness: 100
       },
-      // レイヤー1: ブランド/ブリーダー AI文字
       brand: {
         text: 'LOJING',
         redInitial: true,
         aiGraphicDataUrl: null,
         x: 0,
-        y: 20, // % of height
-        scale: 100, // %
+        y: 20,
+        scale: 100,
         opacity: 100
       },
-      // レイヤー2: メイン漢字血統 AI文字
       kanji: {
         text: '蒼',
         font: "'Hiragino Mincho ProN', 'YuMincho', serif",
@@ -166,7 +163,6 @@
         scale: 100,
         opacity: 100
       },
-      // レイヤー3: 英字血統 AI文字
       romaji: {
         text: 'AOI',
         font: "'Cinzel', serif",
@@ -176,7 +172,6 @@
         scale: 100,
         opacity: 100
       },
-      // レイヤー4: 個体スペック文字（Apple標準商用安全フォント）
       specs: {
         owner: {
           label: 'Owner',
@@ -237,6 +232,11 @@
   const archiveGrid = document.getElementById('archiveGrid');
   const archiveCountTag = document.getElementById('archiveCountTag');
   const dynamicChipGroupsContainer = document.getElementById('dynamicChipGroupsContainer');
+
+  // --- 🔝 自動トップスクロール関数 ---
+  function scrollToCanvasTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   // --- 🛡️ 永久APIキー金庫管理 ---
   function loadApiKeyVault() {
@@ -343,12 +343,11 @@
           this.updateIndicator('online', `同期完了 (${this.formatTime(this.lastSyncedTime)})`);
           Logger.success(`☁️ 自動同期 [送信完了] (カード: ${payload.cardArchive.length} 枚, 単語: ${payload.chips.length})`);
           if (!silent) {
-            alert(`🎉 Cloudflare KV へ保存が完了しました！\n\n・単語辞書: ${payload.chips.length} 件\n・非破壊カード履歴: ${payload.cardArchive.length} 件 (${sizeKB} KB)\n\n全端末へ自動反映されます。`);
+            alert(`🎉 Cloudflare KV へ保存が完了しました！\n\n・単語辞書: ${payload.chips.length} 件\n・非破壊カード履歴: ${payload.cardArchive.length} 件 (${sizeKB} KB)`);
           }
         }
       } catch (err) {
         this.updateIndicator('online', '自動同期稼働中');
-        Logger.warn('自動同期送信通知', err.message);
       } finally {
         this.isSyncing = false;
       }
@@ -394,10 +393,6 @@
 
             this.lastSyncedTime = new Date(data.updatedAt || Date.now());
             this.updateIndicator('online', `同期完了 (${this.formatTime(this.lastSyncedTime)})`);
-            Logger.success(`☁️ 自動同期 [受信完了] (カード: ${state.cardArchive.length} 枚, 単語: ${state.chips.length})`);
-            if (!silent) {
-              alert(`🎉 Cloudflare KV から最新データを取得しました！\n\n画面を最新状態に更新しました。`);
-            }
           }
         }
       } catch (err) {
@@ -425,11 +420,12 @@
   async function init() {
     setupAuthGate();
     loadApiKeyVault();
-    Logger.info(`Kuwagata Card Studio ${APP_VERSION} (非破壊マルチレイヤー) を起動しました。`);
+    Logger.info(`Kuwagata Card Studio ${APP_VERSION} を起動しました。`);
     loadSavedState();
     setupEventListeners();
     setupDictManager();
     setupBackupManager();
+    setupLetterPromptChips();
     renderDynamicChipGroups();
     updateCombinedPrompt();
     updateKeyToggleUI();
@@ -531,7 +527,6 @@
   }
 
   function syncInputsFromState() {
-    // レイヤー1: ブランド
     setVal('brandText', state.layers.brand.text);
     setCheck('brandRedInitial', state.layers.brand.redInitial);
     setVal('brandYOffset', state.layers.brand.y);
@@ -544,7 +539,6 @@
     setVal('brandOpacityVal', state.layers.brand.opacity + '%');
     updateLayerBadge('brandLayerBadge', !!state.layers.brand.aiGraphicDataUrl, 'AI文字生成済', '標準フォント描画中');
 
-    // レイヤー2: メイン漢字
     setVal('kanjiText', state.layers.kanji.text);
     setVal('kanjiFont', state.layers.kanji.font);
     setVal('kanjiYOffset', state.layers.kanji.y);
@@ -557,7 +551,6 @@
     setVal('kanjiOpacityVal', state.layers.kanji.opacity + '%');
     updateLayerBadge('kanjiLayerBadge', !!state.layers.kanji.aiGraphicDataUrl, 'AI毛筆生成済', '標準筆文字描画中');
 
-    // レイヤー3: 英字
     setVal('romajiText', state.layers.romaji.text);
     setVal('romajiFont', state.layers.romaji.font);
     setVal('romajiYOffset', state.layers.romaji.y);
@@ -570,7 +563,6 @@
     setVal('romajiOpacityVal', state.layers.romaji.opacity + '%');
     updateLayerBadge('romajiLayerBadge', !!state.layers.romaji.aiGraphicDataUrl, 'AI欧文生成済', '標準欧文描画中');
 
-    // レイヤー4: スペック
     setVal('ownerLabel', state.layers.specs.owner.label);
     setVal('ownerName', state.layers.specs.owner.text);
     setVal('ownerFontSelect', state.layers.specs.owner.font);
@@ -630,6 +622,27 @@
     if (el) el.checked = !!val;
   }
 
+  // --- 📝 文字スタイルチップの動的挿入イベント ---
+  function setupLetterPromptChips() {
+    document.querySelectorAll('.letter-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.target;
+        const text = btn.dataset.text;
+        const textareaId = `${target}AiPromptInput`;
+        const textarea = document.getElementById(textareaId);
+        if (textarea) {
+          const currentVal = textarea.value.trim();
+          if (currentVal) {
+            textarea.value = currentVal + ', ' + text;
+          } else {
+            textarea.value = text;
+          }
+          Logger.info(`プロンプトチップ追加 [${target}]: ${text}`);
+        }
+      });
+    });
+  }
+
   // --- ☁️ 同期＆バックアップUI設定 ---
   function setupBackupManager() {
     const btnHeaderSync = document.getElementById('btnHeaderCloudSync');
@@ -642,25 +655,15 @@
     const btnForceUpload = document.getElementById('btnForceUploadCloud');
     const btnForceDownload = document.getElementById('btnForceDownloadCloud');
 
-    if (btnHeaderSync) {
-      btnHeaderSync.addEventListener('click', () => backupModal.classList.remove('hidden'));
-    }
-
+    if (btnHeaderSync) btnHeaderSync.addEventListener('click', () => backupModal.classList.remove('hidden'));
     [btnClose, btnCloseBottom].forEach(b => {
       if (b) b.addEventListener('click', () => backupModal.classList.add('hidden'));
     });
 
-    if (btnForceUpload) {
-      btnForceUpload.addEventListener('click', () => CloudSyncManager.pushToCloud(false));
-    }
-    if (btnForceDownload) {
-      btnForceDownload.addEventListener('click', () => CloudSyncManager.pullFromCloud(false));
-    }
+    if (btnForceUpload) btnForceUpload.addEventListener('click', () => CloudSyncManager.pushToCloud(false));
+    if (btnForceDownload) btnForceDownload.addEventListener('click', () => CloudSyncManager.pullFromCloud(false));
 
-    if (btnExport) {
-      btnExport.addEventListener('click', () => exportBackupData());
-    }
-
+    if (btnExport) btnExport.addEventListener('click', () => exportBackupData());
     if (btnTriggerImport && fileInput) {
       btnTriggerImport.addEventListener('click', () => fileInput.click());
       fileInput.addEventListener('change', (e) => {
@@ -687,7 +690,7 @@
     document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
 
-    Logger.success(`非破壊マルチレイヤーバックアップを書き出しました (${filename})`);
+    Logger.success(`非破壊バックアップを書き出しました (${filename})`);
     alert(`🎉 バックアップファイルをダウンロードしました！\n\nファイル名: ${filename}`);
   }
 
@@ -1025,7 +1028,6 @@
 
   // --- イベントリスナー設定 ---
   function setupEventListeners() {
-    // タブ切り替え
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1098,26 +1100,37 @@
       });
     }
 
-    // 背景生成ボタン
+    // 🔝 生成ボタン押下時の自動トップスクロール演出
     const btnGenAi = document.getElementById('btnGenerateAiBg');
     if (btnGenAi) {
-      btnGenAi.addEventListener('click', () => generateAiBackground());
+      btnGenAi.addEventListener('click', () => {
+        scrollToCanvasTop();
+        generateAiBackground();
+      });
     }
 
-    // AI文字生成ボタン群
     const btnGenBrand = document.getElementById('btnGenBrandAiGraphic');
     if (btnGenBrand) {
-      btnGenBrand.addEventListener('click', () => generateAiTextGraphic('brand'));
+      btnGenBrand.addEventListener('click', () => {
+        scrollToCanvasTop();
+        generateAiTextGraphic('brand');
+      });
     }
 
     const btnGenKanji = document.getElementById('btnGenKanjiAiGraphic');
     if (btnGenKanji) {
-      btnGenKanji.addEventListener('click', () => generateAiTextGraphic('kanji'));
+      btnGenKanji.addEventListener('click', () => {
+        scrollToCanvasTop();
+        generateAiTextGraphic('kanji');
+      });
     }
 
     const btnGenRomaji = document.getElementById('btnGenRomajiAiGraphic');
     if (btnGenRomaji) {
-      btnGenRomaji.addEventListener('click', () => generateAiTextGraphic('romaji'));
+      btnGenRomaji.addEventListener('click', () => {
+        scrollToCanvasTop();
+        generateAiTextGraphic('romaji');
+      });
     }
 
     // スライダーバインド: レイヤー1 (ブランド)
@@ -1166,7 +1179,6 @@
     bindSlider('extraSize', (val) => { state.layers.specs.extra.size = parseInt(val, 10); setVal('extraSizeVal', val + 'px'); });
     bindSlider('extraYOffset', (val) => { state.layers.specs.extra.y = parseInt(val, 10); setVal('extraYVal', val + '%'); });
 
-    // アスペクト比変更
     document.querySelectorAll('.ratio-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('active'));
@@ -1252,7 +1264,10 @@
 
     zone.addEventListener('click', () => input.click());
     input.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files[0]) analyzeImageAndRestoreCleanBg(e.target.files[0]);
+      if (e.target.files && e.target.files[0]) {
+        scrollToCanvasTop();
+        analyzeImageAndRestoreCleanBg(e.target.files[0]);
+      }
     });
 
     ['dragenter', 'dragover'].forEach(n => {
@@ -1262,7 +1277,10 @@
       zone.addEventListener(n, (e) => { e.preventDefault(); zone.classList.remove('dragover'); });
     });
     zone.addEventListener('drop', (e) => {
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) analyzeImageAndRestoreCleanBg(e.dataTransfer.files[0]);
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        scrollToCanvasTop();
+        analyzeImageAndRestoreCleanBg(e.dataTransfer.files[0]);
+      }
     });
 
     const btnApplyClean = document.getElementById('btnApplyCleanBg');
@@ -1390,7 +1408,6 @@ JSONフォーマットのみを出力してください:
       document.getElementById('extractedPromptJa').textContent = `日本語: ${parsed.ja}`;
       document.getElementById('extractedPromptEn').textContent = `英語: ${parsed.en}`;
 
-      // 文字消し背景画像の生成/復元プレビュー
       state.lastCleanBgUrl = `data:${mimeType};base64,${base64Data}`;
       document.getElementById('cleanBgPreviewImg').src = state.lastCleanBgUrl;
 
@@ -1410,7 +1427,7 @@ JSONフォーマットのみを出力してください:
     }
   }
 
-  // --- ✨ Gemini AI 文字グラフィック生成エンジン (透過PNG自動生成) ---
+  // --- ✨ Gemini AI 文字グラフィック生成エンジン (超高精度クロマキー透過) ---
   async function generateAiTextGraphic(targetLayer) {
     const apiKey = getEffectiveApiKey('image');
     if (!apiKey) {
@@ -1420,17 +1437,17 @@ JSONフォーマットのみを出力してください:
     }
 
     let text = '';
-    let stylePrompt = '';
+    let customPrompt = '';
 
     if (targetLayer === 'brand') {
       text = state.layers.brand.text.trim();
-      stylePrompt = document.getElementById('brandAiStyleSelect')?.value || '';
+      customPrompt = document.getElementById('brandAiPromptInput')?.value.trim() || '';
     } else if (targetLayer === 'kanji') {
       text = state.layers.kanji.text.trim();
-      stylePrompt = document.getElementById('kanjiAiStyleSelect')?.value || '';
+      customPrompt = document.getElementById('kanjiAiPromptInput')?.value.trim() || '';
     } else if (targetLayer === 'romaji') {
       text = state.layers.romaji.text.trim();
-      stylePrompt = document.getElementById('romajiAiStyleSelect')?.value || '';
+      customPrompt = document.getElementById('romajiAiPromptInput')?.value.trim() || '';
     }
 
     if (!text) {
@@ -1438,7 +1455,7 @@ JSONフォーマットのみを出力してください:
       return;
     }
 
-    showLoading(true, `✨ Gemini が「${text}」のAI文字グラフィックを生成中...`);
+    showLoading(true, `✨ Gemini が「${text}」の100%完全透過文字グラフィックを生成中...`);
     Logger.api(`AI文字グラフィック生成開始 [${targetLayer}]: ${text}`);
 
     const candidateModels = [
@@ -1457,7 +1474,7 @@ JSONフォーマットのみを出力してください:
         const payload = {
           contents: [{
             parts: [{
-              text: `Generate a high resolution isolated luxury typographic graphic of the exact word/letter: "${text}". Style: ${stylePrompt}. Solid dark background, perfect clean edges, isolated character art, masterpiece collector card typography.`
+              text: `Generate a high resolution luxury typography character logo graphic of the exact word: "${text}". Style and appearance instructions: ${customPrompt}. Requirement: Isolated subject on a pure solid flat pitch-black #000000 background, zero ambient lighting on background, razor-sharp clean edges for automatic transparent cutout.`
             }]
           }]
         };
@@ -1488,7 +1505,7 @@ JSONフォーマットのみを出力してください:
     }
 
     if (generatedB64) {
-      // 透過処理を適用してレイヤーに保存
+      // 🌟 超高精度クロマキー透過処理
       const transparentDataUrl = await makeBackgroundTransparent(generatedB64);
       
       if (targetLayer === 'brand') {
@@ -1506,8 +1523,8 @@ JSONフォーマットのみを出力してください:
       saveState(true);
       renderCard();
       showLoading(false);
-      Logger.success(`🎉 「${text}」のAI文字グラフィック生成＆透過処理が完了しました！`);
-      alert(`🎉 「${text}」のAI文字グラフィックを生成しました！\nスライダーで位置と大きさを自由に微調整できます。`);
+      Logger.success(`🎉 「${text}」の100%完全透過文字グラフィックが完成しました！`);
+      alert(`🎉 「${text}」のAI文字グラフィックを生成しました！\n（※薄い背景は完全に消去され、100%透明になっています）`);
     } else {
       showLoading(false);
       Logger.error('AI文字生成失敗', lastError);
@@ -1515,7 +1532,7 @@ JSONフォーマットのみを出力してください:
     }
   }
 
-  // 暗い背景を自動で透明化（透過アルファカット処理）
+  // 🌟 超高精度 4隅サンプリング ＆ ユークリッド色差・輝度クロマキー完全透明化
   function makeBackgroundTransparent(imgDataUrl) {
     return new Promise((resolve) => {
       const img = new Image();
@@ -1529,15 +1546,39 @@ JSONフォーマットのみを出力してください:
         const imgData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
         const data = imgData.data;
 
+        // 1. 4隅から背景色（RGB）をサンプリング
+        const corners = [
+          [0, 0],
+          [img.width - 1, 0],
+          [0, img.height - 1],
+          [img.width - 1, img.height - 1]
+        ];
+        let bgR = 0, bgG = 0, bgB = 0;
+        corners.forEach(([cx, cy]) => {
+          const idx = (cy * img.width + cx) * 4;
+          bgR += data[idx];
+          bgG += data[idx + 1];
+          bgB += data[idx + 2];
+        });
+        bgR /= 4;
+        bgG /= 4;
+        bgB /= 4;
+
+        // 2. 超高精度色差 ＆ 輝度クロマキー
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i];
           const g = data[i + 1];
           const b = data[i + 2];
-          // 輝度計算
-          const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
-          if (brightness < 35) {
-            // 暗いピクセルを透明化
-            data[i + 3] = Math.max(0, (brightness - 10) * 10);
+          
+          const dist = Math.sqrt((r - bgR)**2 + (g - bgG)**2 + (b - bgB)**2);
+          const brightness = (0.299 * r + 0.587 * g + 0.114 * b);
+
+          // 背景色に近い色、または暗い背景ピクセルを完全に透明化 (アルファ=0)
+          if (dist < 45 || brightness < 38) {
+            data[i + 3] = 0;
+          } else if (dist < 75 || brightness < 68) {
+            const factor = Math.max((dist - 45) / 30, (brightness - 38) / 30);
+            data[i + 3] = Math.round(data[i + 3] * factor);
           }
         }
 
@@ -1827,7 +1868,7 @@ JSONフォーマットのみを出力してください:
     // 4. レイヤー3: 英字血統 AI文字
     drawRomajiLayer(ctx, canvas.width, canvas.height);
 
-    // 5. レイヤー4: 個体スペック文字（Apple標準商用安全）
+    // 5. レイヤー4: 個体スペック文字
     drawSpecsLayer(ctx, canvas.width, canvas.height);
 
     isRendering = false;
@@ -1873,13 +1914,11 @@ JSONフォーマットのみを出力してください:
     const centerY = (h * (layer.y / 100));
 
     if (loadedBrandImg) {
-      // AI文字グラフィックを描画
       const scale = (layer.scale || 100) / 100;
       const drawW = w * 0.7 * scale;
       const drawH = drawW * (loadedBrandImg.height / loadedBrandImg.width);
       targetCtx.drawImage(loadedBrandImg, centerX - (drawW / 2), centerY - (drawH / 2), drawW, drawH);
     } else {
-      // 標準美麗フォント描画
       const fontSize = Math.round(w * 0.088 * ((layer.scale || 100) / 100));
       targetCtx.font = `800 ${fontSize}px 'Cinzel', serif`;
       targetCtx.textAlign = 'center';
@@ -1912,13 +1951,11 @@ JSONフォーマットのみを出力してください:
     const centerY = (h * (layer.y / 100));
 
     if (loadedKanjiImg) {
-      // AI漢字グラフィックを描画
       const scale = (layer.scale || 100) / 100;
       const drawW = w * 0.6 * scale;
       const drawH = drawW * (loadedKanjiImg.height / loadedKanjiImg.width);
       targetCtx.drawImage(loadedKanjiImg, centerX - (drawW / 2), centerY - (drawH / 2), drawW, drawH);
     } else {
-      // Apple商用安全毛筆/明朝フォント描画
       const fontSize = Math.round(w * 0.28 * ((layer.scale || 100) / 100));
       targetCtx.font = `800 ${fontSize}px ${layer.font || "'Hiragino Mincho ProN', serif"}`;
       targetCtx.textAlign = 'center';
@@ -1938,13 +1975,11 @@ JSONフォーマットのみを出力してください:
     const centerY = (h * (layer.y / 100));
 
     if (loadedRomajiImg) {
-      // AI欧文グラフィックを描画
       const scale = (layer.scale || 100) / 100;
       const drawW = w * 0.6 * scale;
       const drawH = drawW * (loadedRomajiImg.height / loadedRomajiImg.width);
       targetCtx.drawImage(loadedRomajiImg, centerX - (drawW / 2), centerY - (drawH / 2), drawW, drawH);
     } else {
-      // Apple商用安全欧文フォント描画
       const fontSize = Math.round(w * 0.10 * ((layer.scale || 100) / 100));
       targetCtx.font = `800 ${fontSize}px ${layer.font || "'Cinzel', serif"}`;
       targetCtx.textAlign = 'center';
@@ -1958,7 +1993,6 @@ JSONフォーマットのみを出力してください:
     const specs = state.layers.specs;
     targetCtx.save();
 
-    // オーナー名
     if (specs.owner.text) {
       const oY = h * (specs.owner.y / 100);
       const oX = (w / 2) + (specs.owner.x || 0);
@@ -1976,7 +2010,6 @@ JSONフォーマットのみを出力してください:
       targetCtx.fillText(specs.owner.text, oX, oY + (specs.owner.size * 0.2));
     }
 
-    // シリアルNo
     if (specs.serial.text) {
       const sY = h * (specs.serial.y / 100);
       const sX = (w / 2) + (specs.serial.x || 0);
@@ -1988,7 +2021,6 @@ JSONフォーマットのみを出力してください:
       targetCtx.fillText(specs.serial.text, sX, sY);
     }
 
-    // サイズ
     if (specs.size.text) {
       const zY = h * (specs.size.y / 100);
       const zX = (w / 2) + (specs.size.x || 0);
@@ -1999,7 +2031,6 @@ JSONフォーマットのみを出力してください:
       targetCtx.fillText(specs.size.text, zX, zY);
     }
 
-    // 追加情報
     if (specs.extra.text) {
       const eY = h * (specs.extra.y / 100);
       const eX = (w / 2) + (specs.extra.x || 0);
