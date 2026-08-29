@@ -1,14 +1,22 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v3.1.0 Seamless Auto-Sync Edition)
- * Zero-Click Automatic Real-time Cloud Sync across Mac, iPhone & Partner Devices
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v3.2.0 Permanent Vault Edition)
+ * Permanent Device-Locked API Key Vault, Zero-Click Auto-Cloud Sync & Dual-Key Architecture
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v3.1.0';
+  const APP_VERSION = 'v3.2.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
   const CLOUD_SYNC_ENDPOINT = '/api/sync';
+
+  // 🛡️ 端末固定の永久キー金庫（アップデートでも絶対に消えないキー名）
+  const VAULT_KEYS = {
+    FREE_API_KEY: 'kuwagata_vault_free_api_key',
+    PAID_API_KEY: 'kuwagata_vault_paid_api_key',
+    ACTIVE_KEY_MODE: 'kuwagata_vault_active_key_mode',
+    AUTH_PASSED: 'kuwagata_vault_auth_passed'
+  };
 
   // --- システムロガー (System Logger) ---
   const Logger = {
@@ -134,7 +142,7 @@
 
   // --- 状態管理 (State) ---
   const state = {
-    // 🛡️ APIキーは端末内完全ローカル隔離 (Cloudflare KV同期対象外)
+    // 🛡️ APIキーは永久ローカル金庫に完全隔離 (Cloudflare KV同期対象外)
     freeApiKey: '',
     paidApiKey: '',
     activeKeyMode: 'free',
@@ -203,7 +211,51 @@
   const archiveCountTag = document.getElementById('archiveCountTag');
   const dynamicChipGroupsContainer = document.getElementById('dynamicChipGroupsContainer');
 
-  // --- 🧹 古いキャッシュの自動クリーンアップ (iOS Quota Defense) ---
+  // --- 🛡️ 永久APIキー金庫管理 (Permanent Key Vault Engine) ---
+  function loadApiKeyVault() {
+    try {
+      let free = localStorage.getItem(VAULT_KEYS.FREE_API_KEY) || '';
+      let paid = localStorage.getItem(VAULT_KEYS.PAID_API_KEY) || '';
+      let mode = localStorage.getItem(VAULT_KEYS.ACTIVE_KEY_MODE) || 'free';
+
+      // 過去のあらゆる旧バージョンキーから自動救出・統合
+      if (!free) {
+        for (let i = 35; i >= 20; i--) {
+          const old = localStorage.getItem(`kuwagata_free_api_key_v${i}`) || localStorage.getItem('kuwagata_gemini_api_key');
+          if (old) { free = old; break; }
+        }
+      }
+      if (!paid) {
+        for (let i = 35; i >= 20; i--) {
+          const old = localStorage.getItem(`kuwagata_paid_api_key_v${i}`);
+          if (old) { paid = old; break; }
+        }
+      }
+
+      state.freeApiKey = free;
+      state.paidApiKey = paid;
+      state.activeKeyMode = mode;
+
+      saveApiKeyVault();
+      if (free || paid) {
+        Logger.info('🔑 端末内永久キー金庫からAPIキーを自動ロードしました。');
+      }
+    } catch (e) {
+      Logger.warn('Key vault load warning', e.message);
+    }
+  }
+
+  function saveApiKeyVault() {
+    try {
+      localStorage.setItem(VAULT_KEYS.FREE_API_KEY, state.freeApiKey || '');
+      localStorage.setItem(VAULT_KEYS.PAID_API_KEY, state.paidApiKey || '');
+      localStorage.setItem(VAULT_KEYS.ACTIVE_KEY_MODE, state.activeKeyMode || 'free');
+    } catch (e) {
+      Logger.warn('Key vault save warning', e.message);
+    }
+  }
+
+  // --- 🧹 古いキャッシュの自動クリーンアップ (永久キー金庫は保護) ---
   function cleanupLegacyCache() {
     try {
       const keysToClean = [
@@ -217,19 +269,18 @@
     }
   }
 
-  // --- ☁️ 完全自動シームレス Cloudflare KV 同期エンジン (v3.1.0) ---
+  // --- ☁️ 完全自動シームレス Cloudflare KV 同期エンジン (v3.2.0) ---
   const CloudSyncManager = {
     syncTimer: null,
     isSyncing: false,
     lastSyncedTime: null,
-    lastServerTimestamp: 0,
 
     init() {
       this.updateIndicator('online', '自動同期稼働中');
       // 起動時に自動でCloudflare KVから最新データを取得
       this.pullFromCloud(true);
 
-      // 画面に復帰した時（タブ切り替え / スマホ復帰）に自動で最新取得
+      // 画面復帰時に自動で最新取得
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
           this.pullFromCloud(true);
@@ -239,7 +290,7 @@
         this.pullFromCloud(true);
       });
 
-      // 20秒ごとの自動バックグラウンド同期（常時チェック）
+      // 20秒ごとの自動バックグラウンド巡回同期
       setInterval(() => {
         this.pullFromCloud(true);
       }, 20000);
@@ -293,7 +344,6 @@
       return payload;
     },
 
-    // 変更が発生したら自動で送信予約（デバウンス500ms）
     scheduleAutoSync() {
       clearTimeout(this.syncTimer);
       this.syncTimer = setTimeout(() => {
@@ -318,9 +368,7 @@
         });
 
         if (resp.ok) {
-          const resJson = await resp.json();
           this.lastSyncedTime = new Date();
-          this.lastServerTimestamp = resJson.updatedAt || Date.now();
           this.updateIndicator('online', `同期完了 (${this.formatTime(this.lastSyncedTime)})`);
           Logger.success(`☁️ 自動同期 [送信完了] (カード: ${payload.cardArchive.length} 枚, 単語: ${payload.chips.length})`);
           if (!silent) {
@@ -369,7 +417,6 @@
             }
 
             if (data.cardArchive && Array.isArray(data.cardArchive)) {
-              // 履歴の件数や内容が異なれば更新
               if (JSON.stringify(state.cardArchive) !== JSON.stringify(data.cardArchive)) {
                 state.cardArchive = data.cardArchive;
                 hasChanges = true;
@@ -427,7 +474,8 @@
   async function init() {
     cleanupLegacyCache();
     setupAuthGate();
-    Logger.info(`Kuwagata Card Studio ${APP_VERSION} (完全自動同期) を起動しました。`);
+    loadApiKeyVault(); // 永久金庫からAPIキーをロード
+    Logger.info(`Kuwagata Card Studio ${APP_VERSION} (永久キー金庫) を起動しました。`);
     loadSavedState();
     setupEventListeners();
     setupDictManager();
@@ -452,18 +500,20 @@
     renderCard();
   }
 
-  // --- 🔒 パスワード認証ゲート (Auth Gate) ---
+  // --- 🔒 パスワード認証ゲート (Auth Gate - 永久記憶) ---
   function setupAuthGate() {
     const overlay = document.getElementById('authGateOverlay');
     const form = document.getElementById('authGateForm');
     const input = document.getElementById('authPassInput');
     const errorMsg = document.getElementById('authErrorMsg');
 
-    const isAuth = localStorage.getItem('kuwagata_auth_passed_v31') === 'true' || 
-                   sessionStorage.getItem('kuwagata_auth_passed_v31') === 'true' ||
+    const isAuth = localStorage.getItem(VAULT_KEYS.AUTH_PASSED) === 'true' ||
+                   sessionStorage.getItem('kuwagata_auth_passed') === 'true' ||
+                   localStorage.getItem('kuwagata_auth_passed_v31') === 'true' ||
                    localStorage.getItem('kuwagata_auth_passed_v30') === 'true';
 
     if (isAuth) {
+      localStorage.setItem(VAULT_KEYS.AUTH_PASSED, 'true');
       if (overlay) overlay.classList.add('authenticated');
       return;
     }
@@ -473,8 +523,8 @@
         e.preventDefault();
         const pass = (input.value || '').trim();
         if (VALID_PASSCODES.includes(pass.toLowerCase())) {
-          localStorage.setItem('kuwagata_auth_passed_v31', 'true');
-          sessionStorage.setItem('kuwagata_auth_passed_v31', 'true');
+          localStorage.setItem(VAULT_KEYS.AUTH_PASSED, 'true');
+          sessionStorage.setItem('kuwagata_auth_passed', 'true');
           overlay.classList.add('authenticated');
           Logger.success('合言葉認証に成功しました。スタジオを開放します。');
         } else {
@@ -488,20 +538,17 @@
 
   function saveState(triggerCloud = true) {
     try {
-      localStorage.setItem('kuwagata_card_studio_state_v31', JSON.stringify({
+      localStorage.setItem('kuwagata_card_studio_state_vault', JSON.stringify({
         ...state,
         selectedChipIds: Array.from(state.selectedChipIds),
         bgImageSrc: state.bgImageSrc.startsWith('data:') ? 'assets/bg_default.jpg' : state.bgImageSrc
       }));
       
-      // 🛡️ APIキーは端末ローカルにのみ保存
-      localStorage.setItem('kuwagata_free_api_key_v31', state.freeApiKey);
-      localStorage.setItem('kuwagata_paid_api_key_v31', state.paidApiKey);
-      localStorage.setItem('kuwagata_active_key_mode_v31', state.activeKeyMode);
+      saveApiKeyVault(); // 永久金庫へ保存
 
-      localStorage.setItem('kuwagata_categories_v31', JSON.stringify(state.categories));
-      localStorage.setItem('kuwagata_chips_v31', JSON.stringify(state.chips));
-      localStorage.setItem('kuwagata_card_archive_v31', JSON.stringify(state.cardArchive));
+      localStorage.setItem('kuwagata_categories_vault', JSON.stringify(state.categories));
+      localStorage.setItem('kuwagata_chips_vault', JSON.stringify(state.chips));
+      localStorage.setItem('kuwagata_card_archive_vault', JSON.stringify(state.cardArchive));
 
       if (triggerCloud) {
         CloudSyncManager.scheduleAutoSync();
@@ -513,30 +560,22 @@
 
   function loadSavedState() {
     try {
-      const savedFree = localStorage.getItem('kuwagata_free_api_key_v31') || localStorage.getItem('kuwagata_free_api_key_v30') || localStorage.getItem('kuwagata_free_api_key_v29') || '';
-      const savedPaid = localStorage.getItem('kuwagata_paid_api_key_v31') || localStorage.getItem('kuwagata_paid_api_key_v30') || '';
-      const savedMode = localStorage.getItem('kuwagata_active_key_mode_v31') || 'free';
-
-      state.freeApiKey = savedFree;
-      state.paidApiKey = savedPaid;
-      state.activeKeyMode = savedMode;
-
-      const savedCategories = localStorage.getItem('kuwagata_categories_v31') || localStorage.getItem('kuwagata_categories_v30') || localStorage.getItem('kuwagata_categories_v29');
+      const savedCategories = localStorage.getItem('kuwagata_categories_vault') || localStorage.getItem('kuwagata_categories_v31') || localStorage.getItem('kuwagata_categories_v30');
       if (savedCategories) {
         state.categories = JSON.parse(savedCategories);
       }
 
-      const savedChips = localStorage.getItem('kuwagata_chips_v31') || localStorage.getItem('kuwagata_chips_v30') || localStorage.getItem('kuwagata_chips_v29');
+      const savedChips = localStorage.getItem('kuwagata_chips_vault') || localStorage.getItem('kuwagata_chips_v31') || localStorage.getItem('kuwagata_chips_v30');
       if (savedChips) {
         state.chips = JSON.parse(savedChips);
       }
 
-      const savedArchive = localStorage.getItem('kuwagata_card_archive_v31') || localStorage.getItem('kuwagata_card_archive_v30') || localStorage.getItem('kuwagata_card_archive_v29');
+      const savedArchive = localStorage.getItem('kuwagata_card_archive_vault') || localStorage.getItem('kuwagata_card_archive_v31') || localStorage.getItem('kuwagata_card_archive_v30');
       if (savedArchive) {
         state.cardArchive = JSON.parse(savedArchive);
       }
 
-      const saved = localStorage.getItem('kuwagata_card_studio_state_v31') || localStorage.getItem('kuwagata_card_studio_state_v30') || localStorage.getItem('kuwagata_card_studio_state_v29');
+      const saved = localStorage.getItem('kuwagata_card_studio_state_vault') || localStorage.getItem('kuwagata_card_studio_state_v31') || localStorage.getItem('kuwagata_card_studio_state_v30');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.selectedChipIds) {
@@ -664,7 +703,7 @@
         if (data.selectedChipIds && Array.isArray(data.selectedChipIds)) state.selectedChipIds = new Set(data.selectedChipIds);
         if (data.cardArchive && Array.isArray(data.cardArchive)) state.cardArchive = data.cardArchive;
 
-        saveState(true); // ☁️ 自動でCloudflare KVへ送信
+        saveState(true);
         renderDynamicChipGroups();
         updateCombinedPrompt();
         renderArchiveGrid();
@@ -1035,7 +1074,7 @@
     if (btnQuickToggleKey) {
       btnQuickToggleKey.addEventListener('click', () => {
         state.activeKeyMode = state.activeKeyMode === 'free' ? 'paid' : 'free';
-        saveState();
+        saveApiKeyVault();
         updateKeyToggleUI();
         Logger.info(`APIキーモード変更: ${state.activeKeyMode === 'paid' ? '👑 有料キー' : '🟢 無料キー'}`);
       });
@@ -1059,11 +1098,11 @@
     btnSaveModal.addEventListener('click', () => {
       state.freeApiKey = (freeApiKeyInput ? freeApiKeyInput.value : '').trim();
       state.paidApiKey = (paidApiKeyInput ? paidApiKeyInput.value : '').trim();
-      saveState(false); // APIキー変更はクラウド同期しない
+      saveApiKeyVault(); // 永久金庫へ保存 (アップデートでも消えない)
       updateKeyToggleUI();
       apiKeyModal.classList.add('hidden');
-      Logger.success('Gemini APIキー設定を端末内に保存しました。');
-      alert('APIキー設定を端末内に安全に保存しました。\n（※クラウドへは一切送信されません）');
+      Logger.success('Gemini APIキーを端末の永久金庫に保存しました。');
+      alert('🎉 APIキーを端末内の永久金庫に保存しました！\n今後アプリがアップデートされても消えることはありません。\n（※変更したい時はいつでも上書き可能です）');
     });
 
     const btnOpenLog = document.getElementById('btnOpenLogModal');
@@ -1539,7 +1578,7 @@ JSONフォーマットのみを出力してください:
     }
   }
 
-  // --- 完成カード・アーカイブシステム (v3.1.0 完全自動同期) ---
+  // --- 完成カード・アーカイブシステム (v3.2.0 完全自動同期) ---
   function saveCurrentToArchive() {
     const thumbCanvas = document.createElement('canvas');
     thumbCanvas.width = 320;
@@ -1577,7 +1616,7 @@ JSONフォーマットのみを出力してください:
     };
 
     state.cardArchive.unshift(archiveItem);
-    saveState(true); // ☁️ 自動でCloudflare KVへ即座に送信（アラートなし）
+    saveState(true);
     renderArchiveGrid();
     Logger.success(`カード履歴に保存＆自動同期完了: ${archiveItem.title}`);
     alert(`「${archiveItem.title}」をカード履歴アルバムに保存しました！\n（※自動でiPhoneや相方様のスマホにも共有されます）`);
@@ -1627,7 +1666,7 @@ JSONフォーマットのみを出力してください:
         } else if (action === 'delete') {
           if (confirm(`「${target.title}」を履歴から削除しますか？`)) {
             state.cardArchive.splice(idx, 1);
-            saveState(true); // ☁️ 自動でCloudflare KVへ即座に送信
+            saveState(true);
             renderArchiveGrid();
             Logger.info(`アーカイブ削除: ${target.title}`);
           }
