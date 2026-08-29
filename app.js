@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v3.3.0';
+  const APP_VERSION = 'v3.4.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
   const CLOUD_SYNC_ENDPOINT = '/api/sync';
 
