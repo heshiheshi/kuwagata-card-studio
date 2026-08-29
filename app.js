@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v2.8.0 Live Internet Cloud Sync Edition)
- * Live Internet Cloud Sync Across All Devices, Private Auth Gate, Dual-Key Defense & Gemini Vision/Image
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v2.9.0 Ultra-Light Cloud Sync Edition)
+ * High-Efficiency Compression, Force Cloud Sync, iOS Quota Defense & Strict API Key Isolation
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v2.8.0';
+  const APP_VERSION = 'v2.9.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
   const CLOUD_SYNC_ENDPOINT = 'https://api.restful-api.dev/objects/ff808181a04ccf2d01a04ceb91a200e7';
 
@@ -203,7 +203,21 @@
   const archiveCountTag = document.getElementById('archiveCountTag');
   const dynamicChipGroupsContainer = document.getElementById('dynamicChipGroupsContainer');
 
-  // --- ☁️ ライブ・インターネット・クラウド同期エンジン (Live Cloud Sync Engine) ---
+  // --- 🧹 古いキャッシュの自動クリーンアップ (iOS Quota Defense) ---
+  function cleanupLegacyCache() {
+    try {
+      const keysToClean = [
+        'kuwagata_card_studio_state_v23', 'kuwagata_card_studio_state_v24', 'kuwagata_card_studio_state_v25', 'kuwagata_card_studio_state_v26', 'kuwagata_card_studio_state_v27',
+        'kuwagata_card_archive_v23', 'kuwagata_card_archive_v24', 'kuwagata_card_archive_v25', 'kuwagata_card_archive_v26', 'kuwagata_card_archive_v27',
+        'kuwagata_cloud_sync_master_v27'
+      ];
+      keysToClean.forEach(k => localStorage.removeItem(k));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // --- ☁️ ライブ・インターネット・クラウド同期エンジン (v2.9.0 Ultra-Light Edition) ---
   const CloudSyncManager = {
     syncTimer: null,
     isSyncing: false,
@@ -215,15 +229,47 @@
       this.pullFromCloud(true);
     },
 
-    // 🛡️ APIキーを完全除外した安全共有データのみを作成
+    // 🛡️ APIキーを完全除外 & 画像を超軽量化した安全共有ペイロード
     getSanitizedPayload() {
+      // アーカイブのサムネイルと背景を超軽量圧縮
+      const compressedArchive = state.cardArchive.map(item => {
+        return {
+          id: item.id,
+          createdAt: item.createdAt,
+          title: item.title,
+          ownerName: item.ownerName,
+          sizeText: item.sizeText,
+          thumbnail: item.thumbnail, // 軽量JPEGサムネイル
+          stateData: {
+            aspectRatio: item.stateData.aspectRatio || '5:7',
+            canvasWidth: item.stateData.canvasWidth || 1500,
+            canvasHeight: item.stateData.canvasHeight || 2100,
+            brandText: item.stateData.brandText || '',
+            brandRedInitial: item.stateData.brandRedInitial ?? true,
+            kanjiText: item.stateData.kanjiText || '',
+            kanjiFont: item.stateData.kanjiFont || "'Yuji Boku', serif",
+            romajiText: item.stateData.romajiText || '',
+            romajiFont: item.stateData.romajiFont || "'Cinzel', serif",
+            ownerLabel: item.stateData.ownerLabel || 'Owner',
+            ownerName: item.stateData.ownerName || '',
+            serialText: item.stateData.serialText || '',
+            sizeText: item.stateData.sizeText || '',
+            extraInfoText: item.stateData.extraInfoText || '',
+            verticalOffset: item.stateData.verticalOffset || 0,
+            bgType: item.stateData.bgType || 'image',
+            // 巨大Base64背景の重複を防ぎ、サムネイル画像を復元背景として安全再利用
+            bgImageSrc: (item.stateData.bgImageSrc && !item.stateData.bgImageSrc.startsWith('data:')) ? item.stateData.bgImageSrc : item.thumbnail
+          }
+        };
+      });
+
       const payload = {
         studio: 'KUWAGATA_PREMIUM_STUDIO',
         version: APP_VERSION,
         categories: state.categories,
         chips: state.chips,
         selectedChipIds: Array.from(state.selectedChipIds),
-        cardArchive: state.cardArchive,
+        cardArchive: compressedArchive,
         updatedAt: Date.now()
       };
       
@@ -247,23 +293,27 @@
       this.updateIndicator('syncing', 'クラウドへ送信中...');
 
       const payload = this.getSanitizedPayload();
+      const payloadJson = JSON.stringify({
+        name: 'KUWAGATA_SHARED_STUDIO',
+        data: payload
+      });
+
+      const sizeKB = Math.round(payloadJson.length / 1024);
+      Logger.api(`クラウド送信開始 (サイズ: ${sizeKB} KB, カード: ${payload.cardArchive.length} 枚)`);
 
       try {
         const resp = await fetch(CLOUD_SYNC_ENDPOINT, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: 'KUWAGATA_SHARED_STUDIO',
-            data: payload
-          })
+          body: payloadJson
         });
 
         if (resp.ok) {
           this.lastSyncedTime = new Date();
           this.updateIndicator('online', `同期完了 (${this.formatTime(this.lastSyncedTime)})`);
-          Logger.success('☁️ クラウド同期 [送信成功]', { chips: payload.chips.length, archive: payload.cardArchive.length });
+          Logger.success(`🎉 クラウド送信完全成功！ [${sizeKB} KB] (単語: ${payload.chips.length}, カード: ${payload.cardArchive.length})`);
           if (!silent) {
-            alert('🎉 クラウドへ手動上書き送信が完了しました！\nMac・iPhone・相方様の端末へ即座に反映されます。');
+            alert(`🎉 クラウドへ手動上書き送信が完了しました！\n\n・単語辞書: ${payload.chips.length} 件\n・カード履歴: ${payload.cardArchive.length} 件 (${sizeKB} KB)\n\nMac・iPhone・相方様の全端末へ即座に反映されます。`);
           }
         } else {
           throw new Error(`HTTP ${resp.status}`);
@@ -271,6 +321,9 @@
       } catch (err) {
         this.updateIndicator('online', 'ローカル保存済み');
         Logger.warn('クラウド送信例外', err.message);
+        if (!silent) {
+          alert('クラウド送信エラー: ' + err.message);
+        }
       } finally {
         this.isSyncing = false;
       }
@@ -288,41 +341,33 @@
           const data = result.data || result;
 
           if (data && data.studio === 'KUWAGATA_PREMIUM_STUDIO') {
-            // クラウド側にデータが存在する場合、マージまたは更新
-            let updated = false;
-
             if (data.categories && Object.keys(data.categories).length > 0) {
               state.categories = data.categories;
-              updated = true;
             }
 
             if (data.chips && Array.isArray(data.chips) && data.chips.length > 0) {
               state.chips = data.chips;
-              updated = true;
             }
 
             if (data.selectedChipIds && Array.isArray(data.selectedChipIds)) {
               state.selectedChipIds = new Set(data.selectedChipIds);
-              updated = true;
             }
 
-            if (data.cardArchive && Array.isArray(data.cardArchive) && data.cardArchive.length >= state.cardArchive.length) {
+            // クラウドから届いたカード履歴で端末内を完全上書き復元
+            if (data.cardArchive && Array.isArray(data.cardArchive)) {
               state.cardArchive = data.cardArchive;
-              updated = true;
             }
 
-            if (updated) {
-              saveState(false);
-              renderDynamicChipGroups();
-              updateCombinedPrompt();
-              renderArchiveGrid();
-            }
+            saveState(false);
+            renderDynamicChipGroups();
+            updateCombinedPrompt();
+            renderArchiveGrid();
 
             this.lastSyncedTime = new Date(data.updatedAt || Date.now());
             this.updateIndicator('online', `同期完了 (${this.formatTime(this.lastSyncedTime)})`);
-            Logger.success('☁️ クラウド同期 [受信完了]', { chips: state.chips.length, archive: state.cardArchive.length });
+            Logger.success(`🎉 クラウド同期受信成功！ (単語: ${state.chips.length}, カード履歴: ${state.cardArchive.length} 枚)`);
             if (!silent) {
-              alert(`🎉 クラウドから最新データを取得しました！\n\n・単語辞書: ${state.chips.length} 件\n・発行済みカード履歴: ${state.cardArchive.length} 件\n\nすべての端末で共有されました。`);
+              alert(`🎉 クラウドから最新データを取得しました！\n\n・単語辞書: ${state.chips.length} 件\n・カード履歴: ${state.cardArchive.length} 件\n\n画面を最新状態に上書き更新しました。`);
             }
           }
         }
@@ -360,6 +405,7 @@
   };
 
   async function init() {
+    cleanupLegacyCache();
     setupAuthGate();
     Logger.info(`Kuwagata Card Studio ${APP_VERSION} を起動しました。`);
     loadSavedState();
@@ -393,10 +439,10 @@
     const input = document.getElementById('authPassInput');
     const errorMsg = document.getElementById('authErrorMsg');
 
-    const isAuth = localStorage.getItem('kuwagata_auth_passed_v28') === 'true' || 
-                   sessionStorage.getItem('kuwagata_auth_passed_v28') === 'true' ||
-                   localStorage.getItem('kuwagata_auth_passed_v27') === 'true' ||
-                   localStorage.getItem('kuwagata_auth_passed_v26') === 'true';
+    const isAuth = localStorage.getItem('kuwagata_auth_passed_v29') === 'true' || 
+                   sessionStorage.getItem('kuwagata_auth_passed_v29') === 'true' ||
+                   localStorage.getItem('kuwagata_auth_passed_v28') === 'true' ||
+                   localStorage.getItem('kuwagata_auth_passed_v27') === 'true';
 
     if (isAuth) {
       if (overlay) overlay.classList.add('authenticated');
@@ -408,8 +454,8 @@
         e.preventDefault();
         const pass = (input.value || '').trim();
         if (VALID_PASSCODES.includes(pass.toLowerCase())) {
-          localStorage.setItem('kuwagata_auth_passed_v28', 'true');
-          sessionStorage.setItem('kuwagata_auth_passed_v28', 'true');
+          localStorage.setItem('kuwagata_auth_passed_v29', 'true');
+          sessionStorage.setItem('kuwagata_auth_passed_v29', 'true');
           overlay.classList.add('authenticated');
           Logger.success('合言葉認証に成功しました。スタジオを開放します。');
         } else {
@@ -423,20 +469,20 @@
 
   function saveState(triggerCloud = true) {
     try {
-      localStorage.setItem('kuwagata_card_studio_state_v28', JSON.stringify({
+      localStorage.setItem('kuwagata_card_studio_state_v29', JSON.stringify({
         ...state,
         selectedChipIds: Array.from(state.selectedChipIds),
         bgImageSrc: state.bgImageSrc.startsWith('data:') ? 'assets/bg_default.jpg' : state.bgImageSrc
       }));
       
       // 🛡️ APIキーは端末ローカルにのみ保存
-      localStorage.setItem('kuwagata_free_api_key_v28', state.freeApiKey);
-      localStorage.setItem('kuwagata_paid_api_key_v28', state.paidApiKey);
-      localStorage.setItem('kuwagata_active_key_mode_v28', state.activeKeyMode);
+      localStorage.setItem('kuwagata_free_api_key_v29', state.freeApiKey);
+      localStorage.setItem('kuwagata_paid_api_key_v29', state.paidApiKey);
+      localStorage.setItem('kuwagata_active_key_mode_v29', state.activeKeyMode);
 
-      localStorage.setItem('kuwagata_categories_v28', JSON.stringify(state.categories));
-      localStorage.setItem('kuwagata_chips_v28', JSON.stringify(state.chips));
-      localStorage.setItem('kuwagata_card_archive_v28', JSON.stringify(state.cardArchive));
+      localStorage.setItem('kuwagata_categories_v29', JSON.stringify(state.categories));
+      localStorage.setItem('kuwagata_chips_v29', JSON.stringify(state.chips));
+      localStorage.setItem('kuwagata_card_archive_v29', JSON.stringify(state.cardArchive));
 
       if (triggerCloud) {
         CloudSyncManager.scheduleAutoSync();
@@ -448,30 +494,30 @@
 
   function loadSavedState() {
     try {
-      const savedFree = localStorage.getItem('kuwagata_free_api_key_v28') || localStorage.getItem('kuwagata_free_api_key_v27') || localStorage.getItem('kuwagata_free_api_key_v26') || localStorage.getItem('kuwagata_gemini_api_key') || '';
-      const savedPaid = localStorage.getItem('kuwagata_paid_api_key_v28') || localStorage.getItem('kuwagata_paid_api_key_v27') || localStorage.getItem('kuwagata_paid_api_key_v26') || '';
-      const savedMode = localStorage.getItem('kuwagata_active_key_mode_v28') || 'free';
+      const savedFree = localStorage.getItem('kuwagata_free_api_key_v29') || localStorage.getItem('kuwagata_free_api_key_v28') || localStorage.getItem('kuwagata_free_api_key_v27') || '';
+      const savedPaid = localStorage.getItem('kuwagata_paid_api_key_v29') || localStorage.getItem('kuwagata_paid_api_key_v28') || '';
+      const savedMode = localStorage.getItem('kuwagata_active_key_mode_v29') || 'free';
 
       state.freeApiKey = savedFree;
       state.paidApiKey = savedPaid;
       state.activeKeyMode = savedMode;
 
-      const savedCategories = localStorage.getItem('kuwagata_categories_v28') || localStorage.getItem('kuwagata_categories_v27') || localStorage.getItem('kuwagata_categories_v26');
+      const savedCategories = localStorage.getItem('kuwagata_categories_v29') || localStorage.getItem('kuwagata_categories_v28') || localStorage.getItem('kuwagata_categories_v27');
       if (savedCategories) {
         state.categories = JSON.parse(savedCategories);
       }
 
-      const savedChips = localStorage.getItem('kuwagata_chips_v28') || localStorage.getItem('kuwagata_chips_v27') || localStorage.getItem('kuwagata_chips_v26');
+      const savedChips = localStorage.getItem('kuwagata_chips_v29') || localStorage.getItem('kuwagata_chips_v28') || localStorage.getItem('kuwagata_chips_v27');
       if (savedChips) {
         state.chips = JSON.parse(savedChips);
       }
 
-      const savedArchive = localStorage.getItem('kuwagata_card_archive_v28') || localStorage.getItem('kuwagata_card_archive_v27') || localStorage.getItem('kuwagata_card_archive_v26');
+      const savedArchive = localStorage.getItem('kuwagata_card_archive_v29') || localStorage.getItem('kuwagata_card_archive_v28') || localStorage.getItem('kuwagata_card_archive_v27');
       if (savedArchive) {
         state.cardArchive = JSON.parse(savedArchive);
       }
 
-      const saved = localStorage.getItem('kuwagata_card_studio_state_v28') || localStorage.getItem('kuwagata_card_studio_state_v27') || localStorage.getItem('kuwagata_card_studio_state_v26');
+      const saved = localStorage.getItem('kuwagata_card_studio_state_v29') || localStorage.getItem('kuwagata_card_studio_state_v28') || localStorage.getItem('kuwagata_card_studio_state_v27');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.selectedChipIds) {
@@ -567,17 +613,8 @@
   }
 
   function exportBackupData() {
-    const backupBundle = {
-      app: 'KUWAGATA_PREMIUM_CARD_STUDIO',
-      version: APP_VERSION,
-      exportedAt: new Date().toISOString(),
-      categories: state.categories,
-      chips: state.chips,
-      selectedChipIds: Array.from(state.selectedChipIds),
-      cardArchive: state.cardArchive
-    };
-
-    const blob = new Blob([JSON.stringify(backupBundle, null, 2)], { type: 'application/json' });
+    const payload = CloudSyncManager.getSanitizedPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '') + '_' + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
     const filename = `kuwagata_studio_backup_${dateStr}.json`;
@@ -599,7 +636,7 @@
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target.result);
-        if (!data || data.app !== 'KUWAGATA_PREMIUM_CARD_STUDIO') {
+        if (!data || data.studio !== 'KUWAGATA_PREMIUM_STUDIO') {
           throw new Error('クワガタカードスタジオのバックアップファイルではありません。');
         }
 
@@ -1483,9 +1520,16 @@ JSONフォーマットのみを出力してください:
     }
   }
 
-  // --- 完成カード・アーカイブシステム ---
+  // --- 完成カード・アーカイブシステム (v2.9.0 超軽量圧縮保存) ---
   function saveCurrentToArchive() {
-    const thumbData = canvas.toDataURL('image/jpeg', 0.5);
+    // 320x448px の軽量サムネイルを生成 (品質0.65 -> 約25KB)
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width = 320;
+    thumbCanvas.height = Math.round(320 * (state.canvasHeight / state.canvasWidth));
+    const tCtx = thumbCanvas.getContext('2d');
+    tCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+    const thumbData = thumbCanvas.toDataURL('image/jpeg', 0.65);
+
     const archiveItem = {
       id: 'card_' + Date.now(),
       createdAt: new Date().toLocaleDateString('ja-JP'),
@@ -1510,7 +1554,7 @@ JSONフォーマットのみを出力してください:
         extraInfoText: state.extraInfoText,
         verticalOffset: state.verticalOffset,
         bgType: state.bgType,
-        bgImageSrc: state.bgImageSrc
+        bgImageSrc: state.bgImageSrc.startsWith('data:') ? thumbData : state.bgImageSrc
       }
     };
 
@@ -1518,7 +1562,7 @@ JSONフォーマットのみを出力してください:
     saveState(true); // ☁️ クラウドへ自動アップロード
     renderArchiveGrid();
     Logger.success(`カード履歴に保存＆クラウド同期しました: ${archiveItem.title}`);
-    alert(`「${archiveItem.title}」をカード履歴アルバムに保存しました！\n（※クラウド経由でiPhoneや相方様にも自動共有されます）`);
+    alert(`「${archiveItem.title}」をカード履歴アルバムに保存しました！\n（※超軽量化されクラウド経由でiPhoneにも即座に届きます）`);
   }
 
   function renderArchiveGrid() {
