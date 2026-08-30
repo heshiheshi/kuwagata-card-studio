@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.1.0 Live HUD & Crystal Alpha Edition)
- * True Non-Destructive Multi-Layer Compositor, High-Precision Chroma Alpha, Sticky Live HUD & Letter Prompt Composer
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.2.0 Enterprise Cloud & Universal Export Edition)
+ * True Orthodox Distributed Sync (Timestamps, Smart-Merge, Tombstones, 4-Color LED) & Universal Image Export
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.1.0';
+  const APP_VERSION = 'v4.2.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
   const CLOUD_SYNC_ENDPOINT = '/api/sync';
 
@@ -125,6 +125,11 @@
     paidApiKey: '',
     activeKeyMode: 'free',
 
+    // タイムスタンプ ＆ 墓石（Tombstone）管理
+    localLastModifiedAt: 0,
+    deletedCardIds: new Set(),
+    deletedChipIds: new Set(),
+
     aspectRatio: '5:7',
     aiAspectRatio: '3:4',
     canvasWidth: 1500,
@@ -221,6 +226,7 @@
   const resBadge = document.getElementById('resBadge');
   const apiKeyModal = document.getElementById('apiKeyModal');
   const backupModal = document.getElementById('backupModal');
+  const imageSaveModal = document.getElementById('imageSaveModal');
   const freeApiKeyInput = document.getElementById('freeApiKeyInput');
   const paidApiKeyInput = document.getElementById('paidApiKeyInput');
   const btnQuickToggleKey = document.getElementById('btnQuickToggleKey');
@@ -281,51 +287,66 @@
     }
   }
 
-  // --- ☁️ 完全自動シームレス Cloudflare KV 同期エンジン ---
+  // --- ☁️ 真の王道・分散クラウド同期エンジン (タイムスタンプ ＆ スマートマージ ＆ 墓石管理) ---
   const CloudSyncManager = {
-    syncTimer: null,
     isSyncing: false,
-    lastSyncedTime: null,
+    hasPendingChanges: false,
+    syncTimer: null,
 
     init() {
       this.updateIndicator('online', '自動同期稼働中');
-      this.pullFromCloud(true);
+      this.checkAndPullFromCloud(true);
 
+      // ライフサイクル同期（画面復帰・フォーカス時）
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') this.pullFromCloud(true);
+        if (document.visibilityState === 'visible') this.checkAndPullFromCloud(true);
       });
       window.addEventListener('focus', () => {
-        this.pullFromCloud(true);
+        this.checkAndPullFromCloud(true);
       });
+
+      // オフライン復旧時の自動再送
+      window.addEventListener('online', () => {
+        Logger.info('📶 インターネット接続が復旧しました。未送信データを同期します。');
+        this.pushToCloud(true);
+      });
+      window.addEventListener('offline', () => {
+        this.updateIndicator('pending', 'オフライン（ローカル保持中）');
+      });
+
+      // 20秒ごとの条件付き定期確認（※強制上書きではなく、他端末の更新有無だけをチェック）
       setInterval(() => {
-        this.pullFromCloud(true);
+        if (!this.isSyncing) {
+          this.checkAndPullFromCloud(true);
+        }
       }, 20000);
     },
 
     getSanitizedPayload() {
-      const payload = {
+      return {
         studio: 'KUWAGATA_PREMIUM_STUDIO',
         version: APP_VERSION,
+        updatedAt: state.localLastModifiedAt || Date.now(),
+        deletedCardIds: Array.from(state.deletedCardIds),
+        deletedChipIds: Array.from(state.deletedChipIds),
         categories: state.categories,
         chips: state.chips,
         selectedChipIds: Array.from(state.selectedChipIds),
-        cardArchive: state.cardArchive,
-        updatedAt: Date.now()
+        cardArchive: state.cardArchive
       };
-      return payload;
     },
 
-    scheduleAutoSync() {
-      clearTimeout(this.syncTimer);
-      this.syncTimer = setTimeout(() => {
-        this.pushToCloud(true);
-      }, 600);
-    },
-
+    // 🌟 操作時即時同期（待機時間ゼロで即座にクラウドへ送信）
     async pushToCloud(silent = true) {
-      if (this.isSyncing) return;
+      if (this.isSyncing) {
+        this.hasPendingChanges = true;
+        return;
+      }
       this.isSyncing = true;
-      this.updateIndicator('syncing', '同期中...');
+      this.updateIndicator('syncing', 'クラウドへ送信中...');
+
+      state.localLastModifiedAt = Date.now();
+      localStorage.setItem('kuwagata_local_last_modified_v4', String(state.localLastModifiedAt));
 
       const payload = this.getSanitizedPayload();
       const payloadJson = JSON.stringify(payload);
@@ -339,60 +360,98 @@
         });
 
         if (resp.ok) {
-          this.lastSyncedTime = new Date();
-          this.updateIndicator('online', `同期完了 (${this.formatTime(this.lastSyncedTime)})`);
-          Logger.success(`☁️ 自動同期 [送信完了] (カード: ${payload.cardArchive.length} 枚, 単語: ${payload.chips.length})`);
+          this.updateIndicator('online', `同期完了 (${this.formatTime(new Date())})`);
+          Logger.success(`☁️ クラウド即時送信完了 (カード: ${payload.cardArchive.length} 枚, 容量: ${sizeKB} KB)`);
+          this.hasPendingChanges = false;
           if (!silent) {
-            alert(`🎉 Cloudflare KV へ保存が完了しました！\n\n・単語辞書: ${payload.chips.length} 件\n・非破壊カード履歴: ${payload.cardArchive.length} 件 (${sizeKB} KB)`);
+            alert(`🎉 Cloudflare KV へ安全に保存されました！\n\n・単語辞書: ${payload.chips.length} 件\n・非破壊カード履歴: ${payload.cardArchive.length} 件`);
           }
+        } else {
+          throw new Error(`HTTP ${resp.status}`);
         }
       } catch (err) {
-        this.updateIndicator('online', '自動同期稼働中');
+        this.hasPendingChanges = true;
+        this.updateIndicator('error', '通信待機中（次回自動再送）');
+        Logger.warn('クラウド送信保留（オフライン）', err.message);
       } finally {
         this.isSyncing = false;
+        if (this.hasPendingChanges) {
+          this.hasPendingChanges = false;
+          setTimeout(() => this.pushToCloud(true), 2000);
+        }
       }
     },
 
-    async pullFromCloud(silent = true) {
-      if (this.isSyncing) return;
+    // 🌟 条件付き確認（クラウド側が自分より新しい場合のみ安全に取り込み）
+    async checkAndPullFromCloud(silent = true) {
+      if (this.isSyncing || this.hasPendingChanges) return;
       this.isSyncing = true;
-      this.updateIndicator('syncing', '同期中...');
 
       try {
         const resp = await fetch(CLOUD_SYNC_ENDPOINT);
         if (resp.ok) {
-          const data = await resp.json();
-          if (data && (data.studio === 'KUWAGATA_PREMIUM_STUDIO' || Array.isArray(data.cardArchive))) {
-            let hasChanges = false;
+          const cloudData = await resp.json();
+          if (cloudData && (cloudData.studio === 'KUWAGATA_PREMIUM_STUDIO' || Array.isArray(cloudData.cardArchive))) {
+            const cloudTime = cloudData.updatedAt || 0;
 
-            if (data.categories && Object.keys(data.categories).length > 0) {
-              state.categories = data.categories;
-              hasChanges = true;
-            }
-            if (data.chips && Array.isArray(data.chips) && data.chips.length > 0) {
-              state.chips = data.chips;
-              hasChanges = true;
-            }
-            if (data.selectedChipIds && Array.isArray(data.selectedChipIds)) {
-              state.selectedChipIds = new Set(data.selectedChipIds);
-              hasChanges = true;
-            }
-            if (data.cardArchive && Array.isArray(data.cardArchive)) {
-              if (JSON.stringify(state.cardArchive) !== JSON.stringify(data.cardArchive)) {
-                state.cardArchive = data.cardArchive;
-                hasChanges = true;
+            // 👑 王道の新旧比較: クラウドが自分の更新日時よりも新しい場合のみマージ
+            if (cloudTime > state.localLastModifiedAt) {
+              Logger.info(`☁️ 他端末での最新更新（${this.formatTime(new Date(cloudTime))}）を検知しました。スマートマージを実行します。`);
+              this.updateIndicator('syncing', '他端末の変更を取り込み中...');
+
+              // 1. 墓石（削除マーク）の同期合体
+              if (Array.isArray(cloudData.deletedCardIds)) {
+                cloudData.deletedCardIds.forEach(id => state.deletedCardIds.add(id));
+                localStorage.setItem('kuwagata_deleted_card_ids_v4', JSON.stringify(Array.from(state.deletedCardIds)));
               }
-            }
+              if (Array.isArray(cloudData.deletedChipIds)) {
+                cloudData.deletedChipIds.forEach(id => state.deletedChipIds.add(id));
+                localStorage.setItem('kuwagata_deleted_chip_ids_v4', JSON.stringify(Array.from(state.deletedChipIds)));
+              }
 
-            if (hasChanges) {
+              // 2. カード履歴のスマートマージ（墓石に含まれるカードは100%除外）
+              if (Array.isArray(cloudData.cardArchive)) {
+                const mergedMap = new Map();
+                // 既存のローカルカード
+                state.cardArchive.forEach(c => {
+                  if (!state.deletedCardIds.has(c.id)) mergedMap.set(c.id, c);
+                });
+                // クラウドの新しいカード
+                cloudData.cardArchive.forEach(c => {
+                  if (!state.deletedCardIds.has(c.id)) mergedMap.set(c.id, c);
+                });
+                state.cardArchive = Array.from(mergedMap.values()).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+              }
+
+              // 3. カテゴリと単語のスマートマージ
+              if (cloudData.categories && Object.keys(cloudData.categories).length > 0) {
+                state.categories = { ...state.categories, ...cloudData.categories };
+              }
+              if (Array.isArray(cloudData.chips)) {
+                const chipMap = new Map();
+                state.chips.forEach(c => { if (!state.deletedChipIds.has(c.id)) chipMap.set(c.id, c); });
+                cloudData.chips.forEach(c => { if (!state.deletedChipIds.has(c.id)) chipMap.set(c.id, c); });
+                state.chips = Array.from(chipMap.values());
+              }
+
+              state.localLastModifiedAt = cloudTime;
+              localStorage.setItem('kuwagata_local_last_modified_v4', String(state.localLastModifiedAt));
+
+              // 画面更新（再保存トリガーは発火させない）
               saveState(false);
               renderDynamicChipGroups();
               updateCombinedPrompt();
               renderArchiveGrid();
-            }
 
-            this.lastSyncedTime = new Date(data.updatedAt || Date.now());
-            this.updateIndicator('online', `同期完了 (${this.formatTime(this.lastSyncedTime)})`);
+              this.updateIndicator('online', `同期完了 (${this.formatTime(new Date())})`);
+              Logger.success('🎉 他端末とのスマートマージが完了しました。');
+              if (!silent) {
+                alert('🎉 クラウドから最新データを正常に取り込みました！');
+              }
+            } else {
+              // 自分が最新、または変更なし ➔ 何もしない（削除されたデータの上書き復活を100%防止）
+              this.updateIndicator('online', `同期完了 (${this.formatTime(new Date())})`);
+            }
           }
         }
       } catch (err) {
@@ -408,7 +467,12 @@
       const statusText = document.getElementById('cloudSyncStatusText');
 
       if (dot) dot.className = `sync-status-dot ${status}`;
-      if (badge) badge.textContent = status === 'syncing' ? '🔄 同期中' : '🟢 自動連動中';
+      if (badge) {
+        if (status === 'online') badge.textContent = '🟢 同期完了・安全';
+        else if (status === 'syncing') badge.textContent = '🔵 通信中...';
+        else if (status === 'pending') badge.textContent = '🟡 未送信あり';
+        else if (status === 'error') badge.textContent = '🔴 通信待機中';
+      }
       if (statusText) statusText.textContent = `最終同期: ${text}`;
     },
 
@@ -425,6 +489,7 @@
     setupEventListeners();
     setupDictManager();
     setupBackupManager();
+    setupImageSaveModal();
     setupLetterPromptChips();
     renderDynamicChipGroups();
     updateCombinedPrompt();
@@ -491,25 +556,40 @@
       localStorage.setItem('kuwagata_categories_v4', JSON.stringify(state.categories));
       localStorage.setItem('kuwagata_chips_v4', JSON.stringify(state.chips));
       localStorage.setItem('kuwagata_card_archive_v4', JSON.stringify(state.cardArchive));
+      localStorage.setItem('kuwagata_deleted_card_ids_v4', JSON.stringify(Array.from(state.deletedCardIds)));
+      localStorage.setItem('kuwagata_deleted_chip_ids_v4', JSON.stringify(Array.from(state.deletedChipIds)));
 
       if (triggerCloud) {
-        CloudSyncManager.scheduleAutoSync();
+        CloudSyncManager.pushToCloud(true);
       }
     } catch (e) {
-      Logger.warn('LocalStorage save failed', e.message);
+      Logger.warn('LocalStorage save warning', e.message);
     }
   }
 
   function loadSavedState() {
     try {
+      const savedTime = localStorage.getItem('kuwagata_local_last_modified_v4');
+      if (savedTime) state.localLastModifiedAt = parseInt(savedTime, 10);
+
+      const savedDelCards = localStorage.getItem('kuwagata_deleted_card_ids_v4');
+      if (savedDelCards) state.deletedCardIds = new Set(JSON.parse(savedDelCards));
+
+      const savedDelChips = localStorage.getItem('kuwagata_deleted_chip_ids_v4');
+      if (savedDelChips) state.deletedChipIds = new Set(JSON.parse(savedDelChips));
+
       const savedCategories = localStorage.getItem('kuwagata_categories_v4') || localStorage.getItem('kuwagata_categories_vault');
       if (savedCategories) state.categories = JSON.parse(savedCategories);
 
       const savedChips = localStorage.getItem('kuwagata_chips_v4') || localStorage.getItem('kuwagata_chips_vault');
-      if (savedChips) state.chips = JSON.parse(savedChips);
+      if (savedChips) {
+        state.chips = JSON.parse(savedChips).filter(c => !state.deletedChipIds.has(c.id));
+      }
 
       const savedArchive = localStorage.getItem('kuwagata_card_archive_v4') || localStorage.getItem('kuwagata_card_archive_vault');
-      if (savedArchive) state.cardArchive = JSON.parse(savedArchive);
+      if (savedArchive) {
+        state.cardArchive = JSON.parse(savedArchive).filter(c => !state.deletedCardIds.has(c.id));
+      }
 
       const saved = localStorage.getItem('kuwagata_card_studio_state_v4');
       if (saved) {
@@ -522,7 +602,7 @@
       }
       syncInputsFromState();
     } catch (e) {
-      Logger.warn('LocalStorage load failed', e.message);
+      Logger.warn('LocalStorage load warning', e.message);
     }
   }
 
@@ -643,6 +723,30 @@
     });
   }
 
+  // --- 🖼️ 万能画像保存 ＆ 長押し写真追加モーダル ---
+  function setupImageSaveModal() {
+    const btnClose = document.getElementById('btnCloseImageSaveModal');
+    const btnCloseBottom = document.getElementById('btnCloseImageSaveModalBottom');
+
+    [btnClose, btnCloseBottom].forEach(btn => {
+      if (btn) btn.addEventListener('click', () => imageSaveModal.classList.add('hidden'));
+    });
+  }
+
+  function openImageSaveModal(dataUrl, filename) {
+    const previewImg = document.getElementById('savedModalImagePreview');
+    const directLink = document.getElementById('btnDirectDownloadLink');
+
+    if (previewImg) previewImg.src = dataUrl;
+    if (directLink) {
+      directLink.href = dataUrl;
+      directLink.download = filename;
+    }
+
+    imageSaveModal.classList.remove('hidden');
+    scrollToCanvasTop();
+  }
+
   // --- ☁️ 同期＆バックアップUI設定 ---
   function setupBackupManager() {
     const btnHeaderSync = document.getElementById('btnHeaderCloudSync');
@@ -661,7 +765,7 @@
     });
 
     if (btnForceUpload) btnForceUpload.addEventListener('click', () => CloudSyncManager.pushToCloud(false));
-    if (btnForceDownload) btnForceDownload.addEventListener('click', () => CloudSyncManager.pullFromCloud(false));
+    if (btnForceDownload) btnForceDownload.addEventListener('click', () => CloudSyncManager.checkAndPullFromCloud(false));
 
     if (btnExport) btnExport.addEventListener('click', () => exportBackupData());
     if (btnTriggerImport && fileInput) {
@@ -753,7 +857,7 @@
 
     catKeys.forEach(catKey => {
       const catName = state.categories[catKey] || catKey;
-      const visibleChips = state.chips.filter(c => c.category === catKey && c.isVisible);
+      const visibleChips = state.chips.filter(c => c.category === catKey && c.isVisible && !state.deletedChipIds.has(c.id));
 
       const groupEl = document.createElement('div');
       groupEl.className = 'chip-group';
@@ -815,7 +919,7 @@
 
     catKeys.forEach(cat => {
       state.chips
-        .filter(c => c.category === cat && state.selectedChipIds.has(c.id) && c.isVisible)
+        .filter(c => c.category === cat && state.selectedChipIds.has(c.id) && c.isVisible && !state.deletedChipIds.has(c.id))
         .forEach(c => selectedTexts.push(c.text));
     });
 
@@ -924,68 +1028,69 @@
     const countEl = document.getElementById('dictTotalCountTag');
     if (!listEl) return;
 
-    if (countEl) countEl.textContent = `${state.chips.length} 件`;
+    const activeChips = state.chips.filter(c => !state.deletedChipIds.has(c.id));
+    if (countEl) countEl.textContent = `${activeChips.length} 件`;
     const catKeys = Object.keys(state.categories);
 
-    listEl.innerHTML = state.chips.map((chip, idx) => {
+    listEl.innerHTML = activeChips.map((chip, idx) => {
       const optionsHtml = catKeys.map(k => `
         <option value="${k}" ${chip.category === k ? 'selected' : ''}>${Logger.escapeHtml(state.categories[k])}</option>
       `).join('');
 
       return `
         <div class="dict-item-row" style="display:flex; gap:6px; margin-bottom:4px; align-items:center;">
-          <select class="dict-item-cat-select" data-idx="${idx}" style="width:120px;">
+          <select class="dict-item-cat-select" data-id="${chip.id}" style="width:120px;">
             ${optionsHtml}
           </select>
-          <input type="text" class="dict-item-input" value="${Logger.escapeHtml(chip.text)}" data-idx="${idx}">
-          <button type="button" class="btn-secondary btn-sm" data-action="toggle-vis" data-idx="${idx}">${chip.isVisible ? '表示' : '非表示'}</button>
-          <button type="button" class="btn-secondary btn-sm" data-action="del" data-idx="${idx}" style="color:#ef5350;">✕</button>
+          <input type="text" class="dict-item-input" value="${Logger.escapeHtml(chip.text)}" data-id="${chip.id}">
+          <button type="button" class="btn-secondary btn-sm" data-action="toggle-vis" data-id="${chip.id}">${chip.isVisible ? '表示' : '非表示'}</button>
+          <button type="button" class="btn-secondary btn-sm" data-action="del" data-id="${chip.id}" style="color:#ef5350;">✕</button>
         </div>
       `;
     }).join('');
 
     listEl.querySelectorAll('.dict-item-cat-select').forEach(sel => {
       sel.addEventListener('change', (e) => {
-        const idx = parseInt(e.target.dataset.idx, 10);
-        state.chips[idx].category = e.target.value;
-        saveState();
-        renderDynamicChipGroups();
-        updateCombinedPrompt();
+        const id = e.target.dataset.id;
+        const target = state.chips.find(c => c.id === id);
+        if (target) {
+          target.category = e.target.value;
+          saveState();
+          renderDynamicChipGroups();
+          updateCombinedPrompt();
+        }
       });
     });
 
     listEl.querySelectorAll('.dict-item-input').forEach(input => {
       input.addEventListener('change', (e) => {
-        const idx = parseInt(e.target.dataset.idx, 10);
-        state.chips[idx].text = e.target.value.trim();
-        saveState();
-        renderDynamicChipGroups();
-        updateCombinedPrompt();
+        const id = e.target.dataset.id;
+        const target = state.chips.find(c => c.id === id);
+        if (target) {
+          target.text = e.target.value.trim();
+          saveState();
+          renderDynamicChipGroups();
+          updateCombinedPrompt();
+        }
       });
     });
 
     listEl.querySelectorAll('button[data-action]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const action = btn.dataset.action;
-        const idx = parseInt(btn.dataset.idx, 10);
-        const chip = state.chips[idx];
-        if (!chip) return;
+        const id = btn.dataset.id;
+        const target = state.chips.find(c => c.id === id);
+        if (!target) return;
 
         if (action === 'toggle-vis') {
-          chip.isVisible = !chip.isVisible;
+          target.isVisible = !target.isVisible;
           saveState();
           renderDictManagerList();
           renderDynamicChipGroups();
           updateCombinedPrompt();
         } else if (action === 'del') {
-          if (confirm(`「${chip.text}」を削除しますか？`)) {
-            state.selectedChipIds.delete(chip.id);
-            state.chips.splice(idx, 1);
-            saveState();
-            renderDictManagerList();
-            renderDynamicChipGroups();
-            updateCombinedPrompt();
-          }
+          deleteChip(id);
+          renderDictManagerList();
         }
       });
     });
@@ -996,6 +1101,7 @@
     if (existing) {
       existing.isVisible = true;
       existing.category = category;
+      state.deletedChipIds.delete(existing.id);
       state.selectedChipIds.add(existing.id);
     } else {
       const newChip = {
@@ -1008,21 +1114,24 @@
       state.chips.push(newChip);
       state.selectedChipIds.add(newChip.id);
     }
-    saveState();
+    saveState(true);
     renderDynamicChipGroups();
     updateCombinedPrompt();
     Logger.success(`単語を追加しました: ${text}`);
   }
 
+  // 🌟 墓石管理付きの確実な単語削除（復活防止）
   function deleteChip(chipId) {
     const chip = state.chips.find(c => c.id === chipId);
     if (!chip) return;
     if (confirm(`「${chip.text}」を削除しますか？`)) {
+      state.deletedChipIds.add(chipId);
       state.selectedChipIds.delete(chipId);
       state.chips = state.chips.filter(c => c.id !== chipId);
-      saveState();
+      saveState(true);
       renderDynamicChipGroups();
       updateCombinedPrompt();
+      Logger.success(`単語を削除しました (墓石登録): ${chip.text}`);
     }
   }
 
@@ -1505,7 +1614,6 @@ JSONフォーマットのみを出力してください:
     }
 
     if (generatedB64) {
-      // 🌟 超高精度クロマキー透過処理
       const transparentDataUrl = await makeBackgroundTransparent(generatedB64);
       
       if (targetLayer === 'brand') {
@@ -1546,7 +1654,6 @@ JSONフォーマットのみを出力してください:
         const imgData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
         const data = imgData.data;
 
-        // 1. 4隅から背景色（RGB）をサンプリング
         const corners = [
           [0, 0],
           [img.width - 1, 0],
@@ -1564,7 +1671,6 @@ JSONフォーマットのみを出力してください:
         bgG /= 4;
         bgB /= 4;
 
-        // 2. 超高精度色差 ＆ 輝度クロマキー
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i];
           const g = data[i + 1];
@@ -1573,7 +1679,6 @@ JSONフォーマットのみを出力してください:
           const dist = Math.sqrt((r - bgR)**2 + (g - bgG)**2 + (b - bgB)**2);
           const brightness = (0.299 * r + 0.587 * g + 0.114 * b);
 
-          // 背景色に近い色、または暗い背景ピクセルを完全に透明化 (アルファ=0)
           if (dist < 45 || brightness < 38) {
             data[i + 3] = 0;
           } else if (dist < 75 || brightness < 68) {
@@ -1668,14 +1773,15 @@ JSONフォーマットのみを出力してください:
     }
   }
 
-  // --- 🎴 非破壊マルチレイヤー アーカイブシステム ---
+  // --- 🎴 非破壊マルチレイヤー アーカイブシステム（軽量最適化 ＆ 墓石管理） ---
   function saveCurrentToArchive() {
+    // 高効率サムネイル圧縮（240px, JPEG 0.65 ➔ 10〜15KB程度で超軽量）
     const thumbCanvas = document.createElement('canvas');
-    thumbCanvas.width = 320;
-    thumbCanvas.height = Math.round(320 * (state.canvasHeight / state.canvasWidth));
+    thumbCanvas.width = 240;
+    thumbCanvas.height = Math.round(240 * (state.canvasHeight / state.canvasWidth));
     const tCtx = thumbCanvas.getContext('2d');
     tCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
-    const thumbData = thumbCanvas.toDataURL('image/jpeg', 0.7);
+    const thumbData = thumbCanvas.toDataURL('image/jpeg', 0.65);
 
     const archiveItem = {
       id: 'card_' + Date.now(),
@@ -1692,6 +1798,7 @@ JSONフォーマットのみを出力してください:
       }))
     };
 
+    state.deletedCardIds.delete(archiveItem.id);
     state.cardArchive.unshift(archiveItem);
     saveState(true);
     renderArchiveGrid();
@@ -1701,9 +1808,10 @@ JSONフォーマットのみを出力してください:
 
   function renderArchiveGrid() {
     if (!archiveGrid) return;
-    if (archiveCountTag) archiveCountTag.textContent = `${state.cardArchive.length} 件`;
+    const activeCards = state.cardArchive.filter(c => !state.deletedCardIds.has(c.id));
+    if (archiveCountTag) archiveCountTag.textContent = `${activeCards.length} 件`;
 
-    if (state.cardArchive.length === 0) {
+    if (activeCards.length === 0) {
       archiveGrid.innerHTML = `
         <div style="text-align:center; padding:30px 10px; color:var(--text-muted); font-size:11px;">
           保存されたカード履歴はまだありません。<br>
@@ -1713,7 +1821,7 @@ JSONフォーマットのみを出力してください:
       return;
     }
 
-    archiveGrid.innerHTML = state.cardArchive.map((item, idx) => `
+    archiveGrid.innerHTML = activeCards.map((item) => `
       <div class="archive-card-item">
         <img src="${item.thumbnail}" class="archive-thumb" alt="thumb">
         <div class="archive-title">${Logger.escapeHtml(item.title)}</div>
@@ -1722,8 +1830,8 @@ JSONフォーマットのみを出力してください:
           ${item.createdAt}
         </div>
         <div class="archive-actions">
-          <button type="button" class="btn-primary btn-sm" data-action="restore" data-idx="${idx}">復元・編集</button>
-          <button type="button" class="btn-secondary btn-sm" data-action="delete" data-idx="${idx}" style="color:#ef5350;">削除</button>
+          <button type="button" class="btn-primary btn-sm" data-action="restore" data-id="${item.id}">復元・編集</button>
+          <button type="button" class="btn-secondary btn-sm" data-action="delete" data-id="${item.id}" style="color:#ef5350;">削除</button>
         </div>
       </div>
     `).join('');
@@ -1732,21 +1840,30 @@ JSONフォーマットのみを出力してください:
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const action = btn.dataset.action;
-        const idx = parseInt(btn.dataset.idx, 10);
-        const target = state.cardArchive[idx];
+        const id = btn.dataset.id;
+        const target = state.cardArchive.find(c => c.id === id);
         if (!target) return;
 
         if (action === 'restore') {
           restoreFromArchive(target);
         } else if (action === 'delete') {
-          if (confirm(`「${target.title}」を削除しますか？`)) {
-            state.cardArchive.splice(idx, 1);
-            saveState(true);
-            renderArchiveGrid();
-          }
+          deleteCard(id);
         }
       });
     });
+  }
+
+  // 🌟 墓石管理付きの確実なカード削除（復活完全防止 ＆ 即時クラウド同期）
+  function deleteCard(cardId) {
+    const target = state.cardArchive.find(c => c.id === cardId);
+    if (!target) return;
+    if (confirm(`「${target.title}」を削除しますか？\n（※他の全端末からも安全に消去されます）`)) {
+      state.deletedCardIds.add(cardId);
+      state.cardArchive = state.cardArchive.filter(c => c.id !== cardId);
+      saveState(true); // 即時送信
+      renderArchiveGrid();
+      Logger.success(`カード履歴を削除しました (墓石登録・即時送信): ${target.title}`);
+    }
   }
 
   async function restoreFromArchive(item) {
@@ -1835,6 +1952,7 @@ JSONフォーマットのみを出力してください:
         return;
       }
       const img = new Image();
+      img.crossOrigin = 'anonymous';
       img.onload = () => {
         if (type === 'brand') loadedBrandImg = img;
         if (type === 'kanji') loadedKanjiImg = img;
@@ -1856,19 +1974,10 @@ JSONフォーマットのみを出力してください:
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 1. レイヤー0: 背景描画
     drawBackgroundLayer(ctx, canvas.width, canvas.height);
-
-    // 2. レイヤー1: ブランド AI文字
     drawBrandLayer(ctx, canvas.width, canvas.height);
-
-    // 3. レイヤー2: メイン漢字血統 AI文字
     drawKanjiLayer(ctx, canvas.width, canvas.height);
-
-    // 4. レイヤー3: 英字血統 AI文字
     drawRomajiLayer(ctx, canvas.width, canvas.height);
-
-    // 5. レイヤー4: 個体スペック文字
     drawSpecsLayer(ctx, canvas.width, canvas.height);
 
     isRendering = false;
@@ -2104,8 +2213,9 @@ JSONフォーマットのみを出力してください:
     targetCtx.restore();
   }
 
+  // 🌟 万能画像エクスポート ＆ iPhone/Mac両対応モーダル
   function exportLayer(type) {
-    showLoading(true, 'PNG書き出し中...');
+    showLoading(true, '高画質PNG生成中...');
     setTimeout(() => {
       try {
         const offCanvas = document.createElement('canvas');
@@ -2113,44 +2223,46 @@ JSONフォーマットのみを出力してください:
         offCanvas.height = state.canvasHeight;
         const offCtx = offCanvas.getContext('2d');
 
+        let filename = `kuwagata_card_${Date.now()}.png`;
+
         if (type === 'merged') {
           drawBackgroundLayer(offCtx, state.canvasWidth, state.canvasHeight);
           drawBrandLayer(offCtx, state.canvasWidth, state.canvasHeight);
           drawKanjiLayer(offCtx, state.canvasWidth, state.canvasHeight);
           drawRomajiLayer(offCtx, state.canvasWidth, state.canvasHeight);
           drawSpecsLayer(offCtx, state.canvasWidth, state.canvasHeight);
-          downloadCanvasAsPNG(offCanvas, `kuwagata_card_${state.layers.kanji.text || 'cert'}_full.png`);
+          filename = `kuwagata_card_${state.layers.kanji.text || 'cert'}_full.png`;
         } else if (type === 'bg') {
           drawBackgroundLayer(offCtx, state.canvasWidth, state.canvasHeight);
-          downloadCanvasAsPNG(offCanvas, `kuwagata_bg_clean.png`);
+          filename = `kuwagata_bg_clean.png`;
         } else if (type === 'text') {
           drawBrandLayer(offCtx, state.canvasWidth, state.canvasHeight);
           drawKanjiLayer(offCtx, state.canvasWidth, state.canvasHeight);
           drawRomajiLayer(offCtx, state.canvasWidth, state.canvasHeight);
           drawSpecsLayer(offCtx, state.canvasWidth, state.canvasHeight);
-          downloadCanvasAsPNG(offCanvas, `kuwagata_text_layers_transparent.png`);
+          filename = `kuwagata_text_layers_transparent.png`;
         }
-        Logger.success(`PNG出力完了: ${type}`);
+
+        const dataUrl = offCanvas.toDataURL('image/png');
+
+        // デスクトップ用自動ダウンロード
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // iPhone / iPad 用救済モーダル（長押し写真保存）を同時オープン
+        openImageSaveModal(dataUrl, filename);
+        Logger.success(`高解像度PNG生成完了: ${filename}`);
       } catch (err) {
         Logger.error('PNG出力例外', err.message);
+        alert('PNG出力エラー: ' + err.message);
       } finally {
         showLoading(false);
       }
     }, 50);
-  }
-
-  function downloadCanvasAsPNG(targetCanvas, filename) {
-    targetCanvas.toBlob((blob) => {
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 'image/png');
   }
 
   function readFileAsBase64(file) {

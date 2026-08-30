@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.1.0">
+  <link rel="stylesheet" href="style.css?v=4.2.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -46,7 +46,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.1.0</span>
+            <span class="app-version-badge" id="appVersion">v4.2.0</span>
           </div>
           <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
         </div>
@@ -56,7 +56,7 @@
             <span class="tag-text" id="keyModeLabel">無料キー</span>
           </button>
 
-          <!-- 2. 同期管理 札 (状態ランプ一体型) -->
+          <!-- 2. 同期管理 札 (4色LEDランプ一体型) -->
           <button type="button" class="btn-header-tag" id="btnHeaderCloudSync" title="クラウド自動同期 ＆ データ管理">
             <span class="sync-status-dot online" id="headerSyncDot"></span>
             <span class="tag-text" id="headerSyncText">同期管理</span>
@@ -224,7 +224,7 @@
         </div>
       </section>
 
-      <!-- タブ3: 【大革新】ブランド＆血統名 AI文字グラフィック生成 ＆ 個別調整 -->
+      <!-- タブ3: ブランド＆血統名 AI文字グラフィック生成 ＆ 個別調整 -->
       <section id="tab-ai-letters" class="tab-content">
         <div class="section-title-row">
           <h3>✨ ブランド ＆ 血統名 AI文字グラフィック</h3>
@@ -631,6 +631,31 @@
       <p id="loadingText">Gemini AI で画像を生成中...</p>
     </div>
 
+    <!-- 🖼️ 画像保存 ＆ 長押し写真追加救済モーダル -->
+    <div id="imageSaveModal" class="modal-backdrop hidden">
+      <div class="modal-card" style="max-width: 440px;">
+        <div class="modal-header">
+          <h3>📥 高解像度カード画像の保存</h3>
+          <button type="button" class="btn-modal-close" id="btnCloseImageSaveModal">✕</button>
+        </div>
+        <div class="modal-body" style="text-align: center;">
+          <p class="modal-desc" style="font-size: 11.5px; color: #ffd54f; margin-bottom: 8px;">
+            📱 <strong>iPhone / iPad をお使いの場合</strong><br>
+            下の画像を<strong>「長押し ➔ 写真に追加」</strong>で直接カメラロールへ保存できます！
+          </p>
+          <div class="saved-image-preview-wrap" style="max-width: 260px; margin: 0 auto 10px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-gold); box-shadow: 0 4px 16px rgba(0,0,0,0.8);">
+            <img id="savedModalImagePreview" src="" alt="Card Export" style="width: 100%; display: block;">
+          </div>
+          <a id="btnDirectDownloadLink" href="" download="kuwagata_card.png" class="btn-primary full-width" style="text-decoration: none; display: inline-block; padding: 10px; box-sizing: border-box;">
+            ⬇️ ファイルとしてダウンロード
+          </a>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btnCloseImageSaveModalBottom">閉じる</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 🔑 APIキー設定モーダル (端末内永久キー保管庫) -->
     <div id="apiKeyModal" class="modal-backdrop hidden">
       <div class="modal-card">
@@ -685,8 +710,8 @@
         <div class="modal-body">
           <div class="backup-box">
             <div class="backup-box-info">
-              <h4>☁️ Cloudflare KV シームレス自動連動</h4>
-              <p>Mac・iPhone・相方様の端末間で、<strong>「単語辞書」「非破壊カード履歴」が自動で共有・同期</strong>されます。</p>
+              <h4>☁️ Cloudflare KV 王道同期エンジン (条件付き確認 ＆ 墓石保護)</h4>
+              <p>Mac・iPhone間で、<strong>「単語辞書」「非破壊カード履歴」が安全に同期</strong>されます。削除したデータが復活することはありません。</p>
             </div>
             <div style="display:flex; gap:8px; margin-top:8px;">
               <button type="button" class="btn-primary btn-sm" id="btnForceUploadCloud">⬆️ クラウドへ手動上書き送信</button>
