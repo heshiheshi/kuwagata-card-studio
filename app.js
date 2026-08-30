@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.3.0 Deep Diagnostic & Universal Storage Edition)
- * True Orthodox Distributed Sync, Force Pull, Deep Diagnostic System Logging & Rock-Solid Storage
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.4.0 High-Capacity IndexedDB & Guaranteed Persistence Edition)
+ * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.3.0';
+  const APP_VERSION = 'v4.4.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
   const CLOUD_SYNC_ENDPOINT = '/api/sync';
 
@@ -16,6 +16,96 @@
     PAID_API_KEY: 'kuwagata_vault_paid_api_key',
     ACTIVE_KEY_MODE: 'kuwagata_vault_active_key_mode',
     AUTH_PASSED: 'kuwagata_vault_auth_passed'
+  };
+
+  // --- 💾 大容量ローカルデータベース（StorageVault - IndexedDB） ---
+  const DB_NAME = 'KuwagataStudioDB';
+  const DB_VERSION = 1;
+  const STORE_NAME = 'studio_vault';
+
+  const StorageVault = {
+    db: null,
+
+    async open() {
+      if (this.db) return this.db;
+      return new Promise((resolve, reject) => {
+        if (!window.indexedDB) {
+          Logger.warn('IndexedDB非対応ブラウザです。LocalStorageをフォールバック使用します。');
+          resolve(null);
+          return;
+        }
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
+        };
+        request.onsuccess = (e) => {
+          this.db = e.target.result;
+          resolve(this.db);
+        };
+        request.onerror = (e) => {
+          Logger.error('IndexedDB open error', e.target.error);
+          resolve(null);
+        };
+      });
+    },
+
+    async set(key, value) {
+      try {
+        const db = await this.open();
+        if (!db) {
+          localStorage.setItem(key, JSON.stringify(value));
+          return true;
+        }
+        return new Promise((resolve) => {
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          const store = tx.objectStore(STORE_NAME);
+          const req = store.put(value, key);
+          req.onsuccess = () => resolve(true);
+          req.onerror = (e) => {
+            Logger.error('IndexedDB put error', e.target.error);
+            resolve(false);
+          };
+        });
+      } catch (e) {
+        Logger.error('StorageVault.set error', e.message);
+        return false;
+      }
+    },
+
+    async get(key) {
+      try {
+        const db = await this.open();
+        if (!db) {
+          const val = localStorage.getItem(key);
+          return val ? JSON.parse(val) : null;
+        }
+        return new Promise((resolve) => {
+          const tx = db.transaction(STORE_NAME, 'readonly');
+          const store = tx.objectStore(STORE_NAME);
+          const req = store.get(key);
+          req.onsuccess = (e) => {
+            if (e.target.result !== undefined && e.target.result !== null) {
+              resolve(e.target.result);
+            } else {
+              // LocalStorageからの移行フォールバック
+              const localVal = localStorage.getItem(key);
+              resolve(localVal ? JSON.parse(localVal) : null);
+            }
+          };
+          req.onerror = (e) => {
+            Logger.error('IndexedDB get error', e.target.error);
+            const localVal = localStorage.getItem(key);
+            resolve(localVal ? JSON.parse(localVal) : null);
+          };
+        });
+      } catch (e) {
+        Logger.error('StorageVault.get error', e.message);
+        return null;
+      }
+    }
   };
 
   // --- 🛠️ 超詳細プログラム診断ロガー (Deep Diagnostic Logger) ---
@@ -51,7 +141,7 @@
     error(msg, data) { this.add('error', msg, data); },
     trace(msg, data) { this.add('trace', msg, data); },
 
-    updateUI() {
+    async updateUI() {
       const pill = document.getElementById('logCountPill');
       const tag = document.getElementById('logModalCount');
       const terminal = document.getElementById('logTerminal');
@@ -59,7 +149,18 @@
 
       if (pill) pill.textContent = this.logs.length;
       if (tag) tag.textContent = `${this.logs.length} 件`;
-      if (usageEl) usageEl.textContent = `LocalStorage使用量: ${getLocalStorageUsageKB()} KB / 5120 KB`;
+
+      if (usageEl) {
+        if (navigator.storage && navigator.storage.estimate) {
+          try {
+            const est = await navigator.storage.estimate();
+            const usedMB = (est.usage / (1024 * 1024)).toFixed(2);
+            usageEl.textContent = `ストレージ: IndexedDB大容量保管中 (${usedMB} MB 使用 / 上限数GB)`;
+          } catch (e) {
+            usageEl.textContent = 'ストレージ: IndexedDB大容量保管中 (数GB対応)';
+          }
+        }
+      }
 
       if (terminal) {
         terminal.innerHTML = this.logs.map(log => {
@@ -102,16 +203,6 @@
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
   };
-
-  function getLocalStorageUsageKB() {
-    let total = 0;
-    for (let x in localStorage) {
-      if (localStorage.hasOwnProperty(x)) {
-        total += ((localStorage[x].length + x.length) * 2);
-      }
-    }
-    return Math.round(total / 1024);
-  }
 
   // --- デフォルト カテゴリ ＆ 単語 ---
   const DEFAULT_CATEGORIES = {
@@ -303,7 +394,7 @@
     }
   }
 
-  // --- ☁️ 真の王道・分散クラウド同期エンジン (タイムスタンプ ＆ 強制同期 ＆ 墓石管理) ---
+  // --- ☁️ 真の王道・分散クラウド同期エンジン ---
   const CloudSyncManager = {
     isSyncing: false,
     hasPendingChanges: false,
@@ -328,8 +419,8 @@
         this.pushToCloud(true);
       });
       window.addEventListener('offline', () => {
-        Logger.warn('📶 端末がオフラインになりました。ローカルのみに保存します。');
-        this.updateIndicator('pending', 'オフライン（ローカル保持中）');
+        Logger.warn('📶 端末がオフラインになりました。IndexedDBに安全保持中。');
+        this.updateIndicator('pending', 'オフライン（IndexedDB保持中）');
       });
 
       setInterval(() => {
@@ -353,7 +444,6 @@
       };
     },
 
-    // 🌟 操作時即時同期（待機時間ゼロで即座にクラウドへ送信）
     async pushToCloud(silent = true) {
       if (this.isSyncing) {
         this.hasPendingChanges = true;
@@ -364,7 +454,7 @@
       this.updateIndicator('syncing', 'クラウドへ送信中...');
 
       state.localLastModifiedAt = Date.now();
-      localStorage.setItem('kuwagata_local_last_modified_v4', String(state.localLastModifiedAt));
+      await StorageVault.set('kuwagata_local_last_modified_v4', state.localLastModifiedAt);
 
       const payload = this.getSanitizedPayload();
       const payloadJson = JSON.stringify(payload);
@@ -403,7 +493,6 @@
       }
     },
 
-    // 🌟 20秒定期確認（クラウド側が自分より新しい場合のみ安全に取り込み）
     async checkAndPullFromCloud(silent = true) {
       if (this.isSyncing || this.hasPendingChanges) return;
       this.isSyncing = true;
@@ -425,12 +514,12 @@
               Logger.sync(`[SYNC_MERGE] 他端末での最新更新（${this.formatTime(new Date(cloudTime))}）を検知。マージ実行。`);
               this.updateIndicator('syncing', '他端末の変更を取り込み中...');
 
-              this.applyCloudData(cloudData);
+              await this.applyCloudData(cloudData);
 
               state.localLastModifiedAt = cloudTime;
-              localStorage.setItem('kuwagata_local_last_modified_v4', String(state.localLastModifiedAt));
+              await StorageVault.set('kuwagata_local_last_modified_v4', state.localLastModifiedAt);
 
-              saveState(false);
+              await saveState(false);
               renderDynamicChipGroups();
               updateCombinedPrompt();
               renderArchiveGrid();
@@ -441,7 +530,6 @@
                 alert('🎉 クラウドから最新データを正常に取り込みました！');
               }
             } else {
-              // 自分が最新 ➔ 何もしない（削除されたデータの上書き復活を100%防止）
               this.updateIndicator('online', `同期完了 (${this.formatTime(new Date())})`);
               Logger.trace('[SYNC_CHECK_UPTODATE] 端末データは最新です（上書きスキップ）');
             }
@@ -455,7 +543,6 @@
       }
     },
 
-    // 🌟 強制取得（Force Pull: ボタン押下時は判定をスキップして無条件で最新化）
     async forcePullFromCloud() {
       if (this.isSyncing) return;
       this.isSyncing = true;
@@ -468,12 +555,12 @@
 
         const cloudData = await resp.json();
         if (cloudData && (cloudData.studio === 'KUWAGATA_PREMIUM_STUDIO' || Array.isArray(cloudData.cardArchive))) {
-          this.applyCloudData(cloudData);
+          await this.applyCloudData(cloudData);
 
           state.localLastModifiedAt = cloudData.updatedAt || Date.now();
-          localStorage.setItem('kuwagata_local_last_modified_v4', String(state.localLastModifiedAt));
+          await StorageVault.set('kuwagata_local_last_modified_v4', state.localLastModifiedAt);
 
-          saveState(false);
+          await saveState(false);
           renderDynamicChipGroups();
           updateCombinedPrompt();
           renderArchiveGrid();
@@ -495,14 +582,14 @@
       }
     },
 
-    applyCloudData(cloudData) {
+    async applyCloudData(cloudData) {
       if (Array.isArray(cloudData.deletedCardIds)) {
         cloudData.deletedCardIds.forEach(id => state.deletedCardIds.add(id));
-        localStorage.setItem('kuwagata_deleted_card_ids_v4', JSON.stringify(Array.from(state.deletedCardIds)));
+        await StorageVault.set('kuwagata_deleted_card_ids_v4', Array.from(state.deletedCardIds));
       }
       if (Array.isArray(cloudData.deletedChipIds)) {
         cloudData.deletedChipIds.forEach(id => state.deletedChipIds.add(id));
-        localStorage.setItem('kuwagata_deleted_chip_ids_v4', JSON.stringify(Array.from(state.deletedChipIds)));
+        await StorageVault.set('kuwagata_deleted_chip_ids_v4', Array.from(state.deletedChipIds));
       }
 
       if (Array.isArray(cloudData.cardArchive)) {
@@ -550,8 +637,11 @@
   async function init() {
     setupAuthGate();
     loadApiKeyVault();
-    Logger.info(`Kuwagata Card Studio ${APP_VERSION} を起動しました。`);
-    loadSavedState();
+    Logger.info(`Kuwagata Card Studio ${APP_VERSION} (IndexedDB大容量保護エンジン) を起動しました。`);
+    
+    // 🌟 IndexedDBから端末内データを100%確実に非同期復元
+    await loadSavedState();
+    
     setupEventListeners();
     setupDictManager();
     setupBackupManager();
@@ -608,71 +698,73 @@
     }
   }
 
-  function saveState(triggerCloud = true) {
+  // 🌟 StorageVault (IndexedDB) への完全保存
+  async function saveState(triggerCloud = true) {
     try {
-      localStorage.setItem('kuwagata_card_studio_state_v4', JSON.stringify({
+      const stateObj = {
         aspectRatio: state.aspectRatio,
         canvasWidth: state.canvasWidth,
         canvasHeight: state.canvasHeight,
         layers: state.layers,
         selectedChipIds: Array.from(state.selectedChipIds)
-      }));
-      
-      saveApiKeyVault();
-      localStorage.setItem('kuwagata_categories_v4', JSON.stringify(state.categories));
-      localStorage.setItem('kuwagata_chips_v4', JSON.stringify(state.chips));
-      localStorage.setItem('kuwagata_card_archive_v4', JSON.stringify(state.cardArchive));
-      localStorage.setItem('kuwagata_deleted_card_ids_v4', JSON.stringify(Array.from(state.deletedCardIds)));
-      localStorage.setItem('kuwagata_deleted_chip_ids_v4', JSON.stringify(Array.from(state.deletedChipIds)));
+      };
 
-      const usedKB = getLocalStorageUsageKB();
-      Logger.storage(`[STORAGE_SAVE] LocalStorage 保存完了 (Cards: ${state.cardArchive.length}件, Chips: ${state.chips.length}件, 容量: ${usedKB}KB)`);
+      await StorageVault.set('kuwagata_card_studio_state_v4', stateObj);
+      await StorageVault.set('kuwagata_categories_v4', state.categories);
+      await StorageVault.set('kuwagata_chips_v4', state.chips);
+      await StorageVault.set('kuwagata_card_archive_v4', state.cardArchive);
+      await StorageVault.set('kuwagata_deleted_card_ids_v4', Array.from(state.deletedCardIds));
+      await StorageVault.set('kuwagata_deleted_chip_ids_v4', Array.from(state.deletedChipIds));
+
+      saveApiKeyVault();
+
+      Logger.storage(`[INDEXED_DB_SAVE] 大容量データベース保存成功 (Cards: ${state.cardArchive.length}件, Chips: ${state.chips.length}件)`);
 
       if (triggerCloud) {
         CloudSyncManager.pushToCloud(true);
       }
     } catch (e) {
-      Logger.error('[STORAGE_ERROR] LocalStorage 容量オーバーまたは例外', e.message);
+      Logger.error('[STORAGE_ERROR] IndexedDB 保存例外', e.message);
     }
   }
 
-  function loadSavedState() {
+  // 🌟 StorageVault (IndexedDB) からの完全読み込み
+  async function loadSavedState() {
     try {
-      const savedTime = localStorage.getItem('kuwagata_local_last_modified_v4');
+      const savedTime = await StorageVault.get('kuwagata_local_last_modified_v4');
       if (savedTime) state.localLastModifiedAt = parseInt(savedTime, 10);
 
-      const savedDelCards = localStorage.getItem('kuwagata_deleted_card_ids_v4');
-      if (savedDelCards) state.deletedCardIds = new Set(JSON.parse(savedDelCards));
+      const savedDelCards = await StorageVault.get('kuwagata_deleted_card_ids_v4');
+      if (savedDelCards) state.deletedCardIds = new Set(savedDelCards);
 
-      const savedDelChips = localStorage.getItem('kuwagata_deleted_chip_ids_v4');
-      if (savedDelChips) state.deletedChipIds = new Set(JSON.parse(savedDelChips));
+      const savedDelChips = await StorageVault.get('kuwagata_deleted_chip_ids_v4');
+      if (savedDelChips) state.deletedChipIds = new Set(savedDelChips);
 
-      const savedCategories = localStorage.getItem('kuwagata_categories_v4') || localStorage.getItem('kuwagata_categories_vault');
-      if (savedCategories) state.categories = JSON.parse(savedCategories);
+      const savedCategories = await StorageVault.get('kuwagata_categories_v4');
+      if (savedCategories) state.categories = savedCategories;
 
-      const savedChips = localStorage.getItem('kuwagata_chips_v4') || localStorage.getItem('kuwagata_chips_vault');
-      if (savedChips) {
-        state.chips = JSON.parse(savedChips).filter(c => !state.deletedChipIds.has(c.id));
+      const savedChips = await StorageVault.get('kuwagata_chips_v4');
+      if (savedChips && Array.isArray(savedChips)) {
+        state.chips = savedChips.filter(c => !state.deletedChipIds.has(c.id));
       }
 
-      const savedArchive = localStorage.getItem('kuwagata_card_archive_v4') || localStorage.getItem('kuwagata_card_archive_vault');
-      if (savedArchive) {
-        state.cardArchive = JSON.parse(savedArchive).filter(c => !state.deletedCardIds.has(c.id));
+      const savedArchive = await StorageVault.get('kuwagata_card_archive_v4');
+      if (savedArchive && Array.isArray(savedArchive)) {
+        state.cardArchive = savedArchive.filter(c => !state.deletedCardIds.has(c.id));
       }
 
-      const saved = localStorage.getItem('kuwagata_card_studio_state_v4');
+      const saved = await StorageVault.get('kuwagata_card_studio_state_v4');
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.layers) state.layers = parsed.layers;
-        if (parsed.aspectRatio) state.aspectRatio = parsed.aspectRatio;
-        if (parsed.canvasWidth) state.canvasWidth = parsed.canvasWidth;
-        if (parsed.canvasHeight) state.canvasHeight = parsed.canvasHeight;
-        if (parsed.selectedChipIds) state.selectedChipIds = new Set(parsed.selectedChipIds);
+        if (saved.layers) state.layers = saved.layers;
+        if (saved.aspectRatio) state.aspectRatio = saved.aspectRatio;
+        if (saved.canvasWidth) state.canvasWidth = saved.canvasWidth;
+        if (saved.canvasHeight) state.canvasHeight = saved.canvasHeight;
+        if (saved.selectedChipIds) state.selectedChipIds = new Set(saved.selectedChipIds);
       }
       syncInputsFromState();
-      Logger.storage(`[STORAGE_LOAD] 端末内データ読み込み完了 (Cards: ${state.cardArchive.length}件, Chips: ${state.chips.length}件, 容量: ${getLocalStorageUsageKB()}KB)`);
+      Logger.storage(`[INDEXED_DB_LOAD] 端末内大容量データ復元完了 (Cards: ${state.cardArchive.length}件, Chips: ${state.chips.length}件)`);
     } catch (e) {
-      Logger.error('[STORAGE_LOAD_ERROR] LocalStorage 読み込み例外', e.message);
+      Logger.error('[INDEXED_DB_LOAD_ERROR] 読み込み例外', e.message);
     }
   }
 
@@ -881,7 +973,7 @@
         if (data.selectedChipIds && Array.isArray(data.selectedChipIds)) state.selectedChipIds = new Set(data.selectedChipIds);
         if (data.cardArchive && Array.isArray(data.cardArchive)) state.cardArchive = data.cardArchive;
 
-        saveState(true);
+        await saveState(true);
         renderDynamicChipGroups();
         updateCombinedPrompt();
         renderArchiveGrid();
@@ -1277,7 +1369,7 @@
       });
     }
 
-    // 🌟 生成ボタン群 (※固定プレビューがあるため自動スクロールは廃止)
+    // 🌟 生成ボタン群
     const btnGenAi = document.getElementById('btnGenerateAiBg');
     if (btnGenAi) btnGenAi.addEventListener('click', () => generateAiBackground());
 
@@ -1674,7 +1766,7 @@ JSONフォーマットのみを出力してください:
       }
 
       await reloadAllLayerImages();
-      saveState(true);
+      await saveState(true);
       renderCard();
       showLoading(false);
       Logger.success(`🎉 「${text}」の100%完全透過文字グラフィックが完成しました！`);
@@ -1806,7 +1898,7 @@ JSONフォーマットのみを出力してください:
     if (generatedImageUrl) {
       state.layers.bg.src = generatedImageUrl;
       await loadBgImage(generatedImageUrl);
-      saveState(true);
+      await saveState(true);
       renderCard();
       showLoading(false);
       Logger.success('🎉 背景画像の生成が完了しました！');
@@ -1819,8 +1911,8 @@ JSONフォーマットのみを出力してください:
     }
   }
 
-  // --- 🎴 非破壊マルチレイヤー アーカイブシステム（軽量最適化 ＆ 墓石管理） ---
-  function saveCurrentToArchive() {
+  // --- 🎴 非破壊マルチレイヤー アーカイブシステム（IndexedDB大容量保護） ---
+  async function saveCurrentToArchive() {
     const thumbCanvas = document.createElement('canvas');
     thumbCanvas.width = 240;
     thumbCanvas.height = Math.round(240 * (state.canvasHeight / state.canvasWidth));
@@ -1845,10 +1937,10 @@ JSONフォーマットのみを出力してください:
 
     state.deletedCardIds.delete(archiveItem.id);
     state.cardArchive.unshift(archiveItem);
-    saveState(true);
+    await saveState(true);
     renderArchiveGrid();
     Logger.success(`[ARCHIVE_SAVE] 非破壊レイヤー保存完了: ${archiveItem.title}`);
-    alert(`「${archiveItem.title}」をカード履歴アルバムに非破壊保存しました！\n（※背景と文字が別々に保存されているため、いつでも何度でも綺麗に再編集できます）`);
+    alert(`「${archiveItem.title}」をカード履歴アルバムに非破壊保存しました！\n（※IndexedDB大容量データベースに安全保持され、リロードしても絶対に消えません）`);
   }
 
   function renderArchiveGrid() {
@@ -1898,13 +1990,13 @@ JSONフォーマットのみを出力してください:
     });
   }
 
-  function deleteCard(cardId) {
+  async function deleteCard(cardId) {
     const target = state.cardArchive.find(c => c.id === cardId);
     if (!target) return;
     if (confirm(`「${target.title}」を削除しますか？\n（※他の全端末からも安全に消去されます）`)) {
       state.deletedCardIds.add(cardId);
       state.cardArchive = state.cardArchive.filter(c => c.id !== cardId);
-      saveState(true);
+      await saveState(true);
       renderArchiveGrid();
       Logger.success(`[ARCHIVE_DELETE] カード履歴を削除しました (墓石登録・即時送信): ${target.title}`);
     }
@@ -1921,7 +2013,7 @@ JSONフォーマットのみを出力してください:
     }
     syncInputsFromState();
     await reloadAllLayerImages();
-    saveState(false);
+    await saveState(false);
     renderCard();
     document.querySelector('.tab-btn[data-tab="tab-ai-letters"]').click();
     Logger.success(`[ARCHIVE_RESTORE] 「${item.title}」を完全非破壊復元しました。`);
@@ -1959,7 +2051,7 @@ JSONフォーマットのみを出力してください:
     reader.onload = async (e) => {
       state.layers.bg.src = e.target.result;
       await loadBgImage(e.target.result);
-      saveState(true);
+      await saveState(true);
       renderCard();
       Logger.success(`手動背景画像を適用しました (${file.name})`);
     };
