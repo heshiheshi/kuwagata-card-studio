@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.2.0">
+  <link rel="stylesheet" href="style.css?v=4.3.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -46,7 +46,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.2.0</span>
+            <span class="app-version-badge" id="appVersion">v4.3.0</span>
           </div>
           <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
         </div>
@@ -272,7 +272,7 @@
 
           <div class="ai-gen-btn-row mt-2">
             <button type="button" id="btnGenBrandAiGraphic" class="btn-primary btn-sm full-width">
-              ✨ ブランドAI文字グラフィックを生成 (自動スクロール)
+              ✨ ブランドAI文字グラフィックを生成
             </button>
           </div>
 
@@ -337,7 +337,7 @@
 
           <div class="ai-gen-btn-row mt-2">
             <button type="button" id="btnGenKanjiAiGraphic" class="btn-primary btn-sm full-width">
-              ✨ メイン漢字AIグラフィックを生成 (自動スクロール)
+              ✨ メイン漢字AIグラフィックを生成
             </button>
           </div>
 
@@ -402,7 +402,7 @@
 
           <div class="ai-gen-btn-row mt-2">
             <button type="button" id="btnGenRomajiAiGraphic" class="btn-primary btn-sm full-width">
-              ✨ 英字AI文字グラフィックを生成 (自動スクロール)
+              ✨ 英字AI文字グラフィックを生成
             </button>
           </div>
 
@@ -703,7 +703,7 @@
         <div class="modal-header">
           <div style="display:flex; align-items:center; gap:8px;">
             <h3>☁️ クラウド自動同期 ＆ データ管理</h3>
-            <span class="sync-badge-live" id="modalSyncBadge">🟢 自動連動中</span>
+            <span class="sync-badge-live" id="modalSyncBadge">🟢 同期完了・安全</span>
           </div>
           <button type="button" class="btn-modal-close" id="btnCloseBackupModal">✕</button>
         </div>
@@ -715,7 +715,7 @@
             </div>
             <div style="display:flex; gap:8px; margin-top:8px;">
               <button type="button" class="btn-primary btn-sm" id="btnForceUploadCloud">⬆️ クラウドへ手動上書き送信</button>
-              <button type="button" class="btn-secondary btn-sm" id="btnForceDownloadCloud">⬇️ クラウドから最新を取得</button>
+              <button type="button" class="btn-secondary btn-sm" id="btnForceDownloadCloud">⬇️ クラウドから最新を強制取得</button>
             </div>
             <div id="cloudSyncStatusText" style="font-size:10px; color:var(--text-muted); margin-top:4px;">最終同期: 自動同期稼働中</div>
           </div>
@@ -768,17 +768,21 @@
       </div>
     </div>
 
-    <!-- 📜 システムログモーダル -->
+    <!-- 📜 システムログモーダル (超詳細プログラム診断コンソール) -->
     <div id="logModal" class="modal-backdrop hidden">
       <div class="modal-card">
         <div class="modal-header">
           <div style="display:flex; align-items:center; gap:8px;">
-            <h3>システム & 通信ログコンソール</h3>
+            <h3>🛠️ プログラム詳細診断・通信ログコンソール</h3>
             <span class="log-count-tag" id="logModalCount">0 件</span>
           </div>
           <button type="button" class="btn-modal-close" id="btnCloseLogModal">✕</button>
         </div>
         <div class="modal-body">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:10px; color:var(--text-muted); margin-bottom:4px;">
+            <span id="logStorageUsageText">ストレージ使用量: 0 KB</span>
+            <span>ミリ秒・Rawスタック・通信ヘッダー完全記録</span>
+          </div>
           <div class="log-terminal-window" id="logTerminal"></div>
         </div>
         <div class="modal-footer">

@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.2.0 Enterprise Cloud & Universal Export Edition)
- * True Orthodox Distributed Sync (Timestamps, Smart-Merge, Tombstones, 4-Color LED) & Universal Image Export
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.3.0 Deep Diagnostic & Universal Storage Edition)
+ * True Orthodox Distributed Sync, Force Pull, Deep Diagnostic System Logging & Rock-Solid Storage
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.2.0';
+  const APP_VERSION = 'v4.3.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
   const CLOUD_SYNC_ENDPOINT = '/api/sync';
 
@@ -18,16 +18,22 @@
     AUTH_PASSED: 'kuwagata_vault_auth_passed'
   };
 
-  // --- システムロガー ---
+  // --- 🛠️ 超詳細プログラム診断ロガー (Deep Diagnostic Logger) ---
   const Logger = {
     logs: [],
-    maxLogs: 200,
+    maxLogs: 300,
 
     add(type, msg, rawData = null) {
       const now = new Date();
       const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
       
-      const entry = { time: timeStr, type: type, msg: msg, rawData: rawData };
+      const entry = {
+        iso: now.toISOString(),
+        time: timeStr,
+        type: type,
+        msg: msg,
+        rawData: rawData
+      };
       this.logs.unshift(entry);
       if (this.logs.length > this.maxLogs) this.logs.pop();
 
@@ -37,31 +43,37 @@
 
     info(msg, data) { this.add('info', msg, data); },
     api(msg, data) { this.add('api', msg, data); },
+    sync(msg, data) { this.add('sync', msg, data); },
+    storage(msg, data) { this.add('storage', msg, data); },
+    render(msg, data) { this.add('render', msg, data); },
     success(msg, data) { this.add('success', msg, data); },
     warn(msg, data) { this.add('warn', msg, data); },
     error(msg, data) { this.add('error', msg, data); },
+    trace(msg, data) { this.add('trace', msg, data); },
 
     updateUI() {
       const pill = document.getElementById('logCountPill');
       const tag = document.getElementById('logModalCount');
       const terminal = document.getElementById('logTerminal');
+      const usageEl = document.getElementById('logStorageUsageText');
 
       if (pill) pill.textContent = this.logs.length;
       if (tag) tag.textContent = `${this.logs.length} 件`;
+      if (usageEl) usageEl.textContent = `LocalStorage使用量: ${getLocalStorageUsageKB()} KB / 5120 KB`;
 
       if (terminal) {
         terminal.innerHTML = this.logs.map(log => {
           let extra = '';
           if (log.rawData) {
             const rawStr = typeof log.rawData === 'object' ? JSON.stringify(log.rawData, null, 2) : String(log.rawData);
-            extra = `<pre style="margin-top:4px; padding:6px; background:#000; color:#81c784; font-size:11px; border-radius:4px; overflow-x:auto;">${this.escapeHtml(rawStr)}</pre>`;
+            extra = `<pre style="margin-top:4px; padding:6px; background:#000; color:#81c784; font-size:10px; border-radius:4px; overflow-x:auto; line-height:1.3;">${this.escapeHtml(rawStr)}</pre>`;
           }
           return `
-            <div class="log-entry">
-              <span class="log-time">[${log.time}]</span>
-              <span class="log-tag ${log.type}">${log.type}</span>
-              <div class="log-msg">
-                <span>${this.escapeHtml(log.msg)}</span>
+            <div class="log-entry" style="font-size:11px; margin-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+              <span class="log-time" style="color:#888;">[${log.time}]</span>
+              <span class="log-tag ${log.type}" style="font-weight:700; padding:1px 4px; border-radius:2px;">${log.type.toUpperCase()}</span>
+              <div class="log-msg" style="margin-top:2px;">
+                <span style="color:#eee;">${this.escapeHtml(log.msg)}</span>
                 ${extra}
               </div>
             </div>
@@ -78,7 +90,7 @@
 
     getAllText() {
       return this.logs.map(l => {
-        let line = `[${l.time}] [${l.type.toUpperCase()}] ${l.msg}`;
+        let line = `[${l.iso}] [${l.type.toUpperCase()}] ${l.msg}`;
         if (l.rawData) {
           line += '\n' + (typeof l.rawData === 'object' ? JSON.stringify(l.rawData, null, 2) : String(l.rawData));
         }
@@ -90,6 +102,16 @@
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
   };
+
+  function getLocalStorageUsageKB() {
+    let total = 0;
+    for (let x in localStorage) {
+      if (localStorage.hasOwnProperty(x)) {
+        total += ((localStorage[x].length + x.length) * 2);
+      }
+    }
+    return Math.round(total / 1024);
+  }
 
   // --- デフォルト カテゴリ ＆ 単語 ---
   const DEFAULT_CATEGORIES = {
@@ -125,7 +147,6 @@
     paidApiKey: '',
     activeKeyMode: 'free',
 
-    // タイムスタンプ ＆ 墓石（Tombstone）管理
     localLastModifiedAt: 0,
     deletedCardIds: new Set(),
     deletedChipIds: new Set(),
@@ -239,11 +260,6 @@
   const archiveCountTag = document.getElementById('archiveCountTag');
   const dynamicChipGroupsContainer = document.getElementById('dynamicChipGroupsContainer');
 
-  // --- 🔝 自動トップスクロール関数 ---
-  function scrollToCanvasTop() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
   // --- 🛡️ 永久APIキー金庫管理 ---
   function loadApiKeyVault() {
     try {
@@ -270,7 +286,7 @@
 
       saveApiKeyVault();
       if (free || paid) {
-        Logger.info('🔑 端末内永久キー金庫からAPIキーを自動ロードしました。');
+        Logger.info('🔑 端末内永久キー金庫からAPIキーをロードしました。');
       }
     } catch (e) {
       Logger.warn('Key vault load warning', e.message);
@@ -287,34 +303,35 @@
     }
   }
 
-  // --- ☁️ 真の王道・分散クラウド同期エンジン (タイムスタンプ ＆ スマートマージ ＆ 墓石管理) ---
+  // --- ☁️ 真の王道・分散クラウド同期エンジン (タイムスタンプ ＆ 強制同期 ＆ 墓石管理) ---
   const CloudSyncManager = {
     isSyncing: false,
     hasPendingChanges: false,
-    syncTimer: null,
 
     init() {
       this.updateIndicator('online', '自動同期稼働中');
       this.checkAndPullFromCloud(true);
 
-      // ライフサイクル同期（画面復帰・フォーカス時）
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') this.checkAndPullFromCloud(true);
+        if (document.visibilityState === 'visible') {
+          Logger.trace('ライフサイクル: 画面復帰検知 ➔ クラウド変更確認');
+          this.checkAndPullFromCloud(true);
+        }
       });
       window.addEventListener('focus', () => {
+        Logger.trace('ライフサイクル: ウィンドウフォーカス検知 ➔ クラウド変更確認');
         this.checkAndPullFromCloud(true);
       });
 
-      // オフライン復旧時の自動再送
       window.addEventListener('online', () => {
         Logger.info('📶 インターネット接続が復旧しました。未送信データを同期します。');
         this.pushToCloud(true);
       });
       window.addEventListener('offline', () => {
+        Logger.warn('📶 端末がオフラインになりました。ローカルのみに保存します。');
         this.updateIndicator('pending', 'オフライン（ローカル保持中）');
       });
 
-      // 20秒ごとの条件付き定期確認（※強制上書きではなく、他端末の更新有無だけをチェック）
       setInterval(() => {
         if (!this.isSyncing) {
           this.checkAndPullFromCloud(true);
@@ -340,6 +357,7 @@
     async pushToCloud(silent = true) {
       if (this.isSyncing) {
         this.hasPendingChanges = true;
+        Logger.trace('同期中につき送信キューに保留しました。');
         return;
       }
       this.isSyncing = true;
@@ -352,6 +370,8 @@
       const payloadJson = JSON.stringify(payload);
       const sizeKB = Math.round(payloadJson.length / 1024);
 
+      Logger.sync(`[SYNC_PUSH] クラウド送信開始 (Cards: ${payload.cardArchive.length}件, Chips: ${payload.chips.length}件, Payload: ${sizeKB}KB, Time: ${state.localLastModifiedAt})`);
+
       try {
         const resp = await fetch(CLOUD_SYNC_ENDPOINT, {
           method: 'POST',
@@ -360,11 +380,12 @@
         });
 
         if (resp.ok) {
+          const respData = await resp.json().catch(() => ({}));
           this.updateIndicator('online', `同期完了 (${this.formatTime(new Date())})`);
-          Logger.success(`☁️ クラウド即時送信完了 (カード: ${payload.cardArchive.length} 枚, 容量: ${sizeKB} KB)`);
+          Logger.success(`[SYNC_PUSH_SUCCESS] クラウド送信完了 (HTTP ${resp.status}, ServerTime: ${respData.updatedAt || 'OK'})`);
           this.hasPendingChanges = false;
           if (!silent) {
-            alert(`🎉 Cloudflare KV へ安全に保存されました！\n\n・単語辞書: ${payload.chips.length} 件\n・非破壊カード履歴: ${payload.cardArchive.length} 件`);
+            alert(`🎉 Cloudflare KV へ安全に保存されました！\n\n・単語辞書: ${payload.chips.length} 件\n・非破壊カード履歴: ${payload.cardArchive.length} 件 (${sizeKB} KB)`);
           }
         } else {
           throw new Error(`HTTP ${resp.status}`);
@@ -372,7 +393,7 @@
       } catch (err) {
         this.hasPendingChanges = true;
         this.updateIndicator('error', '通信待機中（次回自動再送）');
-        Logger.warn('クラウド送信保留（オフライン）', err.message);
+        Logger.error('[SYNC_PUSH_ERROR] クラウド送信失敗', err.message);
       } finally {
         this.isSyncing = false;
         if (this.hasPendingChanges) {
@@ -382,10 +403,12 @@
       }
     },
 
-    // 🌟 条件付き確認（クラウド側が自分より新しい場合のみ安全に取り込み）
+    // 🌟 20秒定期確認（クラウド側が自分より新しい場合のみ安全に取り込み）
     async checkAndPullFromCloud(silent = true) {
       if (this.isSyncing || this.hasPendingChanges) return;
       this.isSyncing = true;
+
+      Logger.trace(`[SYNC_CHECK] クラウド更新確認開始 (LocalTime: ${state.localLastModifiedAt})`);
 
       try {
         const resp = await fetch(CLOUD_SYNC_ENDPOINT);
@@ -393,71 +416,114 @@
           const cloudData = await resp.json();
           if (cloudData && (cloudData.studio === 'KUWAGATA_PREMIUM_STUDIO' || Array.isArray(cloudData.cardArchive))) {
             const cloudTime = cloudData.updatedAt || 0;
+            const deltaMs = cloudTime - state.localLastModifiedAt;
 
-            // 👑 王道の新旧比較: クラウドが自分の更新日時よりも新しい場合のみマージ
+            Logger.trace(`[SYNC_CHECK_RESP] CloudTime: ${cloudTime}, LocalTime: ${state.localLastModifiedAt}, Delta: ${deltaMs}ms`);
+
+            // クラウドが自分の更新日時よりも新しい場合のみマージ
             if (cloudTime > state.localLastModifiedAt) {
-              Logger.info(`☁️ 他端末での最新更新（${this.formatTime(new Date(cloudTime))}）を検知しました。スマートマージを実行します。`);
+              Logger.sync(`[SYNC_MERGE] 他端末での最新更新（${this.formatTime(new Date(cloudTime))}）を検知。マージ実行。`);
               this.updateIndicator('syncing', '他端末の変更を取り込み中...');
 
-              // 1. 墓石（削除マーク）の同期合体
-              if (Array.isArray(cloudData.deletedCardIds)) {
-                cloudData.deletedCardIds.forEach(id => state.deletedCardIds.add(id));
-                localStorage.setItem('kuwagata_deleted_card_ids_v4', JSON.stringify(Array.from(state.deletedCardIds)));
-              }
-              if (Array.isArray(cloudData.deletedChipIds)) {
-                cloudData.deletedChipIds.forEach(id => state.deletedChipIds.add(id));
-                localStorage.setItem('kuwagata_deleted_chip_ids_v4', JSON.stringify(Array.from(state.deletedChipIds)));
-              }
-
-              // 2. カード履歴のスマートマージ（墓石に含まれるカードは100%除外）
-              if (Array.isArray(cloudData.cardArchive)) {
-                const mergedMap = new Map();
-                // 既存のローカルカード
-                state.cardArchive.forEach(c => {
-                  if (!state.deletedCardIds.has(c.id)) mergedMap.set(c.id, c);
-                });
-                // クラウドの新しいカード
-                cloudData.cardArchive.forEach(c => {
-                  if (!state.deletedCardIds.has(c.id)) mergedMap.set(c.id, c);
-                });
-                state.cardArchive = Array.from(mergedMap.values()).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-              }
-
-              // 3. カテゴリと単語のスマートマージ
-              if (cloudData.categories && Object.keys(cloudData.categories).length > 0) {
-                state.categories = { ...state.categories, ...cloudData.categories };
-              }
-              if (Array.isArray(cloudData.chips)) {
-                const chipMap = new Map();
-                state.chips.forEach(c => { if (!state.deletedChipIds.has(c.id)) chipMap.set(c.id, c); });
-                cloudData.chips.forEach(c => { if (!state.deletedChipIds.has(c.id)) chipMap.set(c.id, c); });
-                state.chips = Array.from(chipMap.values());
-              }
+              this.applyCloudData(cloudData);
 
               state.localLastModifiedAt = cloudTime;
               localStorage.setItem('kuwagata_local_last_modified_v4', String(state.localLastModifiedAt));
 
-              // 画面更新（再保存トリガーは発火させない）
               saveState(false);
               renderDynamicChipGroups();
               updateCombinedPrompt();
               renderArchiveGrid();
 
               this.updateIndicator('online', `同期完了 (${this.formatTime(new Date())})`);
-              Logger.success('🎉 他端末とのスマートマージが完了しました。');
+              Logger.success('[SYNC_MERGE_SUCCESS] 他端末とのスマートマージ完了');
               if (!silent) {
                 alert('🎉 クラウドから最新データを正常に取り込みました！');
               }
             } else {
-              // 自分が最新、または変更なし ➔ 何もしない（削除されたデータの上書き復活を100%防止）
+              // 自分が最新 ➔ 何もしない（削除されたデータの上書き復活を100%防止）
               this.updateIndicator('online', `同期完了 (${this.formatTime(new Date())})`);
+              Logger.trace('[SYNC_CHECK_UPTODATE] 端末データは最新です（上書きスキップ）');
             }
           }
         }
       } catch (err) {
         this.updateIndicator('online', '自動同期稼働中');
+        Logger.warn('[SYNC_CHECK_WARN] 定期確認スキップ', err.message);
       } finally {
         this.isSyncing = false;
+      }
+    },
+
+    // 🌟 強制取得（Force Pull: ボタン押下時は判定をスキップして無条件で最新化）
+    async forcePullFromCloud() {
+      if (this.isSyncing) return;
+      this.isSyncing = true;
+      this.updateIndicator('syncing', '強制取得中...');
+      Logger.sync('[FORCE_PULL] 手動強制取得を開始しました。');
+
+      try {
+        const resp = await fetch(CLOUD_SYNC_ENDPOINT);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        const cloudData = await resp.json();
+        if (cloudData && (cloudData.studio === 'KUWAGATA_PREMIUM_STUDIO' || Array.isArray(cloudData.cardArchive))) {
+          this.applyCloudData(cloudData);
+
+          state.localLastModifiedAt = cloudData.updatedAt || Date.now();
+          localStorage.setItem('kuwagata_local_last_modified_v4', String(state.localLastModifiedAt));
+
+          saveState(false);
+          renderDynamicChipGroups();
+          updateCombinedPrompt();
+          renderArchiveGrid();
+          await reloadAllLayerImages();
+          renderCard();
+
+          this.updateIndicator('online', `同期完了 (${this.formatTime(new Date())})`);
+          Logger.success(`[FORCE_PULL_SUCCESS] 強制同期完了 (Cards: ${state.cardArchive.length}件, Chips: ${state.chips.length}件)`);
+          alert(`🎉 クラウドから最新データを強制取得しました！\n\n・単語辞書: ${state.chips.length} 件\n・非破壊カード履歴: ${state.cardArchive.length} 件\n\n画面を最新状態に更新しました。`);
+        } else {
+          alert('クラウド上に有効なスタジオデータが見つかりませんでした。');
+        }
+      } catch (err) {
+        this.updateIndicator('error', '取得失敗');
+        Logger.error('[FORCE_PULL_ERROR] 強制取得失敗', err.message);
+        alert('クラウド取得エラー: ' + err.message);
+      } finally {
+        this.isSyncing = false;
+      }
+    },
+
+    applyCloudData(cloudData) {
+      if (Array.isArray(cloudData.deletedCardIds)) {
+        cloudData.deletedCardIds.forEach(id => state.deletedCardIds.add(id));
+        localStorage.setItem('kuwagata_deleted_card_ids_v4', JSON.stringify(Array.from(state.deletedCardIds)));
+      }
+      if (Array.isArray(cloudData.deletedChipIds)) {
+        cloudData.deletedChipIds.forEach(id => state.deletedChipIds.add(id));
+        localStorage.setItem('kuwagata_deleted_chip_ids_v4', JSON.stringify(Array.from(state.deletedChipIds)));
+      }
+
+      if (Array.isArray(cloudData.cardArchive)) {
+        const mergedMap = new Map();
+        state.cardArchive.forEach(c => {
+          if (!state.deletedCardIds.has(c.id)) mergedMap.set(c.id, c);
+        });
+        cloudData.cardArchive.forEach(c => {
+          if (!state.deletedCardIds.has(c.id)) mergedMap.set(c.id, c);
+        });
+        state.cardArchive = Array.from(mergedMap.values()).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+      }
+
+      if (cloudData.categories && Object.keys(cloudData.categories).length > 0) {
+        state.categories = { ...state.categories, ...cloudData.categories };
+      }
+      if (Array.isArray(cloudData.chips)) {
+        const chipMap = new Map();
+        state.chips.forEach(c => { if (!state.deletedChipIds.has(c.id)) chipMap.set(c.id, c); });
+        cloudData.chips.forEach(c => { if (!state.deletedChipIds.has(c.id)) chipMap.set(c.id, c); });
+        state.chips = Array.from(chipMap.values());
       }
     },
 
@@ -559,11 +625,14 @@
       localStorage.setItem('kuwagata_deleted_card_ids_v4', JSON.stringify(Array.from(state.deletedCardIds)));
       localStorage.setItem('kuwagata_deleted_chip_ids_v4', JSON.stringify(Array.from(state.deletedChipIds)));
 
+      const usedKB = getLocalStorageUsageKB();
+      Logger.storage(`[STORAGE_SAVE] LocalStorage 保存完了 (Cards: ${state.cardArchive.length}件, Chips: ${state.chips.length}件, 容量: ${usedKB}KB)`);
+
       if (triggerCloud) {
         CloudSyncManager.pushToCloud(true);
       }
     } catch (e) {
-      Logger.warn('LocalStorage save warning', e.message);
+      Logger.error('[STORAGE_ERROR] LocalStorage 容量オーバーまたは例外', e.message);
     }
   }
 
@@ -601,8 +670,9 @@
         if (parsed.selectedChipIds) state.selectedChipIds = new Set(parsed.selectedChipIds);
       }
       syncInputsFromState();
+      Logger.storage(`[STORAGE_LOAD] 端末内データ読み込み完了 (Cards: ${state.cardArchive.length}件, Chips: ${state.chips.length}件, 容量: ${getLocalStorageUsageKB()}KB)`);
     } catch (e) {
-      Logger.warn('LocalStorage load warning', e.message);
+      Logger.error('[STORAGE_LOAD_ERROR] LocalStorage 読み込み例外', e.message);
     }
   }
 
@@ -744,7 +814,6 @@
     }
 
     imageSaveModal.classList.remove('hidden');
-    scrollToCanvasTop();
   }
 
   // --- ☁️ 同期＆バックアップUI設定 ---
@@ -765,7 +834,7 @@
     });
 
     if (btnForceUpload) btnForceUpload.addEventListener('click', () => CloudSyncManager.pushToCloud(false));
-    if (btnForceDownload) btnForceDownload.addEventListener('click', () => CloudSyncManager.checkAndPullFromCloud(false));
+    if (btnForceDownload) btnForceDownload.addEventListener('click', () => CloudSyncManager.forcePullFromCloud());
 
     if (btnExport) btnExport.addEventListener('click', () => exportBackupData());
     if (btnTriggerImport && fileInput) {
@@ -1032,7 +1101,7 @@
     if (countEl) countEl.textContent = `${activeChips.length} 件`;
     const catKeys = Object.keys(state.categories);
 
-    listEl.innerHTML = activeChips.map((chip, idx) => {
+    listEl.innerHTML = activeChips.map((chip) => {
       const optionsHtml = catKeys.map(k => `
         <option value="${k}" ${chip.category === k ? 'selected' : ''}>${Logger.escapeHtml(state.categories[k])}</option>
       `).join('');
@@ -1120,7 +1189,6 @@
     Logger.success(`単語を追加しました: ${text}`);
   }
 
-  // 🌟 墓石管理付きの確実な単語削除（復活防止）
   function deleteChip(chipId) {
     const chip = state.chips.find(c => c.id === chipId);
     if (!chip) return;
@@ -1209,38 +1277,18 @@
       });
     }
 
-    // 🔝 生成ボタン押下時の自動トップスクロール演出
+    // 🌟 生成ボタン群 (※固定プレビューがあるため自動スクロールは廃止)
     const btnGenAi = document.getElementById('btnGenerateAiBg');
-    if (btnGenAi) {
-      btnGenAi.addEventListener('click', () => {
-        scrollToCanvasTop();
-        generateAiBackground();
-      });
-    }
+    if (btnGenAi) btnGenAi.addEventListener('click', () => generateAiBackground());
 
     const btnGenBrand = document.getElementById('btnGenBrandAiGraphic');
-    if (btnGenBrand) {
-      btnGenBrand.addEventListener('click', () => {
-        scrollToCanvasTop();
-        generateAiTextGraphic('brand');
-      });
-    }
+    if (btnGenBrand) btnGenBrand.addEventListener('click', () => generateAiTextGraphic('brand'));
 
     const btnGenKanji = document.getElementById('btnGenKanjiAiGraphic');
-    if (btnGenKanji) {
-      btnGenKanji.addEventListener('click', () => {
-        scrollToCanvasTop();
-        generateAiTextGraphic('kanji');
-      });
-    }
+    if (btnGenKanji) btnGenKanji.addEventListener('click', () => generateAiTextGraphic('kanji'));
 
     const btnGenRomaji = document.getElementById('btnGenRomajiAiGraphic');
-    if (btnGenRomaji) {
-      btnGenRomaji.addEventListener('click', () => {
-        scrollToCanvasTop();
-        generateAiTextGraphic('romaji');
-      });
-    }
+    if (btnGenRomaji) btnGenRomaji.addEventListener('click', () => generateAiTextGraphic('romaji'));
 
     // スライダーバインド: レイヤー1 (ブランド)
     bindInput('brandText', (val) => { state.layers.brand.text = val; });
@@ -1374,7 +1422,6 @@
     zone.addEventListener('click', () => input.click());
     input.addEventListener('change', (e) => {
       if (e.target.files && e.target.files[0]) {
-        scrollToCanvasTop();
         analyzeImageAndRestoreCleanBg(e.target.files[0]);
       }
     });
@@ -1387,7 +1434,6 @@
     });
     zone.addEventListener('drop', (e) => {
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        scrollToCanvasTop();
         analyzeImageAndRestoreCleanBg(e.dataTransfer.files[0]);
       }
     });
@@ -1775,7 +1821,6 @@ JSONフォーマットのみを出力してください:
 
   // --- 🎴 非破壊マルチレイヤー アーカイブシステム（軽量最適化 ＆ 墓石管理） ---
   function saveCurrentToArchive() {
-    // 高効率サムネイル圧縮（240px, JPEG 0.65 ➔ 10〜15KB程度で超軽量）
     const thumbCanvas = document.createElement('canvas');
     thumbCanvas.width = 240;
     thumbCanvas.height = Math.round(240 * (state.canvasHeight / state.canvasWidth));
@@ -1802,7 +1847,7 @@ JSONフォーマットのみを出力してください:
     state.cardArchive.unshift(archiveItem);
     saveState(true);
     renderArchiveGrid();
-    Logger.success(`非破壊レイヤー保存完了: ${archiveItem.title}`);
+    Logger.success(`[ARCHIVE_SAVE] 非破壊レイヤー保存完了: ${archiveItem.title}`);
     alert(`「${archiveItem.title}」をカード履歴アルバムに非破壊保存しました！\n（※背景と文字が別々に保存されているため、いつでも何度でも綺麗に再編集できます）`);
   }
 
@@ -1853,16 +1898,15 @@ JSONフォーマットのみを出力してください:
     });
   }
 
-  // 🌟 墓石管理付きの確実なカード削除（復活完全防止 ＆ 即時クラウド同期）
   function deleteCard(cardId) {
     const target = state.cardArchive.find(c => c.id === cardId);
     if (!target) return;
     if (confirm(`「${target.title}」を削除しますか？\n（※他の全端末からも安全に消去されます）`)) {
       state.deletedCardIds.add(cardId);
       state.cardArchive = state.cardArchive.filter(c => c.id !== cardId);
-      saveState(true); // 即時送信
+      saveState(true);
       renderArchiveGrid();
-      Logger.success(`カード履歴を削除しました (墓石登録・即時送信): ${target.title}`);
+      Logger.success(`[ARCHIVE_DELETE] カード履歴を削除しました (墓石登録・即時送信): ${target.title}`);
     }
   }
 
@@ -1880,7 +1924,7 @@ JSONフォーマットのみを出力してください:
     saveState(false);
     renderCard();
     document.querySelector('.tab-btn[data-tab="tab-ai-letters"]').click();
-    Logger.success(`「${item.title}」を完全非破壊復元しました。`);
+    Logger.success(`[ARCHIVE_RESTORE] 「${item.title}」を完全非破壊復元しました。`);
     alert(`「${item.title}」を非破壊復元しました！\n文字が重なることなく、背景・AI文字・スペックを個別に自由に再編集できます。`);
   }
 
@@ -1968,6 +2012,7 @@ JSONフォーマットのみを出力してください:
   function renderCard() {
     if (isRendering) return;
     isRendering = true;
+    const t0 = performance.now();
 
     canvas.width = state.canvasWidth;
     canvas.height = state.canvasHeight;
@@ -1979,6 +2024,9 @@ JSONフォーマットのみを出力してください:
     drawKanjiLayer(ctx, canvas.width, canvas.height);
     drawRomajiLayer(ctx, canvas.width, canvas.height);
     drawSpecsLayer(ctx, canvas.width, canvas.height);
+
+    const renderTime = (performance.now() - t0).toFixed(1);
+    Logger.render(`[RENDER_DONE] 5レイヤー合成完了 (${renderTime}ms, ${canvas.width}x${canvas.height}px)`);
 
     isRendering = false;
   }
@@ -2245,7 +2293,6 @@ JSONフォーマットのみを出力してください:
 
         const dataUrl = offCanvas.toDataURL('image/png');
 
-        // デスクトップ用自動ダウンロード
         const a = document.createElement('a');
         a.href = dataUrl;
         a.download = filename;
@@ -2253,11 +2300,10 @@ JSONフォーマットのみを出力してください:
         a.click();
         document.body.removeChild(a);
 
-        // iPhone / iPad 用救済モーダル（長押し写真保存）を同時オープン
         openImageSaveModal(dataUrl, filename);
-        Logger.success(`高解像度PNG生成完了: ${filename}`);
+        Logger.success(`[EXPORT_SUCCESS] 高解像度PNG生成完了: ${filename}`);
       } catch (err) {
-        Logger.error('PNG出力例外', err.message);
+        Logger.error('[EXPORT_ERROR] PNG出力例外', err.message);
         alert('PNG出力エラー: ' + err.message);
       } finally {
         showLoading(false);
