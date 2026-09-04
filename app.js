@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.4.1 Localhost-Cloud Direct Connect & Overwrite Guard Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.5.0 Cache-Busting & High-Speed Direct Sync Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.4.1';
+  const APP_VERSION = 'v4.5.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
