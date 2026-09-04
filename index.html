@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.5.0">
+  <link rel="stylesheet" href="style.css?v=4.6.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -42,11 +42,11 @@
     <!-- ヘッダー -->
     <header class="app-header">
       <div class="header-main-row">
-        <div class="brand-title-area">
+        <div class="brand-title-area" id="mainBrandTitleArea" title="連打で管理者アンロック">
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.5.0</span>
+            <span class="app-version-badge" id="appVersion">v4.6.0</span>
           </div>
           <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
         </div>
@@ -65,12 +65,6 @@
           <!-- 3. API設定 札 (永久キー保管庫) -->
           <button type="button" class="btn-header-tag" id="btnOpenApiKeyModal" title="Gemini APIキー設定">
             <span class="tag-text">API設定</span>
-          </button>
-
-          <!-- 4. シスログ 札 (通信ログ確認) -->
-          <button type="button" class="btn-header-tag" id="btnOpenLogModal" title="システム通信ログ">
-            <span class="tag-text">シスログ</span>
-            <span class="log-count-pill" id="logCountPill">0</span>
           </button>
         </div>
       </div>
@@ -791,8 +785,17 @@
         </div>
       </div>
     </div>
+
+    <!-- 🧪 Localhostモード固定フロートボタン (スクロール追従・常時表示) -->
+    <div id="localhostFloatingContainer" class="localhost-floating-container">
+      <button type="button" id="btnFloatingLocalhost" class="btn-floating-localhost" title="システム通信ログ・診断コンソール">
+        <span class="pulse-dot"></span>
+        <span class="lbl-text">localhost</span>
+        <span class="log-count-pill" id="logCountPill">0</span>
+      </button>
+    </div>
   </div>
 
-  <script src="app.js?v=4.5.0"></script>
+  <script src="app.js?v=4.6.0"></script>
 </body>
 </html>

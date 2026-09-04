@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.5.0 Cache-Busting & High-Speed Direct Sync Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.6.0 Localhost Suite & Secret Unlock Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.5.0';
+  const APP_VERSION = 'v4.6.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -690,6 +690,7 @@
     await loadSavedState();
     
     setupEventListeners();
+    setupLocalhostFloatingSuite();
     setupDictManager();
     setupBackupManager();
     setupImageSaveModal();
@@ -710,6 +711,57 @@
     
     await reloadAllLayerImages();
     renderCard();
+  }
+
+  // --- 🧪 Localhost Floating Suite & 10-Tap 管理者アンロック ---
+  function setupLocalhostFloatingSuite() {
+    const floatingContainer = document.getElementById('localhostFloatingContainer');
+    if (!floatingContainer) return;
+
+    const isUnlocked = localStorage.getItem('kuwagata_localhost_unlocked') === 'true';
+    if (IS_LOCAL_DEV || isUnlocked) {
+      floatingContainer.classList.remove('hidden');
+    } else {
+      floatingContainer.classList.add('hidden');
+    }
+
+    // 🔒 ブランドタイトル10回タップで管理者アンロック (PIN: 1234)
+    const titleArea = document.getElementById('mainBrandTitleArea');
+    if (titleArea) {
+      let tapCount = 0;
+      let lastTapTime = 0;
+
+      titleArea.addEventListener('click', () => {
+        const now = Date.now();
+        if (now - lastTapTime > 3500) {
+          tapCount = 1;
+        } else {
+          tapCount++;
+        }
+        lastTapTime = now;
+
+        if (tapCount >= 10) {
+          tapCount = 0;
+          const pin = prompt('🔐 管理者PINコードを入力してください (4桁):');
+          if (pin === '1234') {
+            const currentlyUnlocked = localStorage.getItem('kuwagata_localhost_unlocked') === 'true';
+            const nextState = !currentlyUnlocked;
+            localStorage.setItem('kuwagata_localhost_unlocked', String(nextState));
+            if (nextState) {
+              floatingContainer.classList.remove('hidden');
+              Logger.success('✨ 管理者モード（Localhost Suite）を有効化しました。');
+              alert('✨ 管理者モード（Localhost Suite）を有効化しました。');
+            } else {
+              if (!IS_LOCAL_DEV) floatingContainer.classList.add('hidden');
+              Logger.info('管理者モード（Localhost Suite）を無効化しました。');
+              alert('管理者モード（Localhost Suite）を無効化しました。');
+            }
+          } else if (pin !== null) {
+            alert('❌ PINコードが正しくありません。');
+          }
+        }
+      });
+    }
   }
 
   // --- 🔒 パスワード認証ゲート ---
@@ -1394,12 +1446,20 @@
     }
 
     const btnOpenLog = document.getElementById('btnOpenLogModal');
+    const btnFloatingLocalhost = document.getElementById('btnFloatingLocalhost');
     const btnCloseLog = document.getElementById('btnCloseLogModal');
     const btnClearLogs = document.getElementById('btnClearLogs');
     const btnCopyLogs = document.getElementById('btnCopyLogs');
 
     if (btnOpenLog) {
       btnOpenLog.addEventListener('click', () => {
+        Logger.updateUI();
+        logModal.classList.remove('hidden');
+      });
+    }
+
+    if (btnFloatingLocalhost) {
+      btnFloatingLocalhost.addEventListener('click', () => {
         Logger.updateUI();
         logModal.classList.remove('hidden');
       });
