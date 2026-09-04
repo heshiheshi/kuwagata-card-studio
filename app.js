@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.6.0 Localhost Suite & Secret Unlock Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.7.0 God Mode Dedicated Modal & Secret Unlock Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.6.0';
+  const APP_VERSION = 'v4.7.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -713,7 +713,7 @@
     renderCard();
   }
 
-  // --- 🧪 Localhost Floating Suite & 10-Tap 管理者アンロック ---
+  // --- 🧪 Localhost Floating Suite & 👑 神モード10回タップ専用PIN認証 ---
   function setupLocalhostFloatingSuite() {
     const floatingContainer = document.getElementById('localhostFloatingContainer');
     if (!floatingContainer) return;
@@ -725,40 +725,110 @@
       floatingContainer.classList.add('hidden');
     }
 
-    // 🔒 ブランドタイトル10回タップで管理者アンロック (PIN: 1234)
     const titleArea = document.getElementById('mainBrandTitleArea');
+    const tapBadge = document.getElementById('tapCounterBadge');
+    const godModeModal = document.getElementById('godModePinModal');
+    const godModeForm = document.getElementById('godModePinForm');
+    const pinInput = document.getElementById('godModePinInput');
+    const errorMsg = document.getElementById('godModeErrorMsg');
+    const btnCancel = document.getElementById('btnCancelGodModePin');
+    const btnSubmit = document.getElementById('btnSubmitGodModePin');
+
+    let tapCount = 0;
+    let tapTimer = null;
+
     if (titleArea) {
-      let tapCount = 0;
-      let lastTapTime = 0;
+      titleArea.addEventListener('click', (e) => {
+        // 子要素のクリックも確実にカウント
+        tapCount++;
+        if (tapTimer) clearTimeout(tapTimer);
 
-      titleArea.addEventListener('click', () => {
-        const now = Date.now();
-        if (now - lastTapTime > 3500) {
-          tapCount = 1;
-        } else {
-          tapCount++;
+        if (tapBadge) {
+          tapBadge.textContent = `${tapCount}/10`;
+          tapBadge.classList.remove('hidden');
         }
-        lastTapTime = now;
 
+        Logger.info(`👑 管理者アンロック・タップ検知: (${tapCount}/10)`);
+
+        // 3.5秒間タップがなければリセット
+        tapTimer = setTimeout(() => {
+          if (tapCount > 0 && tapCount < 10) {
+            Logger.info('タップ猶予時間タイムアウト: カウントをリセットしました');
+          }
+          tapCount = 0;
+          if (tapBadge) tapBadge.classList.add('hidden');
+        }, 3500);
+
+        // 10回到達時: 専用の神モードPIN認証モーダルを開く
         if (tapCount >= 10) {
           tapCount = 0;
-          const pin = prompt('🔐 管理者PINコードを入力してください (4桁):');
-          if (pin === '1234') {
-            const currentlyUnlocked = localStorage.getItem('kuwagata_localhost_unlocked') === 'true';
-            const nextState = !currentlyUnlocked;
-            localStorage.setItem('kuwagata_localhost_unlocked', String(nextState));
-            if (nextState) {
-              floatingContainer.classList.remove('hidden');
-              Logger.success('✨ 管理者モード（Localhost Suite）を有効化しました。');
-              alert('✨ 管理者モード（Localhost Suite）を有効化しました。');
-            } else {
-              if (!IS_LOCAL_DEV) floatingContainer.classList.add('hidden');
-              Logger.info('管理者モード（Localhost Suite）を無効化しました。');
-              alert('管理者モード（Localhost Suite）を無効化しました。');
+          if (tapTimer) clearTimeout(tapTimer);
+          if (tapBadge) tapBadge.classList.add('hidden');
+
+          if (godModeModal) {
+            godModeModal.classList.remove('hidden');
+            if (pinInput) {
+              pinInput.value = '';
+              setTimeout(() => pinInput.focus(), 150);
             }
-          } else if (pin !== null) {
-            alert('❌ PINコードが正しくありません。');
+            if (errorMsg) errorMsg.classList.add('hidden');
+            Logger.info('👑 神モードPINログイン画面を開きました。4桁PINコードの入力を待機中...');
           }
+        }
+      });
+    }
+
+    // 🔒 神モードPIN認証処理
+    function verifyGodModePin() {
+      if (!pinInput) return;
+      const val = (pinInput.value || '').trim();
+
+      if (val === '1234') {
+        if (godModeModal) godModeModal.classList.add('hidden');
+        localStorage.setItem('kuwagata_localhost_unlocked', 'true');
+        floatingContainer.classList.remove('hidden');
+        Logger.success('👑 神モード（管理者Localhost Suite）をアンロックしました！', {
+          authMethod: 'God Mode PIN Modal (1234)',
+          unlockedTime: new Date().toISOString()
+        });
+        alert('👑 神モード（管理者Localhost Suite）をアンロックしました！');
+      } else {
+        if (errorMsg) {
+          errorMsg.classList.remove('hidden');
+          errorMsg.textContent = '❌ PINコードが正しくありません (初期PIN: 1234)';
+        }
+        pinInput.value = '';
+        pinInput.focus();
+        Logger.warn('神モードPIN認証に失敗しました。');
+      }
+    }
+
+    if (godModeForm) {
+      godModeForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        verifyGodModePin();
+      });
+    }
+
+    if (btnSubmit) {
+      btnSubmit.addEventListener('click', (e) => {
+        e.preventDefault();
+        verifyGodModePin();
+      });
+    }
+
+    if (btnCancel) {
+      btnCancel.addEventListener('click', () => {
+        if (godModeModal) godModeModal.classList.add('hidden');
+        Logger.info('神モードPIN認証をキャンセルしました。');
+      });
+    }
+
+    if (pinInput) {
+      pinInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          verifyGodModePin();
         }
       });
     }

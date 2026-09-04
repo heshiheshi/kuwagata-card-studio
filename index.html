@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.6.0">
+  <link rel="stylesheet" href="style.css?v=4.7.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -42,11 +42,12 @@
     <!-- ヘッダー -->
     <header class="app-header">
       <div class="header-main-row">
-        <div class="brand-title-area" id="mainBrandTitleArea" title="連打で管理者アンロック">
+        <div class="brand-title-area" id="mainBrandTitleArea" title="連打で神モード（管理者）アンロック">
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.6.0</span>
+            <span class="app-version-badge" id="appVersion">v4.7.0</span>
+            <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
           <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
         </div>
@@ -786,6 +787,33 @@
       </div>
     </div>
 
+    <!-- 👑 神モード・管理者PIN認証ログインモーダル -->
+    <div id="godModePinModal" class="modal-backdrop hidden">
+      <div class="modal-card godmode-modal-card">
+        <div class="godmode-badge-icon">👑</div>
+        <h3 class="godmode-modal-title">管理者・神モード認証</h3>
+        <p class="godmode-modal-sub">4桁の管理者PINコードを入力してください。<br><span class="text-muted">(初期PIN: <strong style="color:var(--gold-text)">1234</strong>)</span></p>
+        
+        <form id="godModePinForm" class="godmode-pin-form" onsubmit="return false;">
+          <input 
+            type="password" 
+            id="godModePinInput" 
+            maxlength="4" 
+            inputmode="numeric" 
+            pattern="[0-9]*" 
+            placeholder="••••" 
+            class="godmode-pin-input" 
+            autocomplete="off"
+          >
+          <div id="godModeErrorMsg" class="godmode-error-msg hidden">PINコードが正しくありません</div>
+          <div class="godmode-btn-row">
+            <button type="button" class="btn-secondary" id="btnCancelGodModePin">キャンセル</button>
+            <button type="submit" class="btn-primary btn-godmode-submit" id="btnSubmitGodModePin">認証・解除</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- 🧪 Localhostモード固定フロートボタン (スクロール追従・常時表示) -->
     <div id="localhostFloatingContainer" class="localhost-floating-container">
       <button type="button" id="btnFloatingLocalhost" class="btn-floating-localhost" title="システム通信ログ・診断コンソール">
@@ -796,6 +824,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.6.0"></script>
+  <script src="app.js?v=4.7.0"></script>
 </body>
 </html>

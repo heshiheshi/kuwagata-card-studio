@@ -79,18 +79,26 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
 }
 
 .brand-title-row {
   display: flex;
   align-items: center;
   gap: 6px;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .emblem-mark {
   font-size: 18px;
   color: var(--gold-text);
   filter: drop-shadow(0 0 6px var(--gold-glow));
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .app-header h1 {
@@ -103,6 +111,8 @@ body {
   -webkit-text-fill-color: transparent;
   line-height: 1.1;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .app-version-badge {
@@ -113,6 +123,22 @@ body {
   border: 1px solid var(--border-gold);
   padding: 1px 5px;
   border-radius: var(--radius-sm);
+}
+
+.tap-counter-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #ffd700;
+  background: rgba(212, 175, 55, 0.3);
+  border: 1px solid var(--border-gold);
+  border-radius: 9999px;
+  padding: 1px 6px;
+  animation: popBadge 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popBadge {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .app-header .subtitle {
@@ -1188,4 +1214,84 @@ input:checked + .toggle-slider:before {
     font-size: 12px;
   }
 }
+
+/* ==========================================================================
+   👑 神モード・管理者PINログイン画面モーダル
+   ========================================================================== */
+.godmode-modal-card {
+  max-width: 320px;
+  text-align: center;
+  padding: 24px 20px;
+  background: #11141c;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.95), 0 0 30px rgba(212, 175, 55, 0.35);
+  animation: popBadge 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.godmode-badge-icon {
+  font-size: 38px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.7));
+  line-height: 1;
+}
+
+.godmode-modal-title {
+  font-family: var(--font-heading), 'Shippori Mincho', serif;
+  font-size: 16.5px;
+  font-weight: 800;
+  color: var(--gold-text);
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+.godmode-modal-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.godmode-pin-input {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 10px;
+  padding: 10px 12px;
+  background: #000;
+  border: 2px solid rgba(212, 175, 55, 0.5);
+  border-radius: var(--radius-sm);
+  color: #ffd700;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.godmode-pin-input:focus {
+  outline: none;
+  border-color: #ffd700;
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.5);
+}
+
+.godmode-error-msg {
+  color: #ef5350;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  animation: popBadge 0.2s ease;
+}
+
+.godmode-btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.godmode-btn-row button {
+  flex: 1;
+  padding: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
 
