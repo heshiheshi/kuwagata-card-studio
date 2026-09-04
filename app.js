@@ -486,8 +486,9 @@
       Logger.sync(`[SYNC_PUSH] クラウド送信開始 (Cards: ${payload.cardArchive.length}件, Chips: ${payload.chips.length}件, Payload: ${sizeKB}KB)`);
 
       try {
+        const timeoutMs = Math.max(35000, sizeKB * 15);
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
         const resp = await fetch(CLOUD_SYNC_ENDPOINT, {
           method: 'POST',
@@ -500,7 +501,7 @@
         if (resp.ok) {
           const respData = await resp.json().catch(() => ({}));
           this.updateIndicator('online', `同期完了 (${this.formatTime(new Date())})`);
-          Logger.success(`[SYNC_PUSH_SUCCESS] クラウド送信完了 (HTTP ${resp.status})`);
+          Logger.success(`[SYNC_PUSH_SUCCESS] クラウド送信完了 (HTTP ${resp.status}, Payload: ${sizeKB}KB)`);
           this.hasPendingChanges = false;
           if (!silent) {
             alert(`🎉 Cloudflare KV へ安全に保存されました！\n\n・単語辞書: ${payload.chips.length} 件\n・非破壊カード履歴: ${payload.cardArchive.length} 件 (${sizeKB} KB)`);
@@ -519,7 +520,7 @@
         this.isSyncing = false;
         if (this.hasPendingChanges && !isExplicitForce) {
           this.hasPendingChanges = false;
-          setTimeout(() => this.pushToCloud(true), 2000);
+          setTimeout(() => this.pushToCloud(true), 3000);
         }
       }
     },
@@ -533,7 +534,7 @@
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         const resp = await fetch(CLOUD_SYNC_ENDPOINT, { signal: controller.signal });
         clearTimeout(timeoutId);
@@ -591,7 +592,7 @@
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
 
         const resp = await fetch(CLOUD_SYNC_ENDPOINT, { signal: controller.signal });
         clearTimeout(timeoutId);
@@ -1958,14 +1959,63 @@ JSONフォーマットのみを出力してください:
     }
   }
 
-  // --- 🎴 非破壊マルチレイヤー アーカイブシステム（IndexedDB大容量保護） ---
+  function compressImageBase64(dataUrl, maxDim = 1000, quality = 0.75, mimeType = null) {
+    if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image')) {
+      return Promise.resolve(dataUrl);
+    }
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round(h * (maxDim / w));
+            w = maxDim;
+          } else {
+            w = Math.round(w * (maxDim / h));
+            h = maxDim;
+          }
+        }
+        const oc = document.createElement('canvas');
+        oc.width = w;
+        oc.height = h;
+        const ctx = oc.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        
+        const targetMime = mimeType || (dataUrl.includes('image/png') ? 'image/png' : 'image/jpeg');
+        const out = oc.toDataURL(targetMime, quality);
+        resolve(out);
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
+  // --- 🎴 非破壊マルチレイヤー アーカイブシステム（IndexedDB大容量保護＆軽量化） ---
   async function saveCurrentToArchive() {
     const thumbCanvas = document.createElement('canvas');
-    thumbCanvas.width = 240;
-    thumbCanvas.height = Math.round(240 * (state.canvasHeight / state.canvasWidth));
+    thumbCanvas.width = 200;
+    thumbCanvas.height = Math.round(200 * (state.canvasHeight / state.canvasWidth));
     const tCtx = thumbCanvas.getContext('2d');
     tCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
-    const thumbData = thumbCanvas.toDataURL('image/jpeg', 0.65);
+    const thumbData = thumbCanvas.toDataURL('image/jpeg', 0.60);
+
+    // 🌟 レイヤー画像のインテリジェント圧縮（通信サイズ激減）
+    const savedLayers = JSON.parse(JSON.stringify(state.layers));
+    if (savedLayers.bg && savedLayers.bg.src && savedLayers.bg.src.startsWith('data:')) {
+      savedLayers.bg.src = await compressImageBase64(savedLayers.bg.src, 1200, 0.75, 'image/jpeg');
+    }
+    if (savedLayers.brand && savedLayers.brand.aiGraphicDataUrl) {
+      savedLayers.brand.aiGraphicDataUrl = await compressImageBase64(savedLayers.brand.aiGraphicDataUrl, 800, 1.0, 'image/png');
+    }
+    if (savedLayers.kanji && savedLayers.kanji.aiGraphicDataUrl) {
+      savedLayers.kanji.aiGraphicDataUrl = await compressImageBase64(savedLayers.kanji.aiGraphicDataUrl, 800, 1.0, 'image/png');
+    }
+    if (savedLayers.romaji && savedLayers.romaji.aiGraphicDataUrl) {
+      savedLayers.romaji.aiGraphicDataUrl = await compressImageBase64(savedLayers.romaji.aiGraphicDataUrl, 800, 1.0, 'image/png');
+    }
 
     const archiveItem = {
       id: 'card_' + Date.now(),
@@ -1974,12 +2024,12 @@ JSONフォーマットのみを出力してください:
       ownerName: state.layers.specs.owner.text,
       sizeText: state.layers.specs.size.text,
       thumbnail: thumbData,
-      stateData: JSON.parse(JSON.stringify({
+      stateData: {
         aspectRatio: state.aspectRatio,
         canvasWidth: state.canvasWidth,
         canvasHeight: state.canvasHeight,
-        layers: state.layers
-      }))
+        layers: savedLayers
+      }
     };
 
     state.deletedCardIds.delete(archiveItem.id);
