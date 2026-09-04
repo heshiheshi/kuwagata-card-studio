@@ -1,14 +1,19 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.4.0 High-Capacity IndexedDB & Guaranteed Persistence Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.4.1 Localhost-Cloud Direct Connect & Overwrite Guard Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.4.0';
+  const APP_VERSION = 'v4.4.1';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
-  const CLOUD_SYNC_ENDPOINT = '/api/sync';
+
+  // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
+  const IS_LOCAL_DEV = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const CLOUD_SYNC_ENDPOINT = IS_LOCAL_DEV
+    ? 'https://kuwagata-card-studio.pages.dev/api/sync'
+    : '/api/sync';
 
   // 🛡️ 端末固定の永久キー金庫（アップデートでも絶対に消えないキー名）
   const VAULT_KEYS = {
@@ -394,14 +399,19 @@
     }
   }
 
-  // --- ☁️ 真の王道・分散クラウド同期エンジン ---
+  // --- ☁️ 真の王道・分散クラウド同期エンジン (誤上書き防止＆直結) ---
   const CloudSyncManager = {
     isSyncing: false,
     hasPendingChanges: false,
+    hasCompletedInitialPull: false,
 
-    init() {
+    async init() {
       this.updateIndicator('online', '自動同期稼働中');
-      this.checkAndPullFromCloud(true);
+      Logger.info(`☁️ クラウド同期接続先: ${CLOUD_SYNC_ENDPOINT} (${IS_LOCAL_DEV ? 'ローカル開発直結モード' : '本番モード'})`);
+
+      // 🌟 起動時は必ず最初にクラウド最新を確認＆取得（空データ送信を絶対にさせない）
+      await this.checkAndPullFromCloud(true);
+      this.hasCompletedInitialPull = true;
 
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
@@ -444,7 +454,19 @@
       };
     },
 
-    async pushToCloud(silent = true) {
+    // 🌟 操作時即時同期（※初回プル完了前や、初期未変更時の空送信は完全ブロック）
+    async pushToCloud(silent = true, isExplicitForce = false) {
+      if (!isExplicitForce) {
+        if (!this.hasCompletedInitialPull) {
+          Logger.warn('[SYNC_PUSH_GUARD] 初回クラウド確認が未完了のため送信を保留しました。');
+          return;
+        }
+        if (state.cardArchive.length === 0 && state.localLastModifiedAt === 0) {
+          Logger.warn('[SYNC_PUSH_GUARD] 初期状態（0件）のためクラウド上書きを防止しました。');
+          return;
+        }
+      }
+
       if (this.isSyncing) {
         this.hasPendingChanges = true;
         Logger.trace('同期中につき送信キューに保留しました。');
@@ -493,6 +515,7 @@
       }
     },
 
+    // 🌟 定期確認＆自動マージ（※端末が未初期化またはクラウドが新しい時は100%取り込み）
     async checkAndPullFromCloud(silent = true) {
       if (this.isSyncing || this.hasPendingChanges) return;
       this.isSyncing = true;
@@ -507,16 +530,18 @@
             const cloudTime = cloudData.updatedAt || 0;
             const deltaMs = cloudTime - state.localLastModifiedAt;
 
-            Logger.trace(`[SYNC_CHECK_RESP] CloudTime: ${cloudTime}, LocalTime: ${state.localLastModifiedAt}, Delta: ${deltaMs}ms`);
+            Logger.trace(`[SYNC_CHECK_RESP] CloudTime: ${cloudTime}, LocalTime: ${state.localLastModifiedAt}, Delta: ${deltaMs}ms, CloudCards: ${cloudData.cardArchive?.length || 0}`);
 
-            // クラウドが自分の更新日時よりも新しい場合のみマージ
-            if (cloudTime > state.localLastModifiedAt) {
-              Logger.sync(`[SYNC_MERGE] 他端末での最新更新（${this.formatTime(new Date(cloudTime))}）を検知。マージ実行。`);
-              this.updateIndicator('syncing', '他端末の変更を取り込み中...');
+            // ローカルが初期状態（0）またはクラウドの方が新しい場合、安全に取り込み
+            const shouldAdopt = (state.localLastModifiedAt === 0 && (cloudData.cardArchive?.length > 0 || cloudData.chips?.length > 0)) || (cloudTime > state.localLastModifiedAt);
+
+            if (shouldAdopt) {
+              Logger.sync(`[SYNC_MERGE] クラウド側の最新データを取り込み・マージします (CloudCards: ${cloudData.cardArchive?.length || 0}件)`);
+              this.updateIndicator('syncing', 'クラウドの最新を取り込み中...');
 
               await this.applyCloudData(cloudData);
 
-              state.localLastModifiedAt = cloudTime;
+              state.localLastModifiedAt = cloudTime || Date.now();
               await StorageVault.set('kuwagata_local_last_modified_v4', state.localLastModifiedAt);
 
               await saveState(false);
@@ -525,7 +550,7 @@
               renderArchiveGrid();
 
               this.updateIndicator('online', `同期完了 (${this.formatTime(new Date())})`);
-              Logger.success('[SYNC_MERGE_SUCCESS] 他端末とのスマートマージ完了');
+              Logger.success('[SYNC_MERGE_SUCCESS] クラウドとのスマートマージ完了');
               if (!silent) {
                 alert('🎉 クラウドから最新データを正常に取り込みました！');
               }
@@ -540,9 +565,11 @@
         Logger.warn('[SYNC_CHECK_WARN] 定期確認スキップ', err.message);
       } finally {
         this.isSyncing = false;
+        this.hasCompletedInitialPull = true;
       }
     },
 
+    // 🌟 強制取得（Force Pull: ボタン押下時は無条件で最新化）
     async forcePullFromCloud() {
       if (this.isSyncing) return;
       this.isSyncing = true;
@@ -579,6 +606,7 @@
         alert('クラウド取得エラー: ' + err.message);
       } finally {
         this.isSyncing = false;
+        this.hasCompletedInitialPull = true;
       }
     },
 
@@ -637,9 +665,9 @@
   async function init() {
     setupAuthGate();
     loadApiKeyVault();
-    Logger.info(`Kuwagata Card Studio ${APP_VERSION} (IndexedDB大容量保護エンジン) を起動しました。`);
+    Logger.info(`Kuwagata Card Studio ${APP_VERSION} (Direct Cloud Connect) を起動しました。`);
     
-    // 🌟 IndexedDBから端末内データを100%確実に非同期復元
+    // 🌟 IndexedDBからローカルデータを読み込み
     await loadSavedState();
     
     setupEventListeners();
@@ -654,7 +682,8 @@
     setupVisionDropZone();
     renderArchiveGrid();
     
-    CloudSyncManager.init();
+    // 🌟 クラウド初期確認（空データ誤送信ブロック付き）
+    await CloudSyncManager.init();
     
     if (document.fonts) {
       await document.fonts.ready;
@@ -925,7 +954,7 @@
       if (b) b.addEventListener('click', () => backupModal.classList.add('hidden'));
     });
 
-    if (btnForceUpload) btnForceUpload.addEventListener('click', () => CloudSyncManager.pushToCloud(false));
+    if (btnForceUpload) btnForceUpload.addEventListener('click', () => CloudSyncManager.pushToCloud(false, true));
     if (btnForceDownload) btnForceDownload.addEventListener('click', () => CloudSyncManager.forcePullFromCloud());
 
     if (btnExport) btnExport.addEventListener('click', () => exportBackupData());

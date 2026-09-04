@@ -1,6 +1,21 @@
 /**
  * Cloudflare Pages Functions - KUWAGATA STUDIO OFFICIAL KV SYNC API
+ * Multi-Origin CORS & Preflight Support for localhost development and production
  */
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Max-Age": "86400"
+};
+
+export async function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: CORS_HEADERS
+  });
+}
 
 export async function onRequestGet(context) {
   try {
@@ -15,7 +30,7 @@ export async function onRequestGet(context) {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
           "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Access-Control-Allow-Origin": "*"
+          ...CORS_HEADERS
         }
       });
     }
@@ -24,13 +39,16 @@ export async function onRequestGet(context) {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
         "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Access-Control-Allow-Origin": "*"
+        ...CORS_HEADERS
       }
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json; charset=utf-8" }
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        ...CORS_HEADERS
+      }
     });
   }
 }
@@ -68,13 +86,16 @@ async function handleSave(context) {
     }), {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Access-Control-Allow-Origin": "*"
+        ...CORS_HEADERS
       }
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json; charset=utf-8" }
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        ...CORS_HEADERS
+      }
     });
   }
 }
