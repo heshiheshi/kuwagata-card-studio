@@ -1,0 +1,10 @@
+{
+  "name": "kuwagata-card-studio",
+  "version": "4.5.0",
+  "description": "KUWAGATA PREMIUM CARD STUDIO",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "dev": "npx wrangler pages dev . --port 8788",
+    "deploy": "npx wrangler pages deploy ."
+  }
+}
