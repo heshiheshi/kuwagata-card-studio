@@ -11,6 +11,14 @@
     {
       "routePath": "/api/sync",
       "mountPath": "/api",
+      "method": "OPTIONS",
+      "module": [
+        "api/sync.js:onRequestOptions"
+      ]
+    },
+    {
+      "routePath": "/api/sync",
+      "mountPath": "/api",
       "method": "POST",
       "module": [
         "api/sync.js:onRequestPost"

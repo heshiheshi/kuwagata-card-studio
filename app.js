@@ -399,19 +399,20 @@
     }
   }
 
-  // --- ☁️ 真の王道・分散クラウド同期エンジン (誤上書き防止＆直結) ---
+  // --- ☁️ 真の王道・分散クラウド同期エンジン (誤上書き防止＆直結＆タイムアウト保護) ---
   const CloudSyncManager = {
     isSyncing: false,
     hasPendingChanges: false,
     hasCompletedInitialPull: false,
 
-    async init() {
+    init() {
       this.updateIndicator('online', '自動同期稼働中');
       Logger.info(`☁️ クラウド同期接続先: ${CLOUD_SYNC_ENDPOINT} (${IS_LOCAL_DEV ? 'ローカル開発直結モード' : '本番モード'})`);
 
-      // 🌟 起動時は必ず最初にクラウド最新を確認＆取得（空データ送信を絶対にさせない）
-      await this.checkAndPullFromCloud(true);
-      this.hasCompletedInitialPull = true;
+      // 🌟 非同期で初回クラウド確認（UI初期化を絶対にブロックしない）
+      this.checkAndPullFromCloud(true).finally(() => {
+        this.hasCompletedInitialPull = true;
+      });
 
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
@@ -465,13 +466,13 @@
           Logger.warn('[SYNC_PUSH_GUARD] 初期状態（0件）のためクラウド上書きを防止しました。');
           return;
         }
+        if (this.isSyncing) {
+          this.hasPendingChanges = true;
+          Logger.trace('同期中につき送信キューに保留しました。');
+          return;
+        }
       }
 
-      if (this.isSyncing) {
-        this.hasPendingChanges = true;
-        Logger.trace('同期中につき送信キューに保留しました。');
-        return;
-      }
       this.isSyncing = true;
       this.updateIndicator('syncing', 'クラウドへ送信中...');
 
@@ -482,19 +483,24 @@
       const payloadJson = JSON.stringify(payload);
       const sizeKB = Math.round(payloadJson.length / 1024);
 
-      Logger.sync(`[SYNC_PUSH] クラウド送信開始 (Cards: ${payload.cardArchive.length}件, Chips: ${payload.chips.length}件, Payload: ${sizeKB}KB, Time: ${state.localLastModifiedAt})`);
+      Logger.sync(`[SYNC_PUSH] クラウド送信開始 (Cards: ${payload.cardArchive.length}件, Chips: ${payload.chips.length}件, Payload: ${sizeKB}KB)`);
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+
         const resp = await fetch(CLOUD_SYNC_ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: payloadJson
+          body: payloadJson,
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (resp.ok) {
           const respData = await resp.json().catch(() => ({}));
           this.updateIndicator('online', `同期完了 (${this.formatTime(new Date())})`);
-          Logger.success(`[SYNC_PUSH_SUCCESS] クラウド送信完了 (HTTP ${resp.status}, ServerTime: ${respData.updatedAt || 'OK'})`);
+          Logger.success(`[SYNC_PUSH_SUCCESS] クラウド送信完了 (HTTP ${resp.status})`);
           this.hasPendingChanges = false;
           if (!silent) {
             alert(`🎉 Cloudflare KV へ安全に保存されました！\n\n・単語辞書: ${payload.chips.length} 件\n・非破壊カード履歴: ${payload.cardArchive.length} 件 (${sizeKB} KB)`);
@@ -506,9 +512,12 @@
         this.hasPendingChanges = true;
         this.updateIndicator('error', '通信待機中（次回自動再送）');
         Logger.error('[SYNC_PUSH_ERROR] クラウド送信失敗', err.message);
+        if (!silent) {
+          alert('クラウド送信エラー: ' + err.message);
+        }
       } finally {
         this.isSyncing = false;
-        if (this.hasPendingChanges) {
+        if (this.hasPendingChanges && !isExplicitForce) {
           this.hasPendingChanges = false;
           setTimeout(() => this.pushToCloud(true), 2000);
         }
@@ -523,7 +532,12 @@
       Logger.trace(`[SYNC_CHECK] クラウド更新確認開始 (LocalTime: ${state.localLastModifiedAt})`);
 
       try {
-        const resp = await fetch(CLOUD_SYNC_ENDPOINT);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+        const resp = await fetch(CLOUD_SYNC_ENDPOINT, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         if (resp.ok) {
           const cloudData = await resp.json();
           if (cloudData && (cloudData.studio === 'KUWAGATA_PREMIUM_STUDIO' || Array.isArray(cloudData.cardArchive))) {
@@ -571,13 +585,17 @@
 
     // 🌟 強制取得（Force Pull: ボタン押下時は無条件で最新化）
     async forcePullFromCloud() {
-      if (this.isSyncing) return;
       this.isSyncing = true;
       this.updateIndicator('syncing', '強制取得中...');
       Logger.sync('[FORCE_PULL] 手動強制取得を開始しました。');
 
       try {
-        const resp = await fetch(CLOUD_SYNC_ENDPOINT);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+        const resp = await fetch(CLOUD_SYNC_ENDPOINT, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
         const cloudData = await resp.json();
@@ -682,8 +700,8 @@
     setupVisionDropZone();
     renderArchiveGrid();
     
-    // 🌟 クラウド初期確認（空データ誤送信ブロック付き）
-    await CloudSyncManager.init();
+    // 🌟 クラウド初期確認（空データ誤送信ブロック付き・バックグラウンド非同期）
+    CloudSyncManager.init();
     
     if (document.fonts) {
       await document.fonts.ready;

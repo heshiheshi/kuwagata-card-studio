@@ -2,6 +2,19 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // api/sync.js
+var CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Max-Age": "86400"
+};
+async function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: CORS_HEADERS
+  });
+}
+__name(onRequestOptions, "onRequestOptions");
 async function onRequestGet(context) {
   try {
     let rawData = null;
@@ -13,7 +26,7 @@ async function onRequestGet(context) {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
           "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Access-Control-Allow-Origin": "*"
+          ...CORS_HEADERS
         }
       });
     }
@@ -21,13 +34,16 @@ async function onRequestGet(context) {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
         "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Access-Control-Allow-Origin": "*"
+        ...CORS_HEADERS
       }
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json; charset=utf-8" }
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        ...CORS_HEADERS
+      }
     });
   }
 }
@@ -60,19 +76,22 @@ async function handleSave(context) {
     }), {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Access-Control-Allow-Origin": "*"
+        ...CORS_HEADERS
       }
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json; charset=utf-8" }
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        ...CORS_HEADERS
+      }
     });
   }
 }
 __name(handleSave, "handleSave");
 
-// ../.wrangler/tmp/pages-B7XrlB/functionsRoutes-0.5505439241100316.mjs
+// ../.wrangler/tmp/pages-BuXpVT/functionsRoutes-0.9315299706873744.mjs
 var routes = [
   {
     routePath: "/api/sync",
@@ -80,6 +99,13 @@ var routes = [
     method: "GET",
     middlewares: [],
     modules: [onRequestGet]
+  },
+  {
+    routePath: "/api/sync",
+    mountPath: "/api",
+    method: "OPTIONS",
+    middlewares: [],
+    modules: [onRequestOptions]
   },
   {
     routePath: "/api/sync",
@@ -97,7 +123,7 @@ var routes = [
   }
 ];
 
-// ../../../../../.npm/_npx/32026684e21afda6/node_modules/path-to-regexp/dist.es2015/index.js
+// ../../../../../../.npm/_npx/32026684e21afda6/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i = 0;
@@ -423,7 +449,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../../../../.npm/_npx/32026684e21afda6/node_modules/wrangler/templates/pages-template-worker.ts
+// ../../../../../../.npm/_npx/32026684e21afda6/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
