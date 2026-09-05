@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.7.0 God Mode Dedicated Modal & Secret Unlock Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.8.0 Live Key Diagnostics & Transparency Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.7.0';
+  const APP_VERSION = 'v4.8.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -356,7 +356,76 @@
   const archiveCountTag = document.getElementById('archiveCountTag');
   const dynamicChipGroupsContainer = document.getElementById('dynamicChipGroupsContainer');
 
-  // --- 🛡️ 永久APIキー金庫管理 ---
+  // --- 🛡️ 永久APIキー金庫管理 & マスキング/診断 ---
+  function maskApiKey(key) {
+    if (!key) return '(未設定)';
+    const clean = String(key).trim();
+    if (clean.length <= 8) return clean;
+    return `${clean.slice(0, 6)}...${clean.slice(-4)} (${clean.length}文字)`;
+  }
+
+  function getEffectiveApiKeyInfo(purpose = 'any') {
+    let key = '';
+    let slot = '';
+
+    if (purpose === 'image') {
+      if (state.paidApiKey) {
+        key = state.paidApiKey;
+        slot = 'スロット2 (有料キー)';
+      } else if (state.freeApiKey) {
+        key = state.freeApiKey;
+        slot = 'スロット1 (無料キー - スロット2未設定フォールバック)';
+      } else {
+        slot = '(未設定)';
+      }
+    } else if (purpose === 'text') {
+      if (state.freeApiKey) {
+        key = state.freeApiKey;
+        slot = 'スロット1 (無料キー)';
+      } else if (state.paidApiKey) {
+        key = state.paidApiKey;
+        slot = 'スロット2 (有料キー - スロット1未設定フォールバック)';
+      } else {
+        slot = '(未設定)';
+      }
+    } else {
+      if (state.activeKeyMode === 'paid') {
+        if (state.paidApiKey) {
+          key = state.paidApiKey;
+          slot = 'スロット2 (有料キー)';
+        } else if (state.freeApiKey) {
+          key = state.freeApiKey;
+          slot = 'スロット1 (無料キー - スロット2未設定フォールバック)';
+        } else {
+          slot = '(未設定)';
+        }
+      } else {
+        if (state.freeApiKey) {
+          key = state.freeApiKey;
+          slot = 'スロット1 (無料キー)';
+        } else if (state.paidApiKey) {
+          key = state.paidApiKey;
+          slot = 'スロット2 (有料キー - スロット1未設定フォールバック)';
+        } else {
+          slot = '(未設定)';
+        }
+      }
+    }
+
+    return {
+      key: (key || '').trim(),
+      slot: slot,
+      masked: maskApiKey(key),
+      slot1_masked: maskApiKey(state.freeApiKey),
+      slot2_masked: maskApiKey(state.paidApiKey),
+      activeMode: state.activeKeyMode === 'paid' ? '有料キー' : '無料キー'
+    };
+  }
+
+  function getEffectiveApiKey(purpose = 'any') {
+    return getEffectiveApiKeyInfo(purpose).key;
+  }
+
   function loadApiKeyVault() {
     try {
       let free = localStorage.getItem(VAULT_KEYS.FREE_API_KEY) || '';
@@ -382,7 +451,13 @@
 
       saveApiKeyVault();
       if (free || paid) {
-        Logger.info('🔑 端末内永久キー金庫からAPIキーをロードしました。');
+        Logger.info('🔑 端末内永久キー金庫からAPIキーをロードしました。', {
+          slot1_freeKey: maskApiKey(free),
+          slot2_paidKey: maskApiKey(paid),
+          activeMode: mode === 'paid' ? '有料キー' : '無料キー'
+        });
+      } else {
+        Logger.warn('⚠️ 端末内永久キー金庫にAPIキーが未設定です。');
       }
     } catch (e) {
       Logger.warn('Key vault load warning', e.message);
@@ -1173,12 +1248,6 @@
     }
   }
 
-  function getEffectiveApiKey(purpose = 'any') {
-    if (purpose === 'image') return state.paidApiKey || state.freeApiKey;
-    if (purpose === 'text') return state.freeApiKey || state.paidApiKey;
-    return state.activeKeyMode === 'paid' ? (state.paidApiKey || state.freeApiKey) : (state.freeApiKey || state.paidApiKey);
-  }
-
   // --- タブ1: 動的カテゴリーチップグループ描画 ---
   function renderDynamicChipGroups() {
     if (!dynamicChipGroupsContainer) return;
@@ -1510,7 +1579,11 @@
         saveApiKeyVault();
         updateKeyToggleUI();
         apiKeyModal.classList.add('hidden');
-        Logger.success('Gemini APIキーを端末の永久金庫に保存しました。');
+        Logger.success('Gemini APIキーを端末の永久金庫に保存しました。', {
+          savedSlot1_freeKey: maskApiKey(state.freeApiKey),
+          savedSlot2_paidKey: maskApiKey(state.paidApiKey),
+          activeMode: state.activeKeyMode === 'paid' ? '有料キー' : '無料キー'
+        });
         alert('🎉 APIキーを端末内の永久金庫に保存しました！');
       });
     }
@@ -1763,7 +1836,8 @@
   }
 
   async function analyzeImageAndRestoreCleanBg(file) {
-    const apiKey = getEffectiveApiKey('text');
+    const keyInfo = getEffectiveApiKeyInfo('text');
+    const apiKey = keyInfo.key;
     if (!apiKey) {
       apiKeyModal.classList.remove('hidden');
       alert('画像解析を行うために、右上の「API設定」からAPIキーを入力してください。');
@@ -1781,7 +1855,12 @@
     if (resultArea) resultArea.classList.add('hidden');
 
     showLoading(true, 'Gemini Vision AI が画像を解析＆文字消し背景を復元中...');
-    Logger.api(`Vision AI 解析＆文字消し開始: ${file.name}`);
+    Logger.api(`Vision AI 解析＆文字消し開始: ${file.name}`, {
+      usedSlot: keyInfo.slot,
+      usedKey: keyInfo.masked,
+      slot1_freeKey: keyInfo.slot1_masked,
+      slot2_paidKey: keyInfo.slot2_masked
+    });
 
     try {
       const base64Data = await readFileAsBase64(file);
@@ -1854,7 +1933,8 @@ JSONフォーマットのみを出力してください:
 
   // --- ✨ Gemini AI 文字グラフィック生成エンジン (超高精度クロマキー透過) ---
   async function generateAiTextGraphic(targetLayer) {
-    const apiKey = getEffectiveApiKey('image');
+    const keyInfo = getEffectiveApiKeyInfo('image');
+    const apiKey = keyInfo.key;
     if (!apiKey) {
       apiKeyModal.classList.remove('hidden');
       alert('AI文字グラフィックを生成するために、右上の「API設定」のスロット2（有料キー）にAPIキーを入力してください。');
@@ -1881,7 +1961,15 @@ JSONフォーマットのみを出力してください:
     }
 
     showLoading(true, `✨ Gemini が「${text}」の100%完全透過文字グラフィックを生成中...`);
-    Logger.api(`AI文字グラフィック生成開始 [${targetLayer}]: ${text}`);
+    Logger.api(`AI文字グラフィック生成開始 [${targetLayer}]: ${text}`, {
+      layer: targetLayer,
+      text: text,
+      usedSlot: keyInfo.slot,
+      usedKey: keyInfo.masked,
+      slot1_freeKey: keyInfo.slot1_masked,
+      slot2_paidKey: keyInfo.slot2_masked,
+      activeMode: keyInfo.activeMode
+    });
 
     const candidateModels = [
       'gemini-3.1-flash-image',
@@ -1923,9 +2011,22 @@ JSONフォーマットのみを出力してください:
         } else {
           const errJson = await resp.json().catch(() => ({}));
           lastError = errJson.error ? errJson.error.message : `HTTP ${resp.status}`;
+          Logger.warn(`AI文字グラフィック試行失敗 [${model}]: HTTP ${resp.status}`, {
+            model: model,
+            status: resp.status,
+            usedSlot: keyInfo.slot,
+            usedKey: keyInfo.masked,
+            error: lastError
+          });
         }
       } catch (e) {
         lastError = e.message;
+        Logger.warn(`AI文字グラフィック試行例外 [${model}]`, {
+          model: model,
+          usedSlot: keyInfo.slot,
+          usedKey: keyInfo.masked,
+          error: e.message
+        });
       }
     }
 
@@ -2013,7 +2114,8 @@ JSONフォーマットのみを出力してください:
 
   // --- 🖼️ 背景グラフィック生成 ---
   async function generateAiBackground() {
-    const apiKey = getEffectiveApiKey('image');
+    const keyInfo = getEffectiveApiKeyInfo('image');
+    const apiKey = keyInfo.key;
     if (!apiKey) {
       apiKeyModal.classList.remove('hidden');
       alert('背景画像を生成するために、右上の「API設定」のスロット2（有料キー）にAPIキーを入力してください。');
@@ -2027,7 +2129,14 @@ JSONフォーマットのみを出力してください:
     }
 
     showLoading(true, '✨ Gemini が背景グラフィックを生成中...');
-    Logger.api('背景生成開始', { prompt: prompt });
+    Logger.api('背景生成開始', {
+      prompt: prompt,
+      usedSlot: keyInfo.slot,
+      usedKey: keyInfo.masked,
+      slot1_freeKey: keyInfo.slot1_masked,
+      slot2_paidKey: keyInfo.slot2_masked,
+      activeMode: keyInfo.activeMode
+    });
 
     const candidateModels = [
       'gemini-3.1-flash-image',
@@ -2067,9 +2176,22 @@ JSONフォーマットのみを出力してください:
         } else {
           const errJson = await resp.json().catch(() => ({}));
           lastError = errJson.error ? errJson.error.message : `HTTP ${resp.status}`;
+          Logger.warn(`背景生成モデル試行失敗 [${model}]: HTTP ${resp.status}`, {
+            model: model,
+            status: resp.status,
+            usedSlot: keyInfo.slot,
+            usedKey: keyInfo.masked,
+            error: lastError
+          });
         }
       } catch (e) {
         lastError = e.message;
+        Logger.warn(`背景生成モデル試行例外 [${model}]`, {
+          model: model,
+          usedSlot: keyInfo.slot,
+          usedKey: keyInfo.masked,
+          error: e.message
+        });
       }
     }
 
