@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.8.0 Live Key Diagnostics & Transparency Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.9.0 Photos App Direct Save & iOS WebShare Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.8.0';
+  const APP_VERSION = 'v4.9.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -1130,19 +1130,67 @@
     });
   }
 
-  // --- 🖼️ 万能画像保存 ＆ 長押し写真追加モーダル ---
+  function isIOSDevice() {
+    const ua = navigator.userAgent || '';
+    const isIPhone = /iPhone|iPad|iPod/.test(ua);
+    const isIPadOS = (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    return isIPhone || isIPadOS;
+  }
+
+  let currentExportFile = null;
+
+  // --- 🖼️ 万能画像保存 ＆ 写真（カメラロール）ダイレクト保存モーダル (v4.9.0) ---
   function setupImageSaveModal() {
     const btnClose = document.getElementById('btnCloseImageSaveModal');
     const btnCloseBottom = document.getElementById('btnCloseImageSaveModalBottom');
+    const btnShareToPhotos = document.getElementById('btnShareToPhotos');
 
     [btnClose, btnCloseBottom].forEach(btn => {
       if (btn) btn.addEventListener('click', () => imageSaveModal.classList.add('hidden'));
     });
+
+    if (btnShareToPhotos) {
+      btnShareToPhotos.addEventListener('click', async () => {
+        if (!currentExportFile) {
+          alert('保存対象の画像ファイルが準備されていません。再度出力ボタンを押してください。');
+          return;
+        }
+
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [currentExportFile] })) {
+          try {
+            Logger.info('📱 Web Share API (共有シート) 呼び出し開始', {
+              filename: currentExportFile.name,
+              sizeKB: Math.round(currentExportFile.size / 1024),
+              isIOS: isIOSDevice()
+            });
+
+            // ⚠️ iOSで「画像を保存」を確実に出現させるため、files のみを含める
+            await navigator.share({
+              files: [currentExportFile]
+            });
+
+            Logger.success('📱 Web Share API 完了（写真への保存メニュー表示）');
+          } catch (err) {
+            if (err.name === 'AbortError') {
+              Logger.info('共有シートがユーザーによって閉じられました');
+            } else {
+              Logger.warn('Web Share API 実行例外', err.message);
+              alert('写真保存メニューの起動に失敗しました。下のカード画像を「1秒長押し ➔ 写真に追加」してください。');
+            }
+          }
+        } else {
+          alert('お使いの端末またはブラウザは写真直接保存（Web Share）に対応していません。\n下のカード画像を1秒長押しして「”写真”に追加」を選択してください。');
+        }
+      });
+    }
   }
 
-  function openImageSaveModal(dataUrl, filename) {
+  function openImageSaveModal(dataUrl, filename, exportFile = null) {
     const previewImg = document.getElementById('savedModalImagePreview');
     const directLink = document.getElementById('btnDirectDownloadLink');
+    const shareArea = document.getElementById('shareToPhotosActionArea');
+
+    currentExportFile = exportFile;
 
     if (previewImg) previewImg.src = dataUrl;
     if (directLink) {
@@ -1150,7 +1198,19 @@
       directLink.download = filename;
     }
 
+    const canShare = !!(navigator.share && navigator.canShare && currentExportFile && navigator.canShare({ files: [currentExportFile] }));
+    if (shareArea) {
+      shareArea.style.display = canShare ? 'block' : 'none';
+    }
+
     imageSaveModal.classList.remove('hidden');
+
+    Logger.info('🖼️ 写真保存案内モーダル表示', {
+      filename: filename,
+      isIOS: isIOSDevice(),
+      canShareFiles: canShare,
+      fileSizeKB: exportFile ? Math.round(exportFile.size / 1024) : 0
+    });
   }
 
   // --- ☁️ 同期＆バックアップUI設定 ---
@@ -2702,10 +2762,10 @@ JSONフォーマットのみを出力してください:
     targetCtx.restore();
   }
 
-  // 🌟 万能画像エクスポート ＆ iPhone/Mac両対応モーダル
+  // 🌟 万能画像エクスポート ＆ iPhone/iPad写真保存・PC両対応モーダル (v4.9.0)
   function exportLayer(type) {
     showLoading(true, '高画質PNG生成中...');
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         const offCanvas = document.createElement('canvas');
         offCanvas.width = state.canvasWidth;
@@ -2734,15 +2794,36 @@ JSONフォーマットのみを出力してください:
 
         const dataUrl = offCanvas.toDataURL('image/png');
 
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        // Blob & File オブジェクトの生成（iOS Web Share & 写真保存用）
+        let exportFile = null;
+        await new Promise((resolve) => {
+          offCanvas.toBlob((blob) => {
+            if (blob) {
+              exportFile = new File([blob], filename, { type: 'image/png' });
+            }
+            resolve();
+          }, 'image/png');
+        });
 
-        openImageSaveModal(dataUrl, filename);
-        Logger.success(`[EXPORT_SUCCESS] 高解像度PNG生成完了: ${filename}`);
+        const isIOS = isIOSDevice();
+
+        // 📱 PCや非iOS環境のみ、従来の自動ファイルダウンロードを実行（iOSは「ファイルに保存」の混乱防止のためスキップ）
+        if (!isIOS) {
+          const a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+
+        openImageSaveModal(dataUrl, filename, exportFile);
+        Logger.success(`[EXPORT_SUCCESS] 高解像度PNG生成完了: ${filename}`, {
+          isIOS: isIOS,
+          resolution: `${state.canvasWidth}x${state.canvasHeight}`,
+          sizeKB: exportFile ? Math.round(exportFile.size / 1024) : 0,
+          savedVia: isIOS ? '写真保存モーダル待機(iOS)' : '自動ダウンロード+モーダル'
+        });
       } catch (err) {
         Logger.error('[EXPORT_ERROR] PNG出力例外', err.message);
         alert('PNG出力エラー: ' + err.message);
