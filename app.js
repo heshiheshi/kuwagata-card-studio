@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.11.0 AI Letter Prompts Full Japanese & Universal Auto-Resize Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.12.0 Smart Toggle Prompts & User Edit Protection Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.11.0';
+  const APP_VERSION = 'v4.12.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -955,7 +955,13 @@
         canvasWidth: state.canvasWidth,
         canvasHeight: state.canvasHeight,
         layers: state.layers,
-        selectedChipIds: Array.from(state.selectedChipIds)
+        selectedChipIds: Array.from(state.selectedChipIds),
+        aiPrompt: aiPromptInput ? aiPromptInput.value : state.aiPrompt,
+        letterPrompts: {
+          brand: document.getElementById('brandAiPromptInput')?.value || '',
+          kanji: document.getElementById('kanjiAiPromptInput')?.value || '',
+          romaji: document.getElementById('romajiAiPromptInput')?.value || ''
+        }
       };
 
       await StorageVault.set('kuwagata_card_studio_state_v4', stateObj);
@@ -1009,6 +1015,16 @@
         if (saved.canvasWidth) state.canvasWidth = saved.canvasWidth;
         if (saved.canvasHeight) state.canvasHeight = saved.canvasHeight;
         if (saved.selectedChipIds) state.selectedChipIds = new Set(saved.selectedChipIds);
+        if (saved.aiPrompt) {
+          state.aiPrompt = saved.aiPrompt;
+          if (aiPromptInput) aiPromptInput.value = saved.aiPrompt;
+        }
+        if (saved.letterPrompts) {
+          ['brand', 'kanji', 'romaji'].forEach(k => {
+            const el = document.getElementById(`${k}AiPromptInput`);
+            if (el && saved.letterPrompts[k]) el.value = saved.letterPrompts[k];
+          });
+        }
       }
       syncInputsFromState();
       Logger.storage(`[INDEXED_DB_LOAD] 端末内大容量データ復元完了 (Cards: ${state.cardArchive.length}件, Chips: ${state.chips.length}件)`);
@@ -1113,32 +1129,69 @@
     if (el) el.checked = !!val;
   }
 
-  // --- 📝 文字スタイルチップの動的挿入イベント ＆ 自動全行展開 ---
+  // --- 📝 AI文字スタイルチップのスマートトグル (ON/OFF) ＆ 自動全行展開 ---
+  function toggleLetterChip(btn) {
+    const target = btn.dataset.target;
+    const text = btn.dataset.text;
+    const textareaId = `${target}AiPromptInput`;
+    const textarea = document.getElementById(textareaId);
+    if (!textarea || !text) return;
+
+    const currentVal = textarea.value;
+    const isPresent = currentVal.includes(text);
+    const isCurrentlyActive = btn.classList.contains('active') || isPresent;
+
+    if (isCurrentlyActive) {
+      // 🗑️ 解除（OFF）: 該当のスタイル文言のみを抜き取ってピンポイント削除
+      let val = currentVal.split(text).join('');
+      val = val.replace(/、+/g, '、').replace(/^[、\s]+|[、\s]+$/g, '');
+      textarea.value = val;
+      btn.classList.remove('active');
+      Logger.info(`AI文字プロンプトチップ解除 [${target}]: ${text}`);
+    } else {
+      // ➕ 追加（ON）: ピンポイント追記
+      let val = currentVal.trim();
+      if (!val) {
+        textarea.value = text;
+      } else {
+        textarea.value = val + '、' + text;
+      }
+      btn.classList.add('active');
+      Logger.info(`AI文字プロンプトチップ追加 [${target}]: ${text}`);
+    }
+    autoResizePromptTextarea(textarea);
+    saveState();
+  }
+
+  function syncLetterChipsForTarget(target) {
+    const textarea = document.getElementById(`${target}AiPromptInput`);
+    if (!textarea) return;
+    const val = textarea.value;
+    document.querySelectorAll(`.letter-chip[data-target="${target}"]`).forEach(btn => {
+      const text = btn.dataset.text;
+      if (text && val.includes(text)) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+
   function setupLetterPromptChips() {
     document.querySelectorAll('.letter-chip').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const target = btn.dataset.target;
-        const text = btn.dataset.text;
-        const textareaId = `${target}AiPromptInput`;
-        const textarea = document.getElementById(textareaId);
-        if (textarea) {
-          const currentVal = textarea.value.trim();
-          if (currentVal) {
-            textarea.value = currentVal + '、' + text;
-          } else {
-            textarea.value = text;
-          }
-          autoResizePromptTextarea(textarea);
-          Logger.info(`プロンプトチップ追加 [${target}]: ${text}`);
-        }
-      });
+      btn.addEventListener('click', () => toggleLetterChip(btn));
     });
 
-    ['brandAiPromptInput', 'kanjiAiPromptInput', 'romajiAiPromptInput'].forEach(id => {
-      const el = document.getElementById(id);
+    ['brand', 'kanji', 'romaji'].forEach(target => {
+      const el = document.getElementById(`${target}AiPromptInput`);
       if (el) {
-        el.addEventListener('input', () => autoResizePromptTextarea(el));
+        el.addEventListener('input', () => {
+          autoResizePromptTextarea(el);
+          syncLetterChipsForTarget(target);
+          saveState();
+        });
       }
+      syncLetterChipsForTarget(target);
     });
   }
 
@@ -1366,15 +1419,7 @@
             return;
           }
 
-          if (state.selectedChipIds.has(chip.id)) {
-            state.selectedChipIds.delete(chip.id);
-            chipEl.classList.remove('active');
-          } else {
-            state.selectedChipIds.add(chip.id);
-            chipEl.classList.add('active');
-          }
-          updateCombinedPrompt();
-          saveState();
+          toggleBackgroundChip(chip, chipEl);
         });
 
         gridEl.appendChild(chipEl);
@@ -1394,7 +1439,95 @@
     el.style.height = `${newH}px`;
   }
 
-  function updateCombinedPrompt() {
+  // 🌟 背景プロンプトチップのスマートトグル (ON/OFF) ＆ 手動編集の完全保護
+  function toggleBackgroundChip(chip, chipEl) {
+    if (!aiPromptInput) return;
+    const text = chip.text;
+    let val = aiPromptInput.value;
+    const bullet = `・${text}`;
+    const isCurrentlyActive = state.selectedChipIds.has(chip.id) || val.includes(text);
+
+    if (isCurrentlyActive) {
+      // 🗑️ 解除 (OFF): 該当行・文言のみを抜き取って削除（手動入力行は100%保持）
+      state.selectedChipIds.delete(chip.id);
+      if (chipEl) chipEl.classList.remove('active');
+
+      const lines = val.split('\n');
+      const newLines = lines.filter(l => {
+        const t = l.trim();
+        return t !== bullet && t !== text && t !== `・${text}。` && t !== `${text}。`;
+      });
+      aiPromptInput.value = newLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+      Logger.info(`背景プロンプトチップ解除 [${chip.category}]: ${text}`);
+    } else {
+      // ➕ 追加 (ON): アスペクト比指定行の直前に挿入（または末尾追加）
+      state.selectedChipIds.add(chip.id);
+      if (chipEl) chipEl.classList.add('active');
+
+      val = val.trim();
+      if (!val) {
+        aiPromptInput.value = `【背景プロンプト指示】\n${bullet}\n・アスペクト比は縦長の ${state.aspectRatio}（トレーディングカード比率）で生成してください。`;
+      } else if (!val.includes(text)) {
+        const aspectMarker = 'アスペクト比は縦長の';
+        if (val.includes(aspectMarker)) {
+          const lines = val.split('\n');
+          const aspectIndex = lines.findIndex(l => l.includes(aspectMarker));
+          if (aspectIndex !== -1) {
+            lines.splice(aspectIndex, 0, bullet);
+            aiPromptInput.value = lines.join('\n');
+          } else {
+            aiPromptInput.value = val + '\n' + bullet;
+          }
+        } else {
+          aiPromptInput.value = val + '\n' + bullet;
+        }
+      }
+      Logger.info(`背景プロンプトチップ追加 [${chip.category}]: ${text}`);
+    }
+
+    state.aiPrompt = aiPromptInput.value;
+    autoResizePromptTextarea(aiPromptInput);
+    saveState();
+  }
+
+  // 🌟 背景テキストエリアの手動編集内容からチップのON/OFF（点灯/消灯）を動的同期
+  function syncBackgroundChipsFromTextarea() {
+    if (!aiPromptInput) return;
+    const val = aiPromptInput.value;
+    state.chips.forEach(chip => {
+      const chipBtns = document.querySelectorAll(`.word-chip[data-chip-id="${chip.id}"]`);
+      if (val.includes(chip.text)) {
+        state.selectedChipIds.add(chip.id);
+        chipBtns.forEach(b => b.classList.add('active'));
+      } else {
+        state.selectedChipIds.delete(chip.id);
+        chipBtns.forEach(b => b.classList.remove('active'));
+      }
+    });
+  }
+
+  // 🌟 比率変更時：ユーザーの手動入力を壊さず、比率行のみを更新
+  function updateAspectRatioInPrompt() {
+    if (!aiPromptInput) return;
+    const newRatioLine = `・アスペクト比は縦長の ${state.aspectRatio}（トレーディングカード比率）で生成してください。`;
+    let val = aiPromptInput.value;
+    if (/・?アスペクト比は縦長の.*$/m.test(val)) {
+      val = val.replace(/・?アスペクト比は縦長の.*$/m, newRatioLine);
+    } else {
+      val = val.trim() + '\n' + newRatioLine;
+    }
+    aiPromptInput.value = val;
+    state.aiPrompt = val;
+    autoResizePromptTextarea(aiPromptInput);
+  }
+
+  function updateCombinedPrompt(force = false) {
+    if (!force && aiPromptInput && aiPromptInput.value.trim().length > 0) {
+      syncBackgroundChipsFromTextarea();
+      autoResizePromptTextarea(aiPromptInput);
+      return;
+    }
+
     const selectedTexts = [];
     const catKeys = Object.keys(state.categories);
 
@@ -1412,6 +1545,7 @@
       aiPromptInput.value = fullPrompt;
       autoResizePromptTextarea(aiPromptInput);
     }
+    syncBackgroundChipsFromTextarea();
   }
 
   // --- 辞書マネージャー ---
@@ -1722,6 +1856,8 @@
       aiPromptInput.addEventListener('input', () => {
         state.aiPrompt = aiPromptInput.value;
         autoResizePromptTextarea(aiPromptInput);
+        syncBackgroundChipsFromTextarea();
+        saveState();
       });
     }
 
@@ -1811,8 +1947,7 @@
         ratioBadge.textContent = `比率: ${btn.dataset.ratio}`;
         resBadge.textContent = `${state.canvasWidth} × ${state.canvasHeight} px`;
         
-        renderDynamicChipGroups();
-        updateCombinedPrompt();
+        updateAspectRatioInPrompt();
         saveState();
         renderCard();
       });

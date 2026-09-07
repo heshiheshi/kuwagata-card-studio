@@ -1111,6 +1111,14 @@ input:checked + .toggle-slider:before {
   transform: translateY(-1px);
 }
 
+.letter-chip.active {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.35), rgba(139, 24, 27, 0.35));
+  border-color: #ffd54f;
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 0 8px rgba(255, 213, 79, 0.4);
+}
+
 /* ==========================================================================
    4色LEDリアルタイム同期インジケーター
    ========================================================================== */
