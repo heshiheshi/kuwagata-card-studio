@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.10.0 Auto-Expanding Prompt Transparency & UX Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.11.0 AI Letter Prompts Full Japanese & Universal Auto-Resize Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.10.0';
+  const APP_VERSION = 'v4.11.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -770,6 +770,10 @@
     setupBackupManager();
     setupImageSaveModal();
     setupLetterPromptChips();
+    ['brandAiPromptInput', 'kanjiAiPromptInput', 'romajiAiPromptInput'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) autoResizePromptTextarea(el);
+    });
     renderDynamicChipGroups();
     updateCombinedPrompt();
     updateKeyToggleUI();
@@ -1109,7 +1113,7 @@
     if (el) el.checked = !!val;
   }
 
-  // --- 📝 文字スタイルチップの動的挿入イベント ---
+  // --- 📝 文字スタイルチップの動的挿入イベント ＆ 自動全行展開 ---
   function setupLetterPromptChips() {
     document.querySelectorAll('.letter-chip').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1120,13 +1124,21 @@
         if (textarea) {
           const currentVal = textarea.value.trim();
           if (currentVal) {
-            textarea.value = currentVal + ', ' + text;
+            textarea.value = currentVal + '、' + text;
           } else {
             textarea.value = text;
           }
+          autoResizePromptTextarea(textarea);
           Logger.info(`プロンプトチップ追加 [${target}]: ${text}`);
         }
       });
+    });
+
+    ['brandAiPromptInput', 'kanjiAiPromptInput', 'romajiAiPromptInput'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', () => autoResizePromptTextarea(el));
+      }
     });
   }
 
@@ -1377,7 +1389,8 @@
   function autoResizePromptTextarea(el = aiPromptInput) {
     if (!el) return;
     el.style.height = 'auto';
-    const newH = Math.max(el.scrollHeight, 100);
+    const minH = (el.id === 'aiPromptInput') ? 100 : 54;
+    const newH = Math.max(el.scrollHeight, minH);
     el.style.height = `${newH}px`;
   }
 
@@ -1615,6 +1628,13 @@
           targetTab.classList.add('active');
           if (btn.dataset.tab === 'tab-prompt-builder') {
             setTimeout(() => autoResizePromptTextarea(aiPromptInput), 20);
+          } else if (btn.dataset.tab === 'tab-ai-letters') {
+            setTimeout(() => {
+              ['brandAiPromptInput', 'kanjiAiPromptInput', 'romajiAiPromptInput'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) autoResizePromptTextarea(el);
+              });
+            }, 20);
           }
         }
       });
