@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.9.0 Photos App Direct Save & iOS WebShare Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.10.0 Auto-Expanding Prompt Transparency & UX Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.9.0';
+  const APP_VERSION = 'v4.10.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -1373,6 +1373,14 @@
     });
   }
 
+  // 🌟 プロンプトテキストエリアの自動全行展開（スクロールバー根絶・全可視化）
+  function autoResizePromptTextarea(el = aiPromptInput) {
+    if (!el) return;
+    el.style.height = 'auto';
+    const newH = Math.max(el.scrollHeight, 100);
+    el.style.height = `${newH}px`;
+  }
+
   function updateCombinedPrompt() {
     const selectedTexts = [];
     const catKeys = Object.keys(state.categories);
@@ -1389,6 +1397,7 @@
     state.aiPrompt = fullPrompt;
     if (aiPromptInput) {
       aiPromptInput.value = fullPrompt;
+      autoResizePromptTextarea(aiPromptInput);
     }
   }
 
@@ -1602,7 +1611,12 @@
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         const targetTab = document.getElementById(btn.dataset.tab);
-        if (targetTab) targetTab.classList.add('active');
+        if (targetTab) {
+          targetTab.classList.add('active');
+          if (btn.dataset.tab === 'tab-prompt-builder') {
+            setTimeout(() => autoResizePromptTextarea(aiPromptInput), 20);
+          }
+        }
       });
     });
 
@@ -1680,9 +1694,36 @@
       });
     }
 
-    // 🌟 生成ボタン群
+    // 🌟 生成ボタン群 ＆ プロンプト即時全行リサイズ
     const btnGenAi = document.getElementById('btnGenerateAiBg');
     if (btnGenAi) btnGenAi.addEventListener('click', () => generateAiBackground());
+
+    if (aiPromptInput) {
+      aiPromptInput.addEventListener('input', () => {
+        state.aiPrompt = aiPromptInput.value;
+        autoResizePromptTextarea(aiPromptInput);
+      });
+    }
+
+    const btnCopyPrompt = document.getElementById('btnCopyCombinedPrompt');
+    if (btnCopyPrompt && aiPromptInput) {
+      btnCopyPrompt.addEventListener('click', () => {
+        const text = aiPromptInput.value.trim();
+        if (!text) {
+          alert('コピーするプロンプトがありません。');
+          return;
+        }
+        navigator.clipboard.writeText(text).then(() => {
+          const originalText = btnCopyPrompt.textContent;
+          btnCopyPrompt.textContent = 'コピーしました！';
+          setTimeout(() => { btnCopyPrompt.textContent = originalText; }, 1800);
+        }).catch(() => {
+          aiPromptInput.select();
+          document.execCommand('copy');
+          alert('プロンプトをクリップボードにコピーしました！');
+        });
+      });
+    }
 
     const btnGenBrand = document.getElementById('btnGenBrandAiGraphic');
     if (btnGenBrand) btnGenBrand.addEventListener('click', () => generateAiTextGraphic('brand'));
@@ -1861,6 +1902,7 @@
         if (!state.lastExtractedPrompt) return;
         aiPromptInput.value = state.lastExtractedPrompt.ja;
         state.aiPrompt = state.lastExtractedPrompt.ja;
+        autoResizePromptTextarea(aiPromptInput);
         saveState();
         document.querySelector('.tab-btn[data-tab="tab-prompt-builder"]').click();
       });
@@ -2182,7 +2224,8 @@ JSONフォーマットのみを出力してください:
       return;
     }
 
-    const prompt = (state.aiPrompt || '').trim();
+    const prompt = (aiPromptInput && aiPromptInput.value.trim()) ? aiPromptInput.value.trim() : (state.aiPrompt || '').trim();
+    state.aiPrompt = prompt;
     if (!prompt) {
       alert('プロンプトを作成してください。');
       return;
