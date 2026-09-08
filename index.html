@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.12.0">
+  <link rel="stylesheet" href="style.css?v=4.13.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -46,7 +46,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.12.0</span>
+            <span class="app-version-badge" id="appVersion">v4.13.0</span>
             <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
           <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
@@ -274,19 +274,51 @@
           <!-- 個別位置・サイズ調整 -->
           <div class="slider-group-2col mt-3">
             <div class="slider-item">
-              <div class="slider-label-row"><span>縦位置 (Y)</span><span id="brandYVal">20%</span></div>
+              <div class="slider-label-row">
+                <span>縦位置 (Y)</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="brandYOffset" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="brandYVal" data-target="brandYOffset" min="5" max="95" value="20">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="brandYOffset" title="1増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
               <input type="range" id="brandYOffset" min="5" max="95" value="20" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>横位置 (X)</span><span id="brandXVal">0px</span></div>
+              <div class="slider-label-row">
+                <span>横位置 (X)</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="brandXOffset" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="brandXVal" data-target="brandXOffset" min="-300" max="300" value="0">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="brandXOffset" title="1増やす">+</button>
+                  <span class="stepper-unit">px</span>
+                </div>
+              </div>
               <input type="range" id="brandXOffset" min="-300" max="300" value="0" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>大きさ (Scale)</span><span id="brandScaleVal">100%</span></div>
+              <div class="slider-label-row">
+                <span>大きさ (Scale)</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="brandScale" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="brandScaleVal" data-target="brandScale" min="30" max="250" value="100">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="brandScale" title="1増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
               <input type="range" id="brandScale" min="30" max="250" value="100" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>不透明度</span><span id="brandOpacityVal">100%</span></div>
+              <div class="slider-label-row">
+                <span>不透明度</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="brandOpacity" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="brandOpacityVal" data-target="brandOpacity" min="10" max="100" value="100">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="brandOpacity" title="1増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
               <input type="range" id="brandOpacity" min="10" max="100" value="100" class="custom-range">
             </div>
           </div>
@@ -339,19 +371,51 @@
           <!-- 個別位置・サイズ調整 -->
           <div class="slider-group-2col mt-3">
             <div class="slider-item">
-              <div class="slider-label-row"><span>縦位置 (Y)</span><span id="kanjiYVal">44%</span></div>
+              <div class="slider-label-row">
+                <span>縦位置 (Y)</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="kanjiYOffset" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="kanjiYVal" data-target="kanjiYOffset" min="15" max="85" value="44">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="kanjiYOffset" title="1増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
               <input type="range" id="kanjiYOffset" min="15" max="85" value="44" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>横位置 (X)</span><span id="kanjiXVal">0px</span></div>
+              <div class="slider-label-row">
+                <span>横位置 (X)</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="kanjiXOffset" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="kanjiXVal" data-target="kanjiXOffset" min="-300" max="300" value="0">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="kanjiXOffset" title="1増やす">+</button>
+                  <span class="stepper-unit">px</span>
+                </div>
+              </div>
               <input type="range" id="kanjiXOffset" min="-300" max="300" value="0" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>大きさ (Scale)</span><span id="kanjiScaleVal">100%</span></div>
+              <div class="slider-label-row">
+                <span>大きさ (Scale)</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="kanjiScale" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="kanjiScaleVal" data-target="kanjiScale" min="30" max="250" value="100">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="kanjiScale" title="1増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
               <input type="range" id="kanjiScale" min="30" max="250" value="100" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>不透明度</span><span id="kanjiOpacityVal">100%</span></div>
+              <div class="slider-label-row">
+                <span>不透明度</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="kanjiOpacity" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="kanjiOpacityVal" data-target="kanjiOpacity" min="10" max="100" value="100">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="kanjiOpacity" title="1増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
               <input type="range" id="kanjiOpacity" min="10" max="100" value="100" class="custom-range">
             </div>
           </div>
@@ -404,19 +468,51 @@
           <!-- 個別位置・サイズ調整 -->
           <div class="slider-group-2col mt-3">
             <div class="slider-item">
-              <div class="slider-label-row"><span>縦位置 (Y)</span><span id="romajiYVal">68%</span></div>
+              <div class="slider-label-row">
+                <span>縦位置 (Y)</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="romajiYOffset" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="romajiYVal" data-target="romajiYOffset" min="20" max="90" value="68">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="romajiYOffset" title="1増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
               <input type="range" id="romajiYOffset" min="20" max="90" value="68" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>横位置 (X)</span><span id="romajiXVal">0px</span></div>
+              <div class="slider-label-row">
+                <span>横位置 (X)</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="romajiXOffset" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="romajiXVal" data-target="romajiXOffset" min="-300" max="300" value="0">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="romajiXOffset" title="1増やす">+</button>
+                  <span class="stepper-unit">px</span>
+                </div>
+              </div>
               <input type="range" id="romajiXOffset" min="-300" max="300" value="0" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>大きさ (Scale)</span><span id="romajiScaleVal">100%</span></div>
+              <div class="slider-label-row">
+                <span>大きさ (Scale)</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="romajiScale" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="romajiScaleVal" data-target="romajiScale" min="30" max="250" value="100">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="romajiScale" title="1増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
               <input type="range" id="romajiScale" min="30" max="250" value="100" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>不透明度</span><span id="romajiOpacityVal">100%</span></div>
+              <div class="slider-label-row">
+                <span>不透明度</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="romajiOpacity" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="romajiOpacityVal" data-target="romajiOpacity" min="10" max="100" value="100">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="romajiOpacity" title="1増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
               <input type="range" id="romajiOpacity" min="10" max="100" value="100" class="custom-range">
             </div>
           </div>
@@ -844,6 +940,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.12.0"></script>
+  <script src="app.js?v=4.13.0"></script>
 </body>
 </html>

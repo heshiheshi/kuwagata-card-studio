@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.12.0 Smart Toggle Prompts & User Edit Protection Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.13.0 Stepper Precision Controls & Direct Numeric Input Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.12.0';
+  const APP_VERSION = 'v4.13.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -770,6 +770,7 @@
     setupBackupManager();
     setupImageSaveModal();
     setupLetterPromptChips();
+    setupSteppers();
     ['brandAiPromptInput', 'kanjiAiPromptInput', 'romajiAiPromptInput'].forEach(id => {
       const el = document.getElementById(id);
       if (el) autoResizePromptTextarea(el);
@@ -1119,8 +1120,14 @@
   function setVal(id, val) {
     const el = document.getElementById(id);
     if (el) {
-      if (el.tagName === 'SPAN') el.textContent = val;
-      else el.value = val;
+      if (el.tagName === 'SPAN') {
+        el.textContent = val;
+      } else if (el.type === 'number') {
+        const num = parseFloat(String(val).replace(/[^0-9.-]/g, ''));
+        el.value = isNaN(num) ? '' : num;
+      } else {
+        el.value = val;
+      }
     }
   }
 
@@ -1192,6 +1199,57 @@
         });
       }
       syncLetterChipsForTarget(target);
+    });
+  }
+
+  // --- 🎛️ スライダーステッパー（±1微調整 ＆ 直接数値入力） ---
+  function setupSteppers() {
+    document.querySelectorAll('.stepper-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = btn.dataset.target;
+        const slider = document.getElementById(targetId);
+        if (!slider) return;
+
+        const isInc = btn.classList.contains('stepper-inc');
+        const min = parseInt(slider.min, 10);
+        const max = parseInt(slider.max, 10);
+        const step = parseInt(slider.step, 10) || 1;
+        const current = parseInt(slider.value, 10);
+
+        const next = isInc
+          ? Math.min(isNaN(max) ? Infinity : max, current + step)
+          : Math.max(isNaN(min) ? -Infinity : min, current - step);
+
+        if (next !== current) {
+          slider.value = next;
+          slider.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      });
+    });
+
+    document.querySelectorAll('.stepper-input').forEach(input => {
+      const applyInput = () => {
+        const targetId = input.dataset.target;
+        const slider = document.getElementById(targetId);
+        if (!slider) return;
+
+        let num = parseInt(input.value, 10);
+        if (isNaN(num)) return;
+
+        const min = parseInt(slider.min, 10);
+        const max = parseInt(slider.max, 10);
+        if (!isNaN(min)) num = Math.max(min, num);
+        if (!isNaN(max)) num = Math.min(max, num);
+
+        if (parseInt(slider.value, 10) !== num) {
+          slider.value = num;
+          slider.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      };
+
+      input.addEventListener('input', applyInput);
+      input.addEventListener('change', applyInput);
     });
   }
 
