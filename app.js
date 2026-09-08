@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.14.0 Print Calibration Scale Background & Safety Zone Guide Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.15.0 Print Calibration Scale Overlay & Safety Zone Suite)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.14.0';
+  const APP_VERSION = 'v4.15.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -252,10 +252,11 @@
     canvasWidth: 1500,
     canvasHeight: 2100,
 
-    // 📐 印刷キャリブレーション & 安全枠ガイド (v4.14.0)
+    // 📐 印刷キャリブレーション & 安全枠ガイド (v4.15.0)
+    showCalibrationOverlay: false, // 測定スケール透かし重ね合わせ
     showSafetyGuide: false,
     safetyMargin: 3, // % (0〜15%, 5:7標準は3%)
-    exportWithGuide: false, // エクスポート時にガイド線を焼き込むか否か
+    exportWithGuide: false, // エクスポート時にガイド線・スケールを焼き込むか否か
 
     aiPrompt: '',
     categories: { ...DEFAULT_CATEGORIES },
@@ -960,6 +961,7 @@
         aspectRatio: state.aspectRatio,
         canvasWidth: state.canvasWidth,
         canvasHeight: state.canvasHeight,
+        showCalibrationOverlay: state.showCalibrationOverlay,
         showSafetyGuide: state.showSafetyGuide,
         safetyMargin: state.safetyMargin,
         layers: state.layers,
@@ -1022,6 +1024,7 @@
         if (saved.aspectRatio) state.aspectRatio = saved.aspectRatio;
         if (saved.canvasWidth) state.canvasWidth = saved.canvasWidth;
         if (saved.canvasHeight) state.canvasHeight = saved.canvasHeight;
+        if (saved.showCalibrationOverlay !== undefined) state.showCalibrationOverlay = !!saved.showCalibrationOverlay;
         if (saved.showSafetyGuide !== undefined) state.showSafetyGuide = !!saved.showSafetyGuide;
         if (saved.safetyMargin !== undefined) state.safetyMargin = Number(saved.safetyMargin);
         if (saved.selectedChipIds) state.selectedChipIds = new Set(saved.selectedChipIds);
@@ -1112,6 +1115,12 @@
     // 📐 印刷安全枠ガイド入力の同期
     setCheck('toggleSafetyGuide', !!state.showSafetyGuide);
     setVal('safetyMarginInput', state.safetyMargin !== undefined ? state.safetyMargin : 3);
+    const btnCalib = document.getElementById('btnToggleCalibration') || document.getElementById('btnSetCalibrationBg');
+    if (btnCalib) {
+      btnCalib.classList.toggle('active', !!state.showCalibrationOverlay);
+      btnCalib.textContent = state.showCalibrationOverlay ? '📐 スケール表示中' : '📐 測定スケール';
+      btnCalib.title = state.showCalibrationOverlay ? 'クリックで測定スケールを非表示にします' : '目盛り・ルーラー測定スケールを画面に重ねて表示（クリックでON/OFF切替）';
+    }
 
     document.querySelectorAll('.ratio-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.ratio === state.aspectRatio);
@@ -2026,10 +2035,23 @@
 
     document.getElementById('btnRerender').addEventListener('click', () => renderCard());
 
-    // 📐 印刷キャリブレーション ＆ 安全枠ガイド HUD (v4.14.0)
-    const btnSetCalibrationBg = document.getElementById('btnSetCalibrationBg');
-    if (btnSetCalibrationBg) {
-      btnSetCalibrationBg.addEventListener('click', () => applyCalibrationScaleBackground());
+    // 📐 印刷キャリブレーション ＆ 安全枠ガイド HUD (v4.15.0)
+    const btnToggleCalib = document.getElementById('btnToggleCalibration') || document.getElementById('btnSetCalibrationBg');
+    if (btnToggleCalib) {
+      btnToggleCalib.addEventListener('click', () => {
+        state.showCalibrationOverlay = !state.showCalibrationOverlay;
+        btnToggleCalib.classList.toggle('active', !!state.showCalibrationOverlay);
+        btnToggleCalib.textContent = state.showCalibrationOverlay ? '📐 スケール表示中' : '📐 測定スケール';
+        btnToggleCalib.title = state.showCalibrationOverlay ? 'クリックで測定スケールを非表示にします' : '目盛り・ルーラー測定スケールを画面に重ねて表示（クリックでON/OFF切替）';
+        saveState(false);
+        renderCard();
+        Logger.info(`[CALIBRATION_OVERLAY] 測定スケール表示: ${state.showCalibrationOverlay ? 'ON' : 'OFF'}`);
+      });
+    }
+
+    const btnClampSafe = document.getElementById('btnClampToSafeZone');
+    if (btnClampSafe) {
+      btnClampSafe.addEventListener('click', () => clampLayersToSafeZone());
     }
 
     const toggleSafetyGuide = document.getElementById('toggleSafetyGuide');
@@ -2832,48 +2854,45 @@ JSONフォーマットのみを出力してください:
     });
   }
 
-  // 📐 印刷限界測定用ミリ・パーセント精密キャリブレーションスケール画像生成 (v4.14.0)
-  function generateCalibrationScaleDataUrl(w, h) {
-    const c = document.createElement('canvas');
-    c.width = w;
-    c.height = h;
-    const g = c.getContext('2d');
+  // 📐 印刷限界測定用ミリ・パーセント精密キャリブレーションスケール透かしオーバーレイ描画 (v4.15.0)
+  function drawCalibrationOverlay(targetCtx, w, h) {
+    targetCtx.save();
 
-    // 1. 深黒グリッド背景
-    g.fillStyle = '#0b0d14';
-    g.fillRect(0, 0, w, h);
+    // 1. 半透明ダークベール（背面のクワガタ・文字が透けて見える設計）
+    targetCtx.fillStyle = 'rgba(11, 13, 20, 0.45)';
+    targetCtx.fillRect(0, 0, w, h);
 
-    // 2. 背景精密グリッド線 (50px微細, 250px主線)
-    g.lineWidth = 1;
-    g.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+    // 2. 精密グリッド線 (50px微細線, 250px主線)
+    targetCtx.lineWidth = 1;
+    targetCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
     for (let x = 0; x < w; x += 50) {
-      g.beginPath();
-      g.moveTo(x, 0);
-      g.lineTo(x, h);
-      g.stroke();
+      targetCtx.beginPath();
+      targetCtx.moveTo(x, 0);
+      targetCtx.lineTo(x, h);
+      targetCtx.stroke();
     }
     for (let y = 0; y < h; y += 50) {
-      g.beginPath();
-      g.moveTo(0, y);
-      g.lineTo(w, y);
-      g.stroke();
+      targetCtx.beginPath();
+      targetCtx.moveTo(0, y);
+      targetCtx.lineTo(w, y);
+      targetCtx.stroke();
     }
 
-    g.strokeStyle = 'rgba(212, 175, 55, 0.12)';
+    targetCtx.strokeStyle = 'rgba(212, 175, 55, 0.25)';
     for (let x = 0; x < w; x += 250) {
-      g.beginPath();
-      g.moveTo(x, 0);
-      g.lineTo(x, h);
-      g.stroke();
+      targetCtx.beginPath();
+      targetCtx.moveTo(x, 0);
+      targetCtx.lineTo(x, h);
+      targetCtx.stroke();
     }
     for (let y = 0; y < h; y += 250) {
-      g.beginPath();
-      g.moveTo(0, y);
-      g.lineTo(w, y);
-      g.stroke();
+      targetCtx.beginPath();
+      targetCtx.moveTo(0, y);
+      targetCtx.lineTo(w, y);
+      targetCtx.stroke();
     }
 
-    // 3. パーセント別ボーダー目盛り (100%〜90%)
+    // 3. パーセント別ボーダー目盛り線 (100%〜90%)
     const scales = [
       { pct: 100, color: '#ff3b30', lw: 8, dash: [], label: '100% (用紙外周端・余白0%)' },
       { pct: 99,  color: '#ff9500', lw: 2.5, dash: [8, 4], label: '99% (-1%余白)' },
@@ -2891,56 +2910,54 @@ JSONフォーマットのみを出力してください:
       const rectW = w - marginX * 2;
       const rectH = h - marginY * 2;
 
-      g.save();
-      g.strokeStyle = s.color;
-      g.lineWidth = s.lw;
-      g.setLineDash(s.dash);
-      g.strokeRect(marginX, marginY, rectW, rectH);
+      targetCtx.save();
+      targetCtx.strokeStyle = s.color;
+      targetCtx.lineWidth = s.lw;
+      targetCtx.setLineDash(s.dash);
+      targetCtx.strokeRect(marginX, marginY, rectW, rectH);
 
       // 目盛りラベル
-      g.setLineDash([]);
-      g.fillStyle = s.color;
-      g.font = 'bold 18px monospace, sans-serif';
-      g.textAlign = 'left';
-      g.textBaseline = 'top';
+      targetCtx.setLineDash([]);
+      targetCtx.fillStyle = s.color;
+      targetCtx.font = 'bold 18px monospace, sans-serif';
+      targetCtx.textAlign = 'left';
+      targetCtx.textBaseline = 'top';
 
       if (s.pct >= 95) {
-        g.fillText(s.label, marginX + 12, marginY + 8);
+        targetCtx.fillText(s.label, marginX + 12, marginY + 8);
       }
-      g.restore();
+      targetCtx.restore();
     });
 
     // 4. 外周ルーラー目盛り (10px, 50px, 100px)
-    g.save();
-    g.strokeStyle = '#ffffff';
-    g.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    g.font = '13px monospace, sans-serif';
+    targetCtx.save();
+    targetCtx.strokeStyle = '#ffffff';
+    targetCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    targetCtx.font = '13px monospace, sans-serif';
 
     // 上下ルーラー
     for (let x = 0; x <= w; x += 10) {
       const is100 = (x % 100 === 0);
       const is50 = (x % 50 === 0);
       const tickH = is100 ? 30 : (is50 ? 18 : 8);
-      g.lineWidth = is100 ? 2 : 1;
+      targetCtx.lineWidth = is100 ? 2 : 1;
 
-      // Top
-      g.beginPath();
-      g.moveTo(x, 0);
-      g.lineTo(x, tickH);
-      g.stroke();
+      targetCtx.beginPath();
+      targetCtx.moveTo(x, 0);
+      targetCtx.lineTo(x, tickH);
+      targetCtx.stroke();
 
-      // Bottom
-      g.beginPath();
-      g.moveTo(x, h);
-      g.lineTo(x, h - tickH);
-      g.stroke();
+      targetCtx.beginPath();
+      targetCtx.moveTo(x, h);
+      targetCtx.lineTo(x, h - tickH);
+      targetCtx.stroke();
 
       if (is100 && x > 0 && x < w) {
-        g.textAlign = 'center';
-        g.textBaseline = 'top';
-        g.fillText(`${x}`, x, tickH + 4);
-        g.textBaseline = 'bottom';
-        g.fillText(`${x}`, x, h - tickH - 4);
+        targetCtx.textAlign = 'center';
+        targetCtx.textBaseline = 'top';
+        targetCtx.fillText(`${x}`, x, tickH + 4);
+        targetCtx.textBaseline = 'bottom';
+        targetCtx.fillText(`${x}`, x, h - tickH - 4);
       }
     }
 
@@ -2949,29 +2966,27 @@ JSONフォーマットのみを出力してください:
       const is100 = (y % 100 === 0);
       const is50 = (y % 50 === 0);
       const tickW = is100 ? 30 : (is50 ? 18 : 8);
-      g.lineWidth = is100 ? 2 : 1;
+      targetCtx.lineWidth = is100 ? 2 : 1;
 
-      // Left
-      g.beginPath();
-      g.moveTo(0, y);
-      g.lineTo(tickW, y);
-      g.stroke();
+      targetCtx.beginPath();
+      targetCtx.moveTo(0, y);
+      targetCtx.lineTo(tickW, y);
+      targetCtx.stroke();
 
-      // Right
-      g.beginPath();
-      g.moveTo(w, y);
-      g.lineTo(w - tickW, y);
-      g.stroke();
+      targetCtx.beginPath();
+      targetCtx.moveTo(w, y);
+      targetCtx.lineTo(w - tickW, y);
+      targetCtx.stroke();
 
       if (is100 && y > 0 && y < h) {
-        g.textAlign = 'left';
-        g.textBaseline = 'middle';
-        g.fillText(`${y}`, tickW + 6, y);
-        g.textAlign = 'right';
-        g.fillText(`${y}`, w - tickW - 6, y);
+        targetCtx.textAlign = 'left';
+        targetCtx.textBaseline = 'middle';
+        targetCtx.fillText(`${y}`, tickW + 6, y);
+        targetCtx.textAlign = 'right';
+        targetCtx.fillText(`${y}`, w - tickW - 6, y);
       }
     }
-    g.restore();
+    targetCtx.restore();
 
     // 5. 四隅の斜め45度アライメント＆コーナーレジスタ
     const cornerSize = 180;
@@ -2983,115 +2998,110 @@ JSONフォーマットのみを出力してください:
     ];
 
     corners.forEach(cn => {
-      g.save();
-      g.strokeStyle = '#00e5ff';
-      g.lineWidth = 3;
-      g.beginPath();
-      g.moveTo(cn.x, cn.y);
-      g.lineTo(cn.x + cn.dx * cornerSize, cn.y + cn.dy * cornerSize);
-      g.stroke();
+      targetCtx.save();
+      targetCtx.strokeStyle = '#00e5ff';
+      targetCtx.lineWidth = 3;
+      targetCtx.beginPath();
+      targetCtx.moveTo(cn.x, cn.y);
+      targetCtx.lineTo(cn.x + cn.dx * cornerSize, cn.y + cn.dy * cornerSize);
+      targetCtx.stroke();
 
-      g.fillStyle = '#00e5ff';
-      g.font = 'bold 16px sans-serif';
-      g.textAlign = cn.dx === 1 ? 'left' : 'right';
-      g.textBaseline = cn.dy === 1 ? 'top' : 'bottom';
-      g.fillText(cn.label, cn.x + cn.dx * 35, cn.y + cn.dy * 35);
-      g.restore();
+      targetCtx.fillStyle = '#00e5ff';
+      targetCtx.font = 'bold 16px sans-serif';
+      targetCtx.textAlign = cn.dx === 1 ? 'left' : 'right';
+      targetCtx.textBaseline = cn.dy === 1 ? 'top' : 'bottom';
+      targetCtx.fillText(cn.label, cn.x + cn.dx * 35, cn.y + cn.dy * 35);
+      targetCtx.restore();
     });
 
     // 6. 中央クロスヘア＆同心円ターゲット
     const cx = w / 2;
     const cy = h / 2;
 
-    g.save();
-    g.strokeStyle = 'rgba(212, 175, 55, 0.4)';
-    g.lineWidth = 2;
+    targetCtx.save();
+    targetCtx.strokeStyle = 'rgba(212, 175, 55, 0.45)';
+    targetCtx.lineWidth = 2;
     [100, 250, 450].forEach(r => {
-      g.beginPath();
-      g.arc(cx, cy, r, 0, Math.PI * 2);
-      g.stroke();
+      targetCtx.beginPath();
+      targetCtx.arc(cx, cy, r, 0, Math.PI * 2);
+      targetCtx.stroke();
     });
 
-    g.beginPath();
-    g.moveTo(cx - 200, cy);
-    g.lineTo(cx + 200, cy);
-    g.moveTo(cx, cy - 200);
-    g.lineTo(cx, cy + 200);
-    g.stroke();
-    g.restore();
+    targetCtx.beginPath();
+    targetCtx.moveTo(cx - 200, cy);
+    targetCtx.lineTo(cx + 200, cy);
+    targetCtx.moveTo(cx, cy - 200);
+    targetCtx.lineTo(cx, cy + 200);
+    targetCtx.stroke();
+    targetCtx.restore();
 
-    // 7. 中央の解説パネル（取扱説明・印刷ガイド）
-    const panelW = 1040;
-    const panelH = 680;
+    // 7. 中央の半透明解説パネル（透かし対応・高さコンパクト化）
+    const panelW = 1000;
+    const panelH = 460;
     const panelX = (w - panelW) / 2;
     const panelY = (h - panelH) / 2;
 
-    g.save();
-    g.fillStyle = 'rgba(11, 13, 20, 0.94)';
-    g.fillRect(panelX, panelY, panelW, panelH);
-    g.strokeStyle = '#ffd54f';
-    g.lineWidth = 3;
-    g.strokeRect(panelX, panelY, panelW, panelH);
-    g.strokeStyle = 'rgba(212, 175, 55, 0.4)';
-    g.lineWidth = 1;
-    g.strokeRect(panelX + 8, panelY + 8, panelW - 16, panelH - 16);
+    targetCtx.save();
+    targetCtx.fillStyle = 'rgba(11, 13, 20, 0.85)';
+    targetCtx.fillRect(panelX, panelY, panelW, panelH);
+    targetCtx.strokeStyle = '#ffd54f';
+    targetCtx.lineWidth = 3;
+    targetCtx.strokeRect(panelX, panelY, panelW, panelH);
+    targetCtx.strokeStyle = 'rgba(212, 175, 55, 0.4)';
+    targetCtx.lineWidth = 1;
+    targetCtx.strokeRect(panelX + 6, panelY + 6, panelW - 12, panelH - 12);
 
-    // タイトル部
-    g.fillStyle = '#ffd54f';
-    g.font = 'bold 36px "Cinzel", serif, sans-serif';
-    g.textAlign = 'center';
-    g.textBaseline = 'top';
-    g.fillText('KUWAGATA PREMIUM CARD STUDIO', cx, panelY + 36);
+    targetCtx.fillStyle = '#ffd54f';
+    targetCtx.font = 'bold 30px "Cinzel", serif, sans-serif';
+    targetCtx.textAlign = 'center';
+    targetCtx.textBaseline = 'top';
+    targetCtx.fillText('KUWAGATA PRINT CALIBRATION SCALE', cx, panelY + 24);
 
-    g.fillStyle = '#ffffff';
-    g.font = 'bold 24px sans-serif';
-    g.fillText('📐 プリンター印刷限界測定スケール (CALIBRATION TARGET)', cx, panelY + 88);
+    targetCtx.fillStyle = '#ffffff';
+    targetCtx.font = 'bold 20px sans-serif';
+    targetCtx.fillText('📐 印刷限界測定スケール（透かしオーバーレイ）', cx, panelY + 68);
 
-    g.fillStyle = '#00e5ff';
-    g.font = '18px monospace, sans-serif';
-    g.fillText(`解像度: ${w} × ${h} px (比率 5:7 / 標準トレカ 63×88mm)`, cx, panelY + 128);
+    targetCtx.fillStyle = '#00e5ff';
+    targetCtx.font = '16px monospace, sans-serif';
+    targetCtx.fillText(`解像度: ${w} × ${h} px (比率 5:7 / 標準トレカ 63×88mm)`, cx, panelY + 102);
 
-    // 手順・解説
-    g.textAlign = 'left';
-    g.fillStyle = '#eaeaea';
-    g.font = '20px sans-serif';
-    const startY = panelY + 180;
-    const lh = 40;
+    targetCtx.textAlign = 'left';
+    targetCtx.fillStyle = '#eaeaea';
+    targetCtx.font = '18px sans-serif';
+    const startY = panelY + 144;
+    const lh = 36;
 
     const instructions = [
       '【印刷限界測定＆完璧な位置調整の手順】',
-      '① 「完成カードを高解像度PNG保存」を押し、本スケール画像を印刷します。',
-      '② 印刷された用紙の外周を確認し、「何%の目盛り線まで印刷されたか」を見ます。',
-      '   ・多くの家庭用プリンター（フチなし印刷）では外周2〜4%が自動拡大で切り落とされます。',
-      '   ・例: 97%（金色実線）まで写っていれば、必要な安全マージンは「3%」です。',
-      '③ 画面上部の「安全枠ガイド」の数字を、確認したパーセント（例: 3%）に設定します。',
-      '④ 安全枠（黄色破線）の内側に文字やロゴを配置すれば、文字欠けは100%起きません！',
-      '⑤ 今後プリンターを買い替えても、このスケールで再度数値を合わせるだけで即座に対応可能です。'
+      '① 「完成カードを高解像度PNG保存」から印刷し、フチなし印刷の用紙外周を確認します。',
+      '② 印刷された用紙端を見て「何%の目盛り線まで写っているか」を確認します（例: 97%＝3%余白必要）。',
+      '③ 画面上の「安全枠ガイド」の数字を確認したパーセント（例: 3%）に合わせます。',
+      '④ 「🧲 枠内に収める」を押せば、すべての文字が安全枠の内側に一瞬で自動収容されます！',
+      '⑤ 確認が終わったら、上部の「📐 スケール表示中」を押すと元のカード表示に戻ります。'
     ];
 
     instructions.forEach((line, idx) => {
       if (idx === 0) {
-        g.fillStyle = '#ffd54f';
-        g.font = 'bold 22px sans-serif';
+        targetCtx.fillStyle = '#ffd54f';
+        targetCtx.font = 'bold 19px sans-serif';
       } else if (line.includes('例:')) {
-        g.fillStyle = '#ffcc00';
-        g.font = 'bold 19px sans-serif';
-      } else if (line.includes('100%')) {
-        g.fillStyle = '#00e5ff';
-        g.font = 'bold 20px sans-serif';
+        targetCtx.fillStyle = '#ffcc00';
+        targetCtx.font = 'bold 17.5px sans-serif';
+      } else if (line.includes('🧲')) {
+        targetCtx.fillStyle = '#00e5ff';
+        targetCtx.font = 'bold 18px sans-serif';
       } else {
-        g.fillStyle = '#d5d7de';
-        g.font = '19px sans-serif';
+        targetCtx.fillStyle = '#d5d7de';
+        targetCtx.font = '17.5px sans-serif';
       }
-      g.fillText(line, panelX + 36, startY + (idx * lh));
+      targetCtx.fillText(line, panelX + 32, startY + (idx * lh));
     });
 
-    g.restore();
-
-    return c.toDataURL('image/png');
+    targetCtx.restore();
+    targetCtx.restore();
   }
 
-  // 🖨️ 印刷安全枠（セーフティゾーン）ガイド線オーバーレイ描画 (v4.14.0)
+  // 🖨️ 印刷安全枠（セーフティゾーン）ガイド線オーバーレイ描画 (v4.15.0 高コントラスト版)
   function drawSafetyGuideLayer(targetCtx, w, h) {
     const marginPct = (state.safetyMargin !== undefined ? state.safetyMargin : 3);
     const mx = w * (marginPct / 100);
@@ -3101,41 +3111,51 @@ JSONフォーマットのみを出力してください:
 
     targetCtx.save();
 
-    // 1. 切欠け危険領域（マージン外側）の微暗転シェーディング（危険ゾーン強調）
+    // 1. 切欠け危険領域（マージン外側）の鮮明な赤色シェーディング
     if (marginPct > 0) {
-      targetCtx.fillStyle = 'rgba(255, 59, 48, 0.14)';
-      // Top bar
+      targetCtx.fillStyle = 'rgba(255, 45, 85, 0.28)';
       targetCtx.fillRect(0, 0, w, my);
-      // Bottom bar
       targetCtx.fillRect(0, h - my, w, my);
-      // Left bar
       targetCtx.fillRect(0, my, mx, h - (my * 2));
-      // Right bar
       targetCtx.fillRect(w - mx, my, mx, h - (my * 2));
 
-      // 危険ゾーン警告ラベル（上部中央・下部中央）
-      targetCtx.fillStyle = 'rgba(255, 90, 80, 0.85)';
-      targetCtx.font = 'bold 16px sans-serif';
+      // 危険領域のハザード境界線
+      targetCtx.strokeStyle = 'rgba(255, 45, 85, 0.85)';
+      targetCtx.lineWidth = 2;
+      targetCtx.strokeRect(0, 0, w, h);
+
+      // 危険ゾーン警告ラベル
+      targetCtx.fillStyle = '#ffffff';
+      targetCtx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+      targetCtx.shadowBlur = 8;
+      targetCtx.font = 'bold 17px sans-serif';
       targetCtx.textAlign = 'center';
       targetCtx.textBaseline = 'middle';
-      if (my >= 24) {
-        targetCtx.fillText(`▲ CUTOFF RISK ZONE (${marginPct}% 余白切り欠き危険領域) ▲`, w / 2, my / 2);
-        targetCtx.fillText(`▼ CUTOFF RISK ZONE (${marginPct}% 余白切り欠き危険領域) ▼`, w / 2, h - my / 2);
+      if (my >= 22) {
+        targetCtx.fillText(`⚠️ CUTOFF RISK ZONE (余白切り欠き危険領域: 外周 ${marginPct}%)`, w / 2, my / 2);
+        targetCtx.fillText(`⚠️ CUTOFF RISK ZONE (余白切り欠き危険領域: 外周 ${marginPct}%)`, w / 2, h - my / 2);
       }
+      targetCtx.shadowBlur = 0;
     }
 
-    // 2. セーフティゾーン枠線（黄金破線）
-    targetCtx.strokeStyle = '#ffd54f';
-    targetCtx.lineWidth = 4;
-    targetCtx.setLineDash([18, 9]);
+    // 2. セーフティゾーン枠線（高輝度イエローゴールド太破線 + シャドウ）
+    targetCtx.save();
+    targetCtx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+    targetCtx.shadowBlur = 12;
+    targetCtx.strokeStyle = '#ffe600';
+    targetCtx.lineWidth = 5;
+    targetCtx.setLineDash([20, 10]);
     targetCtx.strokeRect(mx, my, safeW, safeH);
-    targetCtx.setLineDash([]);
+    targetCtx.restore();
 
-    // 3. 四隅の強調L字ブラケット（シアン色）
-    const bracketLen = Math.min(50, Math.max(25, w * 0.035));
-    targetCtx.strokeStyle = '#00e5ff';
-    targetCtx.lineWidth = 6;
+    // 3. 四隅の強調L字ブラケット（シアン色発光）
+    const bracketLen = Math.min(55, Math.max(28, w * 0.04));
+    targetCtx.save();
+    targetCtx.strokeStyle = '#00f0ff';
+    targetCtx.lineWidth = 7;
     targetCtx.lineCap = 'square';
+    targetCtx.shadowColor = 'rgba(0, 240, 255, 0.9)';
+    targetCtx.shadowBlur = 10;
 
     // Top-Left
     targetCtx.beginPath();
@@ -3164,17 +3184,19 @@ JSONフォーマットのみを出力してください:
     targetCtx.lineTo(mx + safeW, my + safeH);
     targetCtx.lineTo(mx + safeW, my + safeH - bracketLen);
     targetCtx.stroke();
+    targetCtx.restore();
 
     // 4. セーフティゾーン上部中央バッジ
     const badgeText = `🖨️ PRINT SAFE ZONE (安全枠: ${marginPct}%)`;
     targetCtx.font = 'bold 18px monospace, sans-serif';
     const textWidth = targetCtx.measureText(badgeText).width;
-    const badgeW = textWidth + 36;
-    const badgeH = 34;
+    const badgeW = textWidth + 40;
+    const badgeH = 36;
     const badgeX = (w - badgeW) / 2;
-    const badgeY = Math.max(my + 10, 18);
+    const badgeY = Math.max(my + 12, 18);
 
-    targetCtx.fillStyle = 'rgba(11, 13, 20, 0.9)';
+    targetCtx.save();
+    targetCtx.fillStyle = 'rgba(11, 13, 20, 0.92)';
     targetCtx.beginPath();
     if (typeof targetCtx.roundRect === 'function') {
       targetCtx.roundRect(badgeX, badgeY, badgeW, badgeH, 6);
@@ -3183,41 +3205,91 @@ JSONフォーマットのみを出力してください:
     }
     targetCtx.fill();
 
-    targetCtx.strokeStyle = '#ffd54f';
-    targetCtx.lineWidth = 2;
+    targetCtx.strokeStyle = '#ffe600';
+    targetCtx.lineWidth = 2.5;
     targetCtx.stroke();
 
-    targetCtx.fillStyle = '#ffd54f';
+    targetCtx.fillStyle = '#ffe600';
     targetCtx.textAlign = 'center';
     targetCtx.textBaseline = 'middle';
     targetCtx.fillText(badgeText, w / 2, badgeY + badgeH / 2);
+    targetCtx.restore();
 
     targetCtx.restore();
   }
 
-  // 📐 測定スケール背景を自動生成して背景レイヤーへセット
-  function applyCalibrationScaleBackground() {
-    try {
-      const dataUrl = generateCalibrationScaleDataUrl(state.canvasWidth, state.canvasHeight);
-      state.layers.bg.src = dataUrl;
+  // 🧲 すべての文字・スペックを現在の安全枠内に自動収容 (v4.15.0)
+  function clampLayersToSafeZone() {
+    const marginPct = (state.safetyMargin !== undefined ? state.safetyMargin : 3);
+    const minY = marginPct + 4;
+    const maxY = 100 - marginPct - 4;
+    const maxPixelX = Math.round((state.canvasWidth / 2) - (state.canvasWidth * (marginPct / 100)) - 100);
 
-      const img = new Image();
-      img.onload = () => {
-        loadedBgImg = img;
-        state.showSafetyGuide = true;
-        const toggle = document.getElementById('toggleSafetyGuide');
-        if (toggle) toggle.checked = true;
-        saveState(false);
-        renderCard();
-        Logger.success('📐 印刷限界測定スケール画像を背景にセットし、安全枠ガイドをONにしました。');
-      };
-      img.onerror = () => {
-        Logger.error('測定スケール画像の読み込みに失敗しました');
-      };
-      img.src = dataUrl;
-    } catch (err) {
-      Logger.error('測定スケール背景の生成例外', err.message);
+    let changedCount = 0;
+
+    // 1. ブランド
+    if (state.layers.brand) {
+      if (state.layers.brand.y < minY || state.layers.brand.y > maxY) {
+        state.layers.brand.y = Math.max(minY, Math.min(maxY, state.layers.brand.y));
+        changedCount++;
+      }
+      if (Math.abs(state.layers.brand.x || 0) > maxPixelX) {
+        state.layers.brand.x = Math.max(-maxPixelX, Math.min(maxPixelX, state.layers.brand.x || 0));
+        changedCount++;
+      }
     }
+
+    // 2. 漢字
+    if (state.layers.kanji) {
+      if (state.layers.kanji.y < minY || state.layers.kanji.y > maxY) {
+        state.layers.kanji.y = Math.max(minY, Math.min(maxY, state.layers.kanji.y));
+        changedCount++;
+      }
+      if (Math.abs(state.layers.kanji.x || 0) > maxPixelX) {
+        state.layers.kanji.x = Math.max(-maxPixelX, Math.min(maxPixelX, state.layers.kanji.x || 0));
+        changedCount++;
+      }
+    }
+
+    // 3. ローマ字
+    if (state.layers.romaji) {
+      if (state.layers.romaji.y < minY || state.layers.romaji.y > maxY) {
+        state.layers.romaji.y = Math.max(minY, Math.min(maxY, state.layers.romaji.y));
+        changedCount++;
+      }
+      if (Math.abs(state.layers.romaji.x || 0) > maxPixelX) {
+        state.layers.romaji.x = Math.max(-maxPixelX, Math.min(maxPixelX, state.layers.romaji.x || 0));
+        changedCount++;
+      }
+    }
+
+    // 4. スペック
+    if (state.layers.specs) {
+      ['owner', 'serial', 'size', 'extra'].forEach(key => {
+        const item = state.layers.specs[key];
+        if (item) {
+          if (item.y < minY || item.y > maxY) {
+            item.y = Math.max(minY, Math.min(maxY, item.y));
+            changedCount++;
+          }
+          if (Math.abs(item.x || 0) > maxPixelX) {
+            item.x = Math.max(-maxPixelX, Math.min(maxPixelX, item.x || 0));
+            changedCount++;
+          }
+        }
+      });
+    }
+
+    // 安全枠ガイドを自動ON
+    state.showSafetyGuide = true;
+    const toggle = document.getElementById('toggleSafetyGuide');
+    if (toggle) toggle.checked = true;
+
+    syncInputsFromState();
+    saveState(false);
+    renderCard();
+
+    Logger.success(`[SAFE_ZONE_CLAMP] 🧲 全レイヤーを安全枠（マージン${marginPct}% / Y:${minY}%〜${maxY}%）内に収めました (補正箇所: ${changedCount})`);
   }
 
   // --- 🌟 非破壊マルチレイヤー描画エンジン ---
@@ -3237,13 +3309,18 @@ JSONフォーマットのみを出力してください:
     drawRomajiLayer(ctx, canvas.width, canvas.height);
     drawSpecsLayer(ctx, canvas.width, canvas.height);
 
-    // 📐 印刷安全枠ガイドオーバーレイ描画
+    // 📐 印刷限界測定スケール・オーバーレイ描画 (v4.15.0)
+    if (state.showCalibrationOverlay) {
+      drawCalibrationOverlay(ctx, canvas.width, canvas.height);
+    }
+
+    // 🖨️ 印刷安全枠ガイドオーバーレイ描画 (v4.15.0)
     if (state.showSafetyGuide) {
       drawSafetyGuideLayer(ctx, canvas.width, canvas.height);
     }
 
     const renderTime = (performance.now() - t0).toFixed(1);
-    Logger.render(`[RENDER_DONE] 5レイヤー合成完了 (${renderTime}ms, ${canvas.width}x${canvas.height}px)`);
+    Logger.render(`[RENDER_DONE] レイヤー合成完了 (${renderTime}ms, ${canvas.width}x${canvas.height}px)`);
 
     isRendering = false;
   }
@@ -3496,8 +3573,13 @@ JSONフォーマットのみを出力してください:
           drawKanjiLayer(offCtx, state.canvasWidth, state.canvasHeight);
           drawRomajiLayer(offCtx, state.canvasWidth, state.canvasHeight);
           drawSpecsLayer(offCtx, state.canvasWidth, state.canvasHeight);
-          if (state.exportWithGuide && state.showSafetyGuide) {
-            drawSafetyGuideLayer(offCtx, state.canvasWidth, state.canvasHeight);
+          if (state.exportWithGuide) {
+            if (state.showCalibrationOverlay) {
+              drawCalibrationOverlay(offCtx, state.canvasWidth, state.canvasHeight);
+            }
+            if (state.showSafetyGuide) {
+              drawSafetyGuideLayer(offCtx, state.canvasWidth, state.canvasHeight);
+            }
           }
           filename = `kuwagata_card_${state.layers.kanji.text || 'cert'}_full.png`;
         } else if (type === 'bg') {

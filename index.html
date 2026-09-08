@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.14.0">
+  <link rel="stylesheet" href="style.css?v=4.15.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -46,7 +46,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.14.0</span>
+            <span class="app-version-badge" id="appVersion">v4.15.0</span>
             <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
           <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
@@ -89,15 +89,17 @@
             <button type="button" class="btn-refresh" id="btnRerender" title="再描画">🔄 再描画</button>
           </div>
           <div class="calibration-row">
-            <button type="button" class="btn-calibration-bg" id="btnSetCalibrationBg" title="プリンター印刷境界テスト用のスケール画像を背景にセット">
-              📐 測定スケール背景
+            <button type="button" class="btn-calibration-bg" id="btnToggleCalibration" title="目盛り・ルーラー測定スケールを画面に重ねて表示（クリックでON/OFF切替）">
+              📐 測定スケール
             </button>
             <div class="safety-guide-wrap">
-              <label class="custom-toggle-safety" title="印刷安全枠ガイド（セーフティゾーン）の表示切替">
-                <input type="checkbox" id="toggleSafetyGuide">
-                <span class="toggle-slider"></span>
+              <label class="safety-guide-toggle-label" for="toggleSafetyGuide" title="印刷安全枠ガイド（セーフティゾーン）の表示切替（文字クリックでも切替可能）">
+                <span class="custom-toggle-safety">
+                  <input type="checkbox" id="toggleSafetyGuide">
+                  <span class="toggle-slider"></span>
+                </span>
+                <span class="safety-title">安全枠ガイド</span>
               </label>
-              <span class="safety-title">安全枠ガイド</span>
               <div class="slider-stepper safety-stepper" id="safetyMarginStepper">
                 <button type="button" class="stepper-btn stepper-dec" id="btnSafetyMarginDec" title="1%減らす">−</button>
                 <input type="number" class="stepper-input" id="safetyMarginInput" min="0" max="15" value="3" title="安全マージン(%)">
@@ -105,6 +107,9 @@
                 <span class="stepper-unit">%</span>
               </div>
             </div>
+            <button type="button" class="btn-snap-safe" id="btnClampToSafeZone" title="すべての文字・スペックを現在の安全枠（セーフティゾーン）の内側に自動収容">
+              🧲 枠内に収める
+            </button>
           </div>
         </div>
       </section>
@@ -719,9 +724,9 @@
           </div>
 
           <div class="export-options-row">
-            <label class="custom-checkbox-label" title="テスト印刷や切り欠き確認用に、安全枠ガイド線（黄色破線）を画像に焼き込んで保存します">
+            <label class="custom-checkbox-label" title="テスト印刷や切り欠き確認用に、安全枠ガイド線や測定スケールを画像に焼き込んで保存します">
               <input type="checkbox" id="chkExportWithGuide">
-              <span>📐 印刷安全枠ガイド線を含めて保存する（校正・テスト印刷用）</span>
+              <span>📐 印刷ガイド線・測定スケールを含めて保存する（校正・テスト印刷用）</span>
             </label>
           </div>
         </div>
@@ -967,6 +972,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.14.0"></script>
+  <script src="app.js?v=4.15.0"></script>
 </body>
 </html>
