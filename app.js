@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.15.0 Print Calibration Scale Overlay & Safety Zone Suite)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.16.0 Safety Guide Toggle Fix & Visual State Badge Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.15.0';
+  const APP_VERSION = 'v4.16.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -1115,6 +1115,7 @@
     // 📐 印刷安全枠ガイド入力の同期
     setCheck('toggleSafetyGuide', !!state.showSafetyGuide);
     setVal('safetyMarginInput', state.safetyMargin !== undefined ? state.safetyMargin : 3);
+    updateSafetyStateBadge(!!state.showSafetyGuide);
     const btnCalib = document.getElementById('btnToggleCalibration') || document.getElementById('btnSetCalibrationBg');
     if (btnCalib) {
       btnCalib.classList.toggle('active', !!state.showCalibrationOverlay);
@@ -1136,6 +1137,14 @@
     } else {
       badge.className = 'layer-badge';
       badge.textContent = normalText;
+    }
+  }
+
+  function updateSafetyStateBadge(isOn) {
+    const badge = document.getElementById('safetyStateBadge');
+    if (badge) {
+      badge.textContent = isOn ? 'ON' : 'OFF';
+      badge.classList.toggle('active', !!isOn);
     }
   }
 
@@ -2058,8 +2067,10 @@
     if (toggleSafetyGuide) {
       toggleSafetyGuide.addEventListener('change', (e) => {
         state.showSafetyGuide = e.target.checked;
+        updateSafetyStateBadge(state.showSafetyGuide);
         saveState(false);
         renderCard();
+        Logger.info(`[SAFETY_GUIDE_TOGGLE] 安全枠ガイド表示: ${state.showSafetyGuide ? 'ON' : 'OFF'} (マージン: ${state.safetyMargin}%)`);
       });
     }
 

@@ -440,16 +440,36 @@ body {
   gap: 6px;
 }
 
-.safety-guide-toggle-label {
+.safety-title-label {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
   user-select: none;
 }
 
-.safety-guide-toggle-label:hover .safety-title {
+.safety-title-label:hover .safety-title {
   color: #ffffff;
+}
+
+.safety-state-badge {
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 1.5px 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.15s ease;
+  font-family: monospace, sans-serif;
+  line-height: 1;
+}
+
+.safety-state-badge.active {
+  background: #ffd54f;
+  color: #111111;
+  border-color: #ffd54f;
+  box-shadow: 0 0 6px rgba(255, 213, 79, 0.5);
 }
 
 .custom-toggle-safety {

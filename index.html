@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.15.0">
+  <link rel="stylesheet" href="style.css?v=4.16.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -46,7 +46,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.15.0</span>
+            <span class="app-version-badge" id="appVersion">v4.16.0</span>
             <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
           <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
@@ -93,12 +93,13 @@
               📐 測定スケール
             </button>
             <div class="safety-guide-wrap">
-              <label class="safety-guide-toggle-label" for="toggleSafetyGuide" title="印刷安全枠ガイド（セーフティゾーン）の表示切替（文字クリックでも切替可能）">
-                <span class="custom-toggle-safety">
-                  <input type="checkbox" id="toggleSafetyGuide">
-                  <span class="toggle-slider"></span>
-                </span>
+              <label class="custom-toggle-safety" title="印刷安全枠ガイド（セーフティゾーン）の表示切替">
+                <input type="checkbox" id="toggleSafetyGuide">
+                <span class="toggle-slider"></span>
+              </label>
+              <label for="toggleSafetyGuide" class="safety-title-label" title="クリックで安全枠ガイドのON/OFFを切替">
                 <span class="safety-title">安全枠ガイド</span>
+                <span class="safety-state-badge" id="safetyStateBadge">OFF</span>
               </label>
               <div class="slider-stepper safety-stepper" id="safetyMarginStepper">
                 <button type="button" class="stepper-btn stepper-dec" id="btnSafetyMarginDec" title="1%減らす">−</button>
@@ -972,6 +973,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.15.0"></script>
+  <script src="app.js?v=4.16.0"></script>
 </body>
 </html>
