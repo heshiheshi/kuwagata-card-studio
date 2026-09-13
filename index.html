@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.18.0">
+  <link rel="stylesheet" href="style.css?v=4.19.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -46,7 +46,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.18.0</span>
+            <span class="app-version-badge" id="appVersion">v4.19.0</span>
             <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
           <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
@@ -73,61 +73,44 @@
 
     <!-- メインコンテンツ (モバイルファースト・縦型レイアウト) -->
     <main class="app-main">
-      <!-- 🌟 スティッキー・追従ライブプレビューHUD (常に画像を見ながら調整可能 / ワンタップで折りたたみ可能) -->
-      <section class="preview-section sticky-preview" id="stickyPreviewSection">
-        <!-- 🎴 アコーディオン開閉バー ＆ スクロール連動 (v4.18.0) -->
-        <div class="preview-collapse-header" id="previewCollapseHeader" title="タップで開閉（下へスクロールで自動折りたたみ / 最上部で自動全開）">
-          <div class="preview-collapse-title">
-            <span class="preview-collapse-icon">🎴</span>
-            <span class="preview-collapse-text">カードプレビュー</span>
-            <span class="preview-collapse-status" id="previewCollapseStatus">展開中</span>
-          </div>
-          <div class="preview-collapse-actions">
-            <span class="preview-collapse-hint">スクロール連動 ＆ タップ開閉</span>
-            <button type="button" class="btn-preview-toggle" id="btnTogglePreviewCollapse" aria-label="プレビュー開閉">
-              <span class="toggle-chevron" id="previewToggleChevron">▲</span>
-            </button>
+      <!-- 🎴 メインカードプレビュー（自然なインライン配置・ガタつきゼロ） -->
+      <section class="preview-section" id="previewSection">
+        <div class="preview-card-wrapper" id="previewWrapper">
+          <canvas id="cardCanvas" width="1500" height="2100"></canvas>
+          <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <span id="loadingText">レンダリング中...</span>
           </div>
         </div>
-
-        <div class="preview-collapsible-body" id="previewCollapsibleBody">
-          <div class="preview-card-wrapper" id="previewWrapper">
-            <canvas id="cardCanvas" width="1500" height="2100"></canvas>
-            <div id="loadingOverlay" class="loading-overlay hidden">
-              <div class="spinner"></div>
-              <span id="loadingText">レンダリング中...</span>
-            </div>
+        <div class="preview-toolbar">
+          <div class="preview-toolbar-row">
+            <div class="ratio-badge" id="ratioBadge">比率: 5:7 (トレカ)</div>
+            <div class="res-badge" id="resBadge">1500 × 2100 px</div>
+            <button type="button" class="btn-refresh" id="btnRerender" title="再描画">🔄 再描画</button>
           </div>
-          <div class="preview-toolbar">
-            <div class="preview-toolbar-row">
-              <div class="ratio-badge" id="ratioBadge">比率: 5:7 (トレカ)</div>
-              <div class="res-badge" id="resBadge">1500 × 2100 px</div>
-              <button type="button" class="btn-refresh" id="btnRerender" title="再描画">🔄 再描画</button>
-            </div>
-            <div class="calibration-row">
-              <button type="button" class="btn-calibration-bg" id="btnToggleCalibration" title="目盛り・ルーラー測定スケールを画面に重ねて表示（クリックでON/OFF切替）">
-                📐 測定スケール
-              </button>
-              <div class="safety-guide-wrap">
-                <label class="custom-toggle-safety" title="印刷安全枠ガイド（セーフティゾーン）の表示切替">
-                  <input type="checkbox" id="toggleSafetyGuide">
-                  <span class="toggle-slider"></span>
-                </label>
-                <label for="toggleSafetyGuide" class="safety-title-label" title="クリックで安全枠ガイドのON/OFFを切替">
-                  <span class="safety-title">安全枠ガイド</span>
-                  <span class="safety-state-badge" id="safetyStateBadge">OFF</span>
-                </label>
-                <div class="slider-stepper safety-stepper" id="safetyMarginStepper">
-                  <button type="button" class="stepper-btn stepper-dec" id="btnSafetyMarginDec" title="1%減らす">−</button>
-                  <input type="number" class="stepper-input" id="safetyMarginInput" min="0" max="15" value="3" title="安全マージン(%)">
-                  <button type="button" class="stepper-btn stepper-inc" id="btnSafetyMarginInc" title="1%増やす">+</button>
-                  <span class="stepper-unit">%</span>
-                </div>
+          <div class="calibration-row">
+            <button type="button" class="btn-calibration-bg" id="btnToggleCalibration" title="目盛り・ルーラー測定スケールを画面に重ねて表示（クリックでON/OFF切替）">
+              📐 測定スケール
+            </button>
+            <div class="safety-guide-wrap">
+              <label class="custom-toggle-safety" title="印刷安全枠ガイド（セーフティゾーン）の表示切替">
+                <input type="checkbox" id="toggleSafetyGuide">
+                <span class="toggle-slider"></span>
+              </label>
+              <label for="toggleSafetyGuide" class="safety-title-label" title="クリックで安全枠ガイドのON/OFFを切替">
+                <span class="safety-title">安全枠ガイド</span>
+                <span class="safety-state-badge" id="safetyStateBadge">OFF</span>
+              </label>
+              <div class="slider-stepper safety-stepper" id="safetyMarginStepper">
+                <button type="button" class="stepper-btn stepper-dec" id="btnSafetyMarginDec" title="1%減らす">−</button>
+                <input type="number" class="stepper-input" id="safetyMarginInput" min="0" max="15" value="3" title="安全マージン(%)">
+                <button type="button" class="stepper-btn stepper-inc" id="btnSafetyMarginInc" title="1%増やす">+</button>
+                <span class="stepper-unit">%</span>
               </div>
-              <button type="button" class="btn-snap-safe" id="btnClampToSafeZone" title="すべての文字・スペックを現在の安全枠（セーフティゾーン）の内側に自動収容">
-                🧲 枠内に収める
-              </button>
             </div>
+            <button type="button" class="btn-snap-safe" id="btnClampToSafeZone" title="すべての文字・スペックを現在の安全枠（セーフティゾーン）の内側に自動収容">
+              🧲 枠内に収める
+            </button>
           </div>
         </div>
       </section>
@@ -980,6 +963,40 @@
       </div>
     </div>
 
+    <!-- 🎴 独立フローティング・ミニバー (v4.19.0 画面外スクロール時のみ出現) -->
+    <div id="floatingPreviewBar" class="floating-preview-bar hidden" title="タップでカードプレビューを開く">
+      <div class="fpb-inner">
+        <span class="fpb-icon">🎴</span>
+        <span class="fpb-title">カードプレビュー</span>
+        <span class="fpb-badge">確認する</span>
+        <span class="fpb-chevron">▲</span>
+      </div>
+    </div>
+
+    <!-- 🎴 フローティング・プレビュー確認シート (ドロワー) -->
+    <div id="floatingPreviewDrawer" class="floating-preview-drawer hidden">
+      <div class="fpd-backdrop" id="fpdBackdrop"></div>
+      <div class="fpd-panel">
+        <div class="fpd-header">
+          <div class="fpd-title-group">
+            <span class="fpd-icon">🎴</span>
+            <span class="fpd-title">カードプレビュー</span>
+            <span class="fpd-ratio-tag" id="fpdRatioTag">比率: 5:7</span>
+          </div>
+          <button type="button" class="btn-fpd-close" id="btnFpdClose" aria-label="閉じる">✕</button>
+        </div>
+        <div class="fpd-body">
+          <div class="fpd-canvas-wrap">
+            <canvas id="floatingCanvas" width="1500" height="2100"></canvas>
+          </div>
+        </div>
+        <div class="fpd-footer">
+          <div class="fpd-meta" id="fpdMeta">1500 × 2100 px</div>
+          <button type="button" class="btn-fpd-close-action" id="btnFpdCloseAction">閉じる</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 🧪 Localhostモード固定フロートボタン (スクロール追従・常時表示) -->
     <div id="localhostFloatingContainer" class="localhost-floating-container">
       <button type="button" id="btnFloatingLocalhost" class="btn-floating-localhost" title="システム通信ログ・診断コンソール">
@@ -990,6 +1007,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.18.0"></script>
+  <script src="app.js?v=4.19.0"></script>
 </body>
 </html>

@@ -1329,144 +1329,234 @@ input:checked + .toggle-slider:before {
 .auth-error-msg.hidden { display: none !important; }
 
 /* ==========================================================================
-   🌟 追従ライブプレビューHUD ＆ アコーディオン式折りたたみ (v4.17.0)
+   🎴 独立フローティング・ミニバー ＆ プレビュー確認シート (v4.19.0)
    ========================================================================== */
-.preview-section.sticky-preview {
-  position: sticky;
-  top: 4px;
-  z-index: 120;
-  background: rgba(17, 20, 26, 0.94);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--border-gold);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
-  padding: 6px 10px;
-  transition: padding 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
-}
-
-/* 🎴 アコーディオンヘッダー */
-.preview-collapse-header {
+.floating-preview-bar {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  z-index: 200;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 4px 8px;
+  background: rgba(16, 18, 25, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-gold);
+  border-radius: 999px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8), 0 0 15px var(--gold-glow);
+  padding: 5px 14px 5px 10px;
   cursor: pointer;
   user-select: none;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 6px;
-  transition: all 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease, box-shadow 0.25s ease;
 }
 
-.preview-collapse-header:hover {
-  background: rgba(212, 175, 55, 0.12);
-  border-color: rgba(212, 175, 55, 0.4);
+.floating-preview-bar:hover {
+  background: rgba(22, 26, 36, 0.98);
+  border-color: #ffd54f;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), 0 0 22px rgba(212, 175, 55, 0.7);
 }
 
-.preview-collapse-title {
+.floating-preview-bar.hidden {
+  transform: translateX(-50%) translateY(-160%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fpb-inner {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
+  gap: 8px;
+}
+
+.fpb-icon {
+  font-size: 14px;
+}
+
+.fpb-title {
+  font-size: 11.5px;
   font-weight: 700;
   color: var(--gold-text);
+  letter-spacing: 0.5px;
 }
 
-.preview-collapse-icon {
-  font-size: 13px;
-}
-
-.preview-collapse-status {
-  font-size: 9px;
+.fpb-badge {
+  font-size: 9.5px;
   font-weight: 800;
-  padding: 1px 5px;
-  border-radius: 3px;
+  padding: 2px 8px;
+  border-radius: 999px;
   background: rgba(212, 175, 55, 0.2);
   color: #ffd54f;
   border: 1px solid rgba(212, 175, 55, 0.4);
-  transition: all 0.2s ease;
 }
 
-.preview-collapse-actions {
+.fpb-chevron {
+  font-size: 9px;
+  color: #ffd54f;
+  font-weight: 900;
+}
+
+/* 🎴 フローティング・プレビュー確認シート (ドロワー) */
+.floating-preview-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  transition: visibility 0.28s ease;
+}
+
+.floating-preview-drawer.hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.fpd-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 1;
+  transition: opacity 0.28s ease;
+}
+
+.floating-preview-drawer.hidden .fpd-backdrop {
+  opacity: 0;
+}
+
+.fpd-panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  max-height: 85vh;
+  background: rgba(17, 20, 26, 0.98);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border: 1px solid var(--border-gold);
+  border-bottom: none;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.95);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(0);
+  transition: transform 0.32s cubic-bezier(0.32, 1, 0.23, 1);
+}
+
+.floating-preview-drawer.hidden .fpd-panel {
+  transform: translateY(105%);
+}
+
+.fpd-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.fpd-title-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
-.preview-collapse-hint {
-  font-size: 9.5px;
-  color: var(--text-muted);
+.fpd-icon {
+  font-size: 15px;
 }
 
-.btn-preview-toggle {
-  width: 22px;
-  height: 22px;
+.fpd-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--gold-text);
+}
+
+.fpd-ratio-tag {
+  font-size: 10px;
+  padding: 2px 7px;
   background: rgba(212, 175, 55, 0.15);
-  border: 1px solid rgba(212, 175, 55, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.3);
   border-radius: 4px;
   color: #ffd54f;
+}
+
+.btn-fpd-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0;
   transition: all 0.2s ease;
 }
 
-.btn-preview-toggle:hover {
-  background: rgba(212, 175, 55, 0.35);
+.btn-fpd-close:hover {
+  background: rgba(212, 175, 55, 0.3);
   color: #ffffff;
 }
 
-.toggle-chevron {
-  font-size: 10px;
-  font-weight: 900;
-  display: inline-block;
-  transition: transform 0.25s ease;
+.fpd-body {
+  padding: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  background: radial-gradient(circle at center, #1b1f2b 0%, #0b0d12 100%);
 }
 
-/* 展開・格納アニメーション本体 */
-.preview-collapsible-body {
-  max-height: 1200px;
-  opacity: 1;
+.fpd-canvas-wrap {
+  width: 100%;
+  max-width: 260px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.95);
+  border-radius: var(--radius-sm);
   overflow: hidden;
-  transition: max-height 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease, margin 0.22s ease;
+  background: #000;
 }
 
-/* 🎴 折りたたみ時 (Collapsed State) */
-.preview-section.sticky-preview.collapsed {
-  padding: 4px 8px;
-  background: rgba(14, 16, 22, 0.96);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.75);
+.fpd-canvas-wrap canvas {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
-.preview-section.sticky-preview.collapsed .preview-collapse-header {
-  margin-bottom: 0;
-  background: rgba(212, 175, 55, 0.08);
-  border-color: rgba(212, 175, 55, 0.3);
+.fpd-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.5);
 }
 
-.preview-section.sticky-preview.collapsed .preview-collapsible-body {
-  max-height: 0;
-  opacity: 0;
-  margin: 0;
-  padding: 0;
-  pointer-events: none;
-}
-
-.preview-section.sticky-preview.collapsed .preview-collapse-status {
-  background: rgba(255, 255, 255, 0.08);
+.fpd-meta {
+  font-size: 11px;
   color: var(--text-muted);
-  border-color: rgba(255, 255, 255, 0.15);
 }
 
-.preview-section.sticky-preview.collapsed .toggle-chevron {
-  transform: rotate(180deg);
+.btn-fpd-close-action {
+  padding: 6px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  background: rgba(212, 175, 55, 0.2);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  color: #ffd54f;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.preview-section.sticky-preview .preview-card-wrapper {
-  max-width: 210px; /* スクロール時でも画面半分以下に収まり、下のスライダー操作が快適 */
-  box-shadow: 0 4px 16px rgba(0,0,0,0.9);
+.btn-fpd-close-action:hover {
+  background: rgba(212, 175, 55, 0.4);
+  color: #ffffff;
 }
 
 .letter-chip-container {

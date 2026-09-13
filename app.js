@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.18.0 Smart Scroll Collapsible Preview Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.19.0 Floating Preview Bar & Non-Destructive Drawer Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.18.0';
+  const APP_VERSION = 'v4.19.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -251,9 +251,6 @@
     aiAspectRatio: '3:4',
     canvasWidth: 1500,
     canvasHeight: 2100,
-
-    // 🎴 アコーディオン式折りたたみプレビュー (v4.17.0)
-    previewCollapsed: false,
 
     // 📐 印刷キャリブレーション & 安全枠ガイド (v4.15.0)
     showCalibrationOverlay: false, // 測定スケール透かし重ね合わせ
@@ -774,7 +771,7 @@
     await loadSavedState();
     
     setupEventListeners();
-    handleSmartPreviewScroll();
+    setupFloatingPreviewSystem();
     setupLocalhostFloatingSuite();
     setupDictManager();
     setupBackupManager();
@@ -965,7 +962,6 @@
         aspectRatio: state.aspectRatio,
         canvasWidth: state.canvasWidth,
         canvasHeight: state.canvasHeight,
-        previewCollapsed: state.previewCollapsed,
         showCalibrationOverlay: state.showCalibrationOverlay,
         showSafetyGuide: state.showSafetyGuide,
         safetyMargin: state.safetyMargin,
@@ -1029,11 +1025,6 @@
         if (saved.aspectRatio) state.aspectRatio = saved.aspectRatio;
         if (saved.canvasWidth) state.canvasWidth = saved.canvasWidth;
         if (saved.canvasHeight) state.canvasHeight = saved.canvasHeight;
-        if (saved.previewCollapsed !== undefined) {
-          const currentY = Math.max(0, (typeof window !== 'undefined' ? (window.scrollY || window.pageYOffset || 0) : 0));
-          state.previewCollapsed = currentY <= 40 ? false : !!saved.previewCollapsed;
-          togglePreviewCollapse(state.previewCollapsed, false);
-        }
         if (saved.showCalibrationOverlay !== undefined) state.showCalibrationOverlay = !!saved.showCalibrationOverlay;
         if (saved.showSafetyGuide !== undefined) state.showSafetyGuide = !!saved.showSafetyGuide;
         if (saved.safetyMargin !== undefined) state.safetyMargin = Number(saved.safetyMargin);
@@ -1158,91 +1149,76 @@
     }
   }
 
-  // 📜 スマート・スクロール連動 ＆ 手動オーバーライド制御 (v4.18.0)
-  let manualPreviewOverride = false;
-  let lastScrollY = typeof window !== 'undefined' ? (window.scrollY || window.pageYOffset || 0) : 0;
-  let scrollDownAccum = 0;
+  // 🎴 独立フローティング・プレビュー確認シート制御 (v4.19.0)
+  function syncFloatingCanvas() {
+    const fCanvas = document.getElementById('floatingCanvas');
+    const fpdRatioTag = document.getElementById('fpdRatioTag');
+    const fpdMeta = document.getElementById('fpdMeta');
+    if (!fCanvas || !canvas) return;
+    fCanvas.width = canvas.width;
+    fCanvas.height = canvas.height;
+    const fCtx = fCanvas.getContext('2d');
+    fCtx.clearRect(0, 0, fCanvas.width, fCanvas.height);
+    fCtx.drawImage(canvas, 0, 0);
+    if (fpdRatioTag) fpdRatioTag.textContent = `比率: ${state.aspectRatio || '5:7'}`;
+    if (fpdMeta) fpdMeta.textContent = `${state.canvasWidth || 1500} × ${state.canvasHeight || 2100} px`;
+  }
 
-  function togglePreviewCollapse(forceState, isManual = true) {
-    const prevState = state.previewCollapsed;
-    if (typeof forceState === 'boolean') {
-      state.previewCollapsed = forceState;
-    } else {
-      state.previewCollapsed = !state.previewCollapsed;
-    }
-
-    // 手動操作時のオーバーライド管理
-    const currentScrollY = Math.max(0, (typeof window !== 'undefined' ? (window.scrollY || window.pageYOffset || 0) : 0));
-    if (isManual) {
-      if (currentScrollY > 60 && !state.previewCollapsed) {
-        // 下部作業エリアで手動で開いた場合：作業しながら見たい意図を尊重しオーバーライド有効化
-        manualPreviewOverride = true;
-        scrollDownAccum = 0;
-      } else {
-        manualPreviewOverride = false;
-        scrollDownAccum = 0;
-      }
-    }
-
-    const sec = document.getElementById('stickyPreviewSection');
-    const statusTag = document.getElementById('previewCollapseStatus');
-    if (sec) sec.classList.toggle('collapsed', !!state.previewCollapsed);
-    if (statusTag) statusTag.textContent = state.previewCollapsed ? '折りたたみ中' : '展開中';
-
-    // 状態が変化した時のみログ記録と保存
-    if (prevState !== state.previewCollapsed) {
-      saveState(false);
-      Logger.info(`[PREVIEW_COLLAPSE] プレビュー開閉 (${isManual ? '手動タップ' : 'スクロール連動'}): ${state.previewCollapsed ? '折りたたみ (格納)' : '全開 (表示)'}`);
+  function openFloatingPreviewDrawer() {
+    syncFloatingCanvas();
+    const drawer = document.getElementById('floatingPreviewDrawer');
+    if (drawer) {
+      drawer.classList.remove('hidden');
+      Logger.info('[FLOATING_PREVIEW] フローティング確認シートを展開');
     }
   }
 
-  function handleSmartPreviewScroll() {
-    const currentScrollY = Math.max(0, window.scrollY || window.pageYOffset || 0);
-    const delta = currentScrollY - lastScrollY;
+  function closeFloatingPreviewDrawer() {
+    const drawer = document.getElementById('floatingPreviewDrawer');
+    if (drawer) {
+      drawer.classList.add('hidden');
+    }
+  }
 
-    // 1. ページ最上部（Top 0〜40px）にいる/戻った時：自然と全開に復帰
-    if (currentScrollY <= 40) {
-      manualPreviewOverride = false;
-      scrollDownAccum = 0;
-      if (state.previewCollapsed) {
-        togglePreviewCollapse(false, false);
-      }
-      lastScrollY = currentScrollY;
-      return;
+  function setupFloatingPreviewSystem() {
+    const previewSec = document.getElementById('previewSection') || document.getElementById('stickyPreviewSection');
+    const floatingBar = document.getElementById('floatingPreviewBar');
+    const fpdBackdrop = document.getElementById('fpdBackdrop');
+    const btnFpdClose = document.getElementById('btnFpdClose');
+    const btnFpdCloseAction = document.getElementById('btnFpdCloseAction');
+
+    if (floatingBar) {
+      floatingBar.addEventListener('click', openFloatingPreviewDrawer);
+    }
+    if (fpdBackdrop) {
+      fpdBackdrop.addEventListener('click', closeFloatingPreviewDrawer);
+    }
+    if (btnFpdClose) {
+      btnFpdClose.addEventListener('click', closeFloatingPreviewDrawer);
+    }
+    if (btnFpdCloseAction) {
+      btnFpdCloseAction.addEventListener('click', closeFloatingPreviewDrawer);
     }
 
-    // 2. 下方向へのスクロール（作業エリアへ進む時）
-    if (delta > 0) {
-      if (manualPreviewOverride) {
-        // 下部で手動展開された後の場合：微小スクロールでは閉じず、大きく下へスクロール(>140px)した場合のみ自然に折りたたむ
-        scrollDownAccum += delta;
-        if (scrollDownAccum > 140) {
-          manualPreviewOverride = false;
-          scrollDownAccum = 0;
-          if (!state.previewCollapsed) {
-            togglePreviewCollapse(true, false);
+    if (previewSec && floatingBar && 'IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          // プレビューが画面上部にスクロールアウトした時のみミニバーを表示
+          const isScrolledPast = entry.boundingClientRect.bottom < 60;
+          if (!entry.isIntersecting && isScrolledPast) {
+            floatingBar.classList.remove('hidden');
+          } else {
+            floatingBar.classList.add('hidden');
+            closeFloatingPreviewDrawer();
           }
-        }
-      } else {
-        // 通常の下スクロール：Topエリア(>100px)を抜けた時点で自然に折りたたむ
-        if (currentScrollY > 100 && !state.previewCollapsed) {
-          togglePreviewCollapse(true, false);
-        }
-      }
-    } else if (delta < -10) {
-      // 上方向へのスクロール中
-      if (scrollDownAccum > 0) {
-        scrollDownAccum = Math.max(0, scrollDownAccum - Math.abs(delta));
-      }
-      // Top付近(<=80px)に近づいたらスムーズに自動展開
-      if (currentScrollY <= 80 && state.previewCollapsed) {
-        manualPreviewOverride = false;
-        scrollDownAccum = 0;
-        togglePreviewCollapse(false, false);
-      }
-    }
+        });
+      }, {
+        root: null,
+        threshold: [0, 0.1, 0.5]
+      });
 
-    lastScrollY = currentScrollY;
+      observer.observe(previewSec);
+    }
   }
 
   function setVal(id, val) {
@@ -2140,23 +2116,6 @@
     });
 
     document.getElementById('btnRerender').addEventListener('click', () => renderCard());
-
-    // 🎴 アコーディオン式プレビュー折りたたみヘッダー ＆ スクロール連動 (v4.18.0)
-    const previewCollapseHeader = document.getElementById('previewCollapseHeader');
-    if (previewCollapseHeader) {
-      previewCollapseHeader.addEventListener('click', () => togglePreviewCollapse());
-    }
-
-    let isScrollTicking = false;
-    window.addEventListener('scroll', () => {
-      if (!isScrollTicking) {
-        window.requestAnimationFrame(() => {
-          handleSmartPreviewScroll();
-          isScrollTicking = false;
-        });
-        isScrollTicking = true;
-      }
-    }, { passive: true });
 
     // 📐 印刷キャリブレーション ＆ 安全枠ガイド HUD (v4.15.0)
     const btnToggleCalib = document.getElementById('btnToggleCalibration') || document.getElementById('btnSetCalibrationBg');
@@ -3446,6 +3405,12 @@ JSONフォーマットのみを出力してください:
 
     const renderTime = (performance.now() - t0).toFixed(1);
     Logger.render(`[RENDER_DONE] レイヤー合成完了 (${renderTime}ms, ${canvas.width}x${canvas.height}px)`);
+
+    // 🎴 フローティング確認シートが開いていればリアルタイム同期 (v4.19.0)
+    const floatingDrawer = document.getElementById('floatingPreviewDrawer');
+    if (floatingDrawer && !floatingDrawer.classList.contains('hidden')) {
+      syncFloatingCanvas();
+    }
 
     isRendering = false;
   }
