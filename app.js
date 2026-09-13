@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.16.0 Safety Guide Toggle Fix & Visual State Badge Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.17.0 Collapsible Sticky Live Preview Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.16.0';
+  const APP_VERSION = 'v4.17.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -251,6 +251,9 @@
     aiAspectRatio: '3:4',
     canvasWidth: 1500,
     canvasHeight: 2100,
+
+    // 🎴 アコーディオン式折りたたみプレビュー (v4.17.0)
+    previewCollapsed: false,
 
     // 📐 印刷キャリブレーション & 安全枠ガイド (v4.15.0)
     showCalibrationOverlay: false, // 測定スケール透かし重ね合わせ
@@ -961,6 +964,7 @@
         aspectRatio: state.aspectRatio,
         canvasWidth: state.canvasWidth,
         canvasHeight: state.canvasHeight,
+        previewCollapsed: state.previewCollapsed,
         showCalibrationOverlay: state.showCalibrationOverlay,
         showSafetyGuide: state.showSafetyGuide,
         safetyMargin: state.safetyMargin,
@@ -1024,6 +1028,10 @@
         if (saved.aspectRatio) state.aspectRatio = saved.aspectRatio;
         if (saved.canvasWidth) state.canvasWidth = saved.canvasWidth;
         if (saved.canvasHeight) state.canvasHeight = saved.canvasHeight;
+        if (saved.previewCollapsed !== undefined) {
+          state.previewCollapsed = !!saved.previewCollapsed;
+          togglePreviewCollapse(state.previewCollapsed);
+        }
         if (saved.showCalibrationOverlay !== undefined) state.showCalibrationOverlay = !!saved.showCalibrationOverlay;
         if (saved.showSafetyGuide !== undefined) state.showSafetyGuide = !!saved.showSafetyGuide;
         if (saved.safetyMargin !== undefined) state.safetyMargin = Number(saved.safetyMargin);
@@ -1146,6 +1154,20 @@
       badge.textContent = isOn ? 'ON' : 'OFF';
       badge.classList.toggle('active', !!isOn);
     }
+  }
+
+  function togglePreviewCollapse(forceState) {
+    if (typeof forceState === 'boolean') {
+      state.previewCollapsed = forceState;
+    } else {
+      state.previewCollapsed = !state.previewCollapsed;
+    }
+    const sec = document.getElementById('stickyPreviewSection');
+    const statusTag = document.getElementById('previewCollapseStatus');
+    if (sec) sec.classList.toggle('collapsed', !!state.previewCollapsed);
+    if (statusTag) statusTag.textContent = state.previewCollapsed ? '折りたたみ中' : '展開中';
+    saveState(false);
+    Logger.info(`[PREVIEW_COLLAPSE] プレビュー開閉: ${state.previewCollapsed ? '折りたたみ (格納)' : '展開 (表示)'}`);
   }
 
   function setVal(id, val) {
@@ -2043,6 +2065,12 @@
     });
 
     document.getElementById('btnRerender').addEventListener('click', () => renderCard());
+
+    // 🎴 アコーディオン式プレビュー折りたたみヘッダー (v4.17.0)
+    const previewCollapseHeader = document.getElementById('previewCollapseHeader');
+    if (previewCollapseHeader) {
+      previewCollapseHeader.addEventListener('click', () => togglePreviewCollapse());
+    }
 
     // 📐 印刷キャリブレーション ＆ 安全枠ガイド HUD (v4.15.0)
     const btnToggleCalib = document.getElementById('btnToggleCalibration') || document.getElementById('btnSetCalibrationBg');

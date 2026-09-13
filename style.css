@@ -1329,7 +1329,7 @@ input:checked + .toggle-slider:before {
 .auth-error-msg.hidden { display: none !important; }
 
 /* ==========================================================================
-   🌟 追従ライブプレビューHUD ＆ 文字スタイルチップ
+   🌟 追従ライブプレビューHUD ＆ アコーディオン式折りたたみ (v4.17.0)
    ========================================================================== */
 .preview-section.sticky-preview {
   position: sticky;
@@ -1340,6 +1340,128 @@ input:checked + .toggle-slider:before {
   border: 1px solid var(--border-gold);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
   padding: 6px 10px;
+  transition: padding 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* 🎴 アコーディオンヘッダー */
+.preview-collapse-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  cursor: pointer;
+  user-select: none;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+}
+
+.preview-collapse-header:hover {
+  background: rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+.preview-collapse-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold-text);
+}
+
+.preview-collapse-icon {
+  font-size: 13px;
+}
+
+.preview-collapse-status {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(212, 175, 55, 0.2);
+  color: #ffd54f;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  transition: all 0.2s ease;
+}
+
+.preview-collapse-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.preview-collapse-hint {
+  font-size: 9.5px;
+  color: var(--text-muted);
+}
+
+.btn-preview-toggle {
+  width: 22px;
+  height: 22px;
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 4px;
+  color: #ffd54f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.btn-preview-toggle:hover {
+  background: rgba(212, 175, 55, 0.35);
+  color: #ffffff;
+}
+
+.toggle-chevron {
+  font-size: 10px;
+  font-weight: 900;
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+
+/* 展開・格納アニメーション本体 */
+.preview-collapsible-body {
+  max-height: 1200px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease, margin 0.22s ease;
+}
+
+/* 🎴 折りたたみ時 (Collapsed State) */
+.preview-section.sticky-preview.collapsed {
+  padding: 4px 8px;
+  background: rgba(14, 16, 22, 0.96);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.75);
+}
+
+.preview-section.sticky-preview.collapsed .preview-collapse-header {
+  margin-bottom: 0;
+  background: rgba(212, 175, 55, 0.08);
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.preview-section.sticky-preview.collapsed .preview-collapsible-body {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.preview-section.sticky-preview.collapsed .preview-collapse-status {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.preview-section.sticky-preview.collapsed .toggle-chevron {
+  transform: rotate(180deg);
 }
 
 .preview-section.sticky-preview .preview-card-wrapper {
