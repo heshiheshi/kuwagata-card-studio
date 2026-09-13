@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.17.0 Collapsible Sticky Live Preview Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.18.0 Smart Scroll Collapsible Preview Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.17.0';
+  const APP_VERSION = 'v4.18.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -774,6 +774,7 @@
     await loadSavedState();
     
     setupEventListeners();
+    handleSmartPreviewScroll();
     setupLocalhostFloatingSuite();
     setupDictManager();
     setupBackupManager();
@@ -1029,8 +1030,9 @@
         if (saved.canvasWidth) state.canvasWidth = saved.canvasWidth;
         if (saved.canvasHeight) state.canvasHeight = saved.canvasHeight;
         if (saved.previewCollapsed !== undefined) {
-          state.previewCollapsed = !!saved.previewCollapsed;
-          togglePreviewCollapse(state.previewCollapsed);
+          const currentY = Math.max(0, (typeof window !== 'undefined' ? (window.scrollY || window.pageYOffset || 0) : 0));
+          state.previewCollapsed = currentY <= 40 ? false : !!saved.previewCollapsed;
+          togglePreviewCollapse(state.previewCollapsed, false);
         }
         if (saved.showCalibrationOverlay !== undefined) state.showCalibrationOverlay = !!saved.showCalibrationOverlay;
         if (saved.showSafetyGuide !== undefined) state.showSafetyGuide = !!saved.showSafetyGuide;
@@ -1156,18 +1158,91 @@
     }
   }
 
-  function togglePreviewCollapse(forceState) {
+  // 📜 スマート・スクロール連動 ＆ 手動オーバーライド制御 (v4.18.0)
+  let manualPreviewOverride = false;
+  let lastScrollY = typeof window !== 'undefined' ? (window.scrollY || window.pageYOffset || 0) : 0;
+  let scrollDownAccum = 0;
+
+  function togglePreviewCollapse(forceState, isManual = true) {
+    const prevState = state.previewCollapsed;
     if (typeof forceState === 'boolean') {
       state.previewCollapsed = forceState;
     } else {
       state.previewCollapsed = !state.previewCollapsed;
     }
+
+    // 手動操作時のオーバーライド管理
+    const currentScrollY = Math.max(0, (typeof window !== 'undefined' ? (window.scrollY || window.pageYOffset || 0) : 0));
+    if (isManual) {
+      if (currentScrollY > 60 && !state.previewCollapsed) {
+        // 下部作業エリアで手動で開いた場合：作業しながら見たい意図を尊重しオーバーライド有効化
+        manualPreviewOverride = true;
+        scrollDownAccum = 0;
+      } else {
+        manualPreviewOverride = false;
+        scrollDownAccum = 0;
+      }
+    }
+
     const sec = document.getElementById('stickyPreviewSection');
     const statusTag = document.getElementById('previewCollapseStatus');
     if (sec) sec.classList.toggle('collapsed', !!state.previewCollapsed);
     if (statusTag) statusTag.textContent = state.previewCollapsed ? '折りたたみ中' : '展開中';
-    saveState(false);
-    Logger.info(`[PREVIEW_COLLAPSE] プレビュー開閉: ${state.previewCollapsed ? '折りたたみ (格納)' : '展開 (表示)'}`);
+
+    // 状態が変化した時のみログ記録と保存
+    if (prevState !== state.previewCollapsed) {
+      saveState(false);
+      Logger.info(`[PREVIEW_COLLAPSE] プレビュー開閉 (${isManual ? '手動タップ' : 'スクロール連動'}): ${state.previewCollapsed ? '折りたたみ (格納)' : '全開 (表示)'}`);
+    }
+  }
+
+  function handleSmartPreviewScroll() {
+    const currentScrollY = Math.max(0, window.scrollY || window.pageYOffset || 0);
+    const delta = currentScrollY - lastScrollY;
+
+    // 1. ページ最上部（Top 0〜40px）にいる/戻った時：自然と全開に復帰
+    if (currentScrollY <= 40) {
+      manualPreviewOverride = false;
+      scrollDownAccum = 0;
+      if (state.previewCollapsed) {
+        togglePreviewCollapse(false, false);
+      }
+      lastScrollY = currentScrollY;
+      return;
+    }
+
+    // 2. 下方向へのスクロール（作業エリアへ進む時）
+    if (delta > 0) {
+      if (manualPreviewOverride) {
+        // 下部で手動展開された後の場合：微小スクロールでは閉じず、大きく下へスクロール(>140px)した場合のみ自然に折りたたむ
+        scrollDownAccum += delta;
+        if (scrollDownAccum > 140) {
+          manualPreviewOverride = false;
+          scrollDownAccum = 0;
+          if (!state.previewCollapsed) {
+            togglePreviewCollapse(true, false);
+          }
+        }
+      } else {
+        // 通常の下スクロール：Topエリア(>100px)を抜けた時点で自然に折りたたむ
+        if (currentScrollY > 100 && !state.previewCollapsed) {
+          togglePreviewCollapse(true, false);
+        }
+      }
+    } else if (delta < -10) {
+      // 上方向へのスクロール中
+      if (scrollDownAccum > 0) {
+        scrollDownAccum = Math.max(0, scrollDownAccum - Math.abs(delta));
+      }
+      // Top付近(<=80px)に近づいたらスムーズに自動展開
+      if (currentScrollY <= 80 && state.previewCollapsed) {
+        manualPreviewOverride = false;
+        scrollDownAccum = 0;
+        togglePreviewCollapse(false, false);
+      }
+    }
+
+    lastScrollY = currentScrollY;
   }
 
   function setVal(id, val) {
@@ -2066,11 +2141,22 @@
 
     document.getElementById('btnRerender').addEventListener('click', () => renderCard());
 
-    // 🎴 アコーディオン式プレビュー折りたたみヘッダー (v4.17.0)
+    // 🎴 アコーディオン式プレビュー折りたたみヘッダー ＆ スクロール連動 (v4.18.0)
     const previewCollapseHeader = document.getElementById('previewCollapseHeader');
     if (previewCollapseHeader) {
       previewCollapseHeader.addEventListener('click', () => togglePreviewCollapse());
     }
+
+    let isScrollTicking = false;
+    window.addEventListener('scroll', () => {
+      if (!isScrollTicking) {
+        window.requestAnimationFrame(() => {
+          handleSmartPreviewScroll();
+          isScrollTicking = false;
+        });
+        isScrollTicking = true;
+      }
+    }, { passive: true });
 
     // 📐 印刷キャリブレーション ＆ 安全枠ガイド HUD (v4.15.0)
     const btnToggleCalib = document.getElementById('btnToggleCalibration') || document.getElementById('btnSetCalibrationBg');

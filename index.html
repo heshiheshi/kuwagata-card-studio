@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.17.0">
+  <link rel="stylesheet" href="style.css?v=4.18.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -46,7 +46,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.17.0</span>
+            <span class="app-version-badge" id="appVersion">v4.18.0</span>
             <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
           <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
@@ -75,15 +75,15 @@
     <main class="app-main">
       <!-- 🌟 スティッキー・追従ライブプレビューHUD (常に画像を見ながら調整可能 / ワンタップで折りたたみ可能) -->
       <section class="preview-section sticky-preview" id="stickyPreviewSection">
-        <!-- 🎴 アコーディオン開閉バー (v4.17.0) -->
-        <div class="preview-collapse-header" id="previewCollapseHeader" title="クリックでカードプレビューを開閉（折りたたみ）">
+        <!-- 🎴 アコーディオン開閉バー ＆ スクロール連動 (v4.18.0) -->
+        <div class="preview-collapse-header" id="previewCollapseHeader" title="タップで開閉（下へスクロールで自動折りたたみ / 最上部で自動全開）">
           <div class="preview-collapse-title">
             <span class="preview-collapse-icon">🎴</span>
             <span class="preview-collapse-text">カードプレビュー</span>
             <span class="preview-collapse-status" id="previewCollapseStatus">展開中</span>
           </div>
           <div class="preview-collapse-actions">
-            <span class="preview-collapse-hint">タップで開閉</span>
+            <span class="preview-collapse-hint">スクロール連動 ＆ タップ開閉</span>
             <button type="button" class="btn-preview-toggle" id="btnTogglePreviewCollapse" aria-label="プレビュー開閉">
               <span class="toggle-chevron" id="previewToggleChevron">▲</span>
             </button>
@@ -990,6 +990,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.17.0"></script>
+  <script src="app.js?v=4.18.0"></script>
 </body>
 </html>
