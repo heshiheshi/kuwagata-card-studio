@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.19.0 Floating Preview Bar & Non-Destructive Drawer Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.20.0 Top Dropdown Floating Preview Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.19.0';
+  const APP_VERSION = 'v4.20.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -1149,7 +1149,7 @@
     }
   }
 
-  // 🎴 独立フローティング・プレビュー確認シート制御 (v4.19.0)
+  // 🎴 独立フローティング・プレビュー確認シート制御 (上部ドロップダウン方式 v4.20.0)
   function syncFloatingCanvas() {
     const fCanvas = document.getElementById('floatingCanvas');
     const fpdRatioTag = document.getElementById('fpdRatioTag');
@@ -1167,16 +1167,33 @@
   function openFloatingPreviewDrawer() {
     syncFloatingCanvas();
     const drawer = document.getElementById('floatingPreviewDrawer');
+    const chevron = document.getElementById('fpbChevron');
+    const badge = document.getElementById('fpbBadge');
     if (drawer) {
       drawer.classList.remove('hidden');
-      Logger.info('[FLOATING_PREVIEW] フローティング確認シートを展開');
+      if (chevron) chevron.textContent = '▲';
+      if (badge) badge.textContent = '閉じる';
+      Logger.info('[FLOATING_PREVIEW] 上部ドロップダウン確認シートを展開');
     }
   }
 
   function closeFloatingPreviewDrawer() {
     const drawer = document.getElementById('floatingPreviewDrawer');
+    const chevron = document.getElementById('fpbChevron');
+    const badge = document.getElementById('fpbBadge');
     if (drawer) {
       drawer.classList.add('hidden');
+      if (chevron) chevron.textContent = '▼';
+      if (badge) badge.textContent = '確認する';
+    }
+  }
+
+  function toggleFloatingPreviewDrawer() {
+    const drawer = document.getElementById('floatingPreviewDrawer');
+    if (drawer && !drawer.classList.contains('hidden')) {
+      closeFloatingPreviewDrawer();
+    } else {
+      openFloatingPreviewDrawer();
     }
   }
 
@@ -1188,7 +1205,7 @@
     const btnFpdCloseAction = document.getElementById('btnFpdCloseAction');
 
     if (floatingBar) {
-      floatingBar.addEventListener('click', openFloatingPreviewDrawer);
+      floatingBar.addEventListener('click', toggleFloatingPreviewDrawer);
     }
     if (fpdBackdrop) {
       fpdBackdrop.addEventListener('click', closeFloatingPreviewDrawer);

@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.19.0">
+  <link rel="stylesheet" href="style.css?v=4.20.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -46,7 +46,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.19.0</span>
+            <span class="app-version-badge" id="appVersion">v4.20.0</span>
             <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
           <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
@@ -963,17 +963,17 @@
       </div>
     </div>
 
-    <!-- 🎴 独立フローティング・ミニバー (v4.19.0 画面外スクロール時のみ出現) -->
-    <div id="floatingPreviewBar" class="floating-preview-bar hidden" title="タップでカードプレビューを開く">
+    <!-- 🎴 独立フローティング・ミニバー (v4.20.0 上部ドロップダウン方式) -->
+    <div id="floatingPreviewBar" class="floating-preview-bar hidden" title="タップでカードプレビューを開閉">
       <div class="fpb-inner">
         <span class="fpb-icon">🎴</span>
         <span class="fpb-title">カードプレビュー</span>
-        <span class="fpb-badge">確認する</span>
-        <span class="fpb-chevron">▲</span>
+        <span class="fpb-badge" id="fpbBadge">確認する</span>
+        <span class="fpb-chevron" id="fpbChevron">▼</span>
       </div>
     </div>
 
-    <!-- 🎴 フローティング・プレビュー確認シート (ドロワー) -->
+    <!-- 🎴 フローティング・プレビュー確認シート (上部ドロップダウン) -->
     <div id="floatingPreviewDrawer" class="floating-preview-drawer hidden">
       <div class="fpd-backdrop" id="fpdBackdrop"></div>
       <div class="fpd-panel">
@@ -1007,6 +1007,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.19.0"></script>
+  <script src="app.js?v=4.20.0"></script>
 </body>
 </html>
