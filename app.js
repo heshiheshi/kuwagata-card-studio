@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.20.0 Top Dropdown Floating Preview Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.21.0 Dual Window Vision & AI Inpainting Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.20.0';
+  const APP_VERSION = 'v4.21.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -2260,30 +2260,53 @@
     }
   }
 
-  // --- 👁️ Vision AI: 画像解析 ＆ 文字消し背景自動復元 ---
+  // --- 👁️ Vision AI & AI消しゴム: 窓1（プロンプト抽出）＆ 窓2（文字・菱形消去） (v4.21.0) ---
   function setupVisionDropZone() {
-    const zone = document.getElementById('visionDropZone');
-    const input = document.getElementById('visionFileInput');
-    if (!zone || !input) return;
+    // 🌟 窓1: 背景プロンプト抽出ゾーン
+    const promptZone = document.getElementById('promptExtractDropZone');
+    const promptInput = document.getElementById('promptExtractFileInput');
+    if (promptZone && promptInput) {
+      promptZone.addEventListener('click', () => promptInput.click());
+      promptInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          extractPromptFromImage(e.target.files[0]);
+        }
+      });
+      ['dragenter', 'dragover'].forEach(n => {
+        promptZone.addEventListener(n, (e) => { e.preventDefault(); promptZone.classList.add('dragover'); });
+      });
+      ['dragleave', 'drop'].forEach(n => {
+        promptZone.addEventListener(n, (e) => { e.preventDefault(); promptZone.classList.remove('dragover'); });
+      });
+      promptZone.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          extractPromptFromImage(e.dataTransfer.files[0]);
+        }
+      });
+    }
 
-    zone.addEventListener('click', () => input.click());
-    input.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files[0]) {
-        analyzeImageAndRestoreCleanBg(e.target.files[0]);
-      }
-    });
-
-    ['dragenter', 'dragover'].forEach(n => {
-      zone.addEventListener(n, (e) => { e.preventDefault(); zone.classList.add('dragover'); });
-    });
-    ['dragleave', 'drop'].forEach(n => {
-      zone.addEventListener(n, (e) => { e.preventDefault(); zone.classList.remove('dragover'); });
-    });
-    zone.addEventListener('drop', (e) => {
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        analyzeImageAndRestoreCleanBg(e.dataTransfer.files[0]);
-      }
-    });
+    // 🌟 窓2: 文字＆右下菱形消去ゾーン
+    const cleanZone = document.getElementById('cleanBgDropZone');
+    const cleanInput = document.getElementById('cleanBgFileInput');
+    if (cleanZone && cleanInput) {
+      cleanZone.addEventListener('click', () => cleanInput.click());
+      cleanInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          eraseTextAndDiamondFromImage(e.target.files[0]);
+        }
+      });
+      ['dragenter', 'dragover'].forEach(n => {
+        cleanZone.addEventListener(n, (e) => { e.preventDefault(); cleanZone.classList.add('dragover'); });
+      });
+      ['dragleave', 'drop'].forEach(n => {
+        cleanZone.addEventListener(n, (e) => { e.preventDefault(); cleanZone.classList.remove('dragover'); });
+      });
+      cleanZone.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          eraseTextAndDiamondFromImage(e.dataTransfer.files[0]);
+        }
+      });
+    }
 
     const btnApplyClean = document.getElementById('btnApplyCleanBg');
     if (btnApplyClean) {
@@ -2340,7 +2363,8 @@
     }
   }
 
-  async function analyzeImageAndRestoreCleanBg(file) {
+  // 🌟 窓1: 画像から背景プロンプト抽出（Vision AI）
+  async function extractPromptFromImage(file) {
     const keyInfo = getEffectiveApiKeyInfo('text');
     const apiKey = keyInfo.key;
     if (!apiKey) {
@@ -2349,33 +2373,29 @@
       return;
     }
 
-    const promptArea = document.getElementById('visionUploadPrompt');
-    const loadingInline = document.getElementById('visionLoadingInline');
-    const cleanArea = document.getElementById('cleanBgResultArea');
-    const resultArea = document.getElementById('visionResultArea');
+    const promptArea = document.getElementById('visionResultArea');
+    const loadingInline = document.getElementById('promptExtractLoadingInline');
+    const uploadPrompt = document.getElementById('promptExtractUploadPrompt');
 
-    if (promptArea) promptArea.classList.add('hidden');
+    if (uploadPrompt) uploadPrompt.classList.add('hidden');
     if (loadingInline) loadingInline.classList.remove('hidden');
-    if (cleanArea) cleanArea.classList.add('hidden');
-    if (resultArea) resultArea.classList.add('hidden');
+    if (promptArea) promptArea.classList.add('hidden');
 
-    showLoading(true, 'Gemini Vision AI が画像を解析＆文字消し背景を復元中...');
-    Logger.api(`Vision AI 解析＆文字消し開始: ${file.name}`, {
+    showLoading(true, 'Gemini Vision AI が画像を詳細解析＆プロンプト抽出中...');
+    Logger.api(`Vision AI 背景プロンプト抽出開始: ${file.name}`, {
       usedSlot: keyInfo.slot,
-      usedKey: keyInfo.masked,
-      slot1_freeKey: keyInfo.slot1_masked,
-      slot2_paidKey: keyInfo.slot2_masked
+      usedKey: keyInfo.masked
     });
 
     try {
       const base64Data = await readFileAsBase64(file);
       const mimeType = file.type || 'image/jpeg';
 
-      const promptInstruction = `あなたは最高峰の画像解析＆インペインティングエンジニアです。
-添付されたカード画像を解析し、印字されている文字（ブランド名、漢字血統名、数字、サイズなど）をすべて完全に無視・除去して、
-その下にある『純粋な背景グラフィック（和紙テクスチャ、中央の水彩グラデーション、金箔散らし）』を完全復元するための詳細プロンプトを出力してください。
+      const promptInstruction = `あなたは最高峰のトレーディングカード背景デザイナーです。
+添付されたカード画像を解析し、印字されている文字（ブランド名、漢字血統名、数字、サイズなど）やロゴマーク（右下の菱形など）をすべて完全に無視・除外して、
+その下にある『純粋な背景グラフィック（和紙テクスチャ、中央の水彩グラデーション、金箔散らし、色彩構成）』を完全再現するための詳細プロンプトを出力してください。
 
-JSONフォーマットのみを出力してください:
+必ず以下の有効なJSONフォーマットのみを出力してください（Markdown記法なし）:
 {
   "ja": "上質な和紙の質感、中央に透明感のある翡翠色・深緑色の水彩シェイプ、蒔絵風の金箔散らし、文字配置用の中央クリーン構図、文字なし、最高峰コレクターズ品質",
   "en": "luxury washi paper texture, emerald green watercolor shape, golden dust particles, clean center, no typography, 8k"
@@ -2417,23 +2437,184 @@ JSONフォーマットのみを出力してください:
       document.getElementById('extractedPromptJa').textContent = `日本語: ${parsed.ja}`;
       document.getElementById('extractedPromptEn').textContent = `英語: ${parsed.en}`;
 
-      state.lastCleanBgUrl = `data:${mimeType};base64,${base64Data}`;
-      document.getElementById('cleanBgPreviewImg').src = state.lastCleanBgUrl;
-
       if (promptArea) promptArea.classList.remove('hidden');
       if (loadingInline) loadingInline.classList.add('hidden');
-      if (cleanArea) cleanArea.classList.remove('hidden');
-      if (resultArea) resultArea.classList.remove('hidden');
+      if (uploadPrompt) uploadPrompt.classList.remove('hidden');
 
       showLoading(false);
-      Logger.success('Vision AI 解析＆文字消し背景復元完了');
+      Logger.success('Vision AI 背景プロンプト抽出完了');
     } catch (err) {
-      if (promptArea) promptArea.classList.remove('hidden');
       if (loadingInline) loadingInline.classList.add('hidden');
+      if (uploadPrompt) uploadPrompt.classList.remove('hidden');
       showLoading(false);
       Logger.error('Vision AI 解析例外', err.message);
       alert('解析エラー: ' + err.message);
     }
+  }
+
+  // 🌟 窓2: 画像の文字 ＆ 右下菱形マーク消去（AI直接消去・インペインティング）
+  async function eraseTextAndDiamondFromImage(file) {
+    const keyInfo = getEffectiveApiKeyInfo('image');
+    const apiKey = keyInfo.key;
+    if (!apiKey) {
+      apiKeyModal.classList.remove('hidden');
+      alert('AI文字消去を行うために、右上の「API設定」からAPIキーを入力してください（有料キースロット2推奨）。');
+      return;
+    }
+
+    const cleanArea = document.getElementById('cleanBgResultArea');
+    const loadingInline = document.getElementById('cleanBgLoadingInline');
+    const uploadPrompt = document.getElementById('cleanBgUploadPrompt');
+
+    if (uploadPrompt) uploadPrompt.classList.add('hidden');
+    if (loadingInline) loadingInline.classList.remove('hidden');
+    if (cleanArea) cleanArea.classList.add('hidden');
+
+    showLoading(true, 'AIが画像から文字および【右下の菱形マーク】を消去・背景修復中...');
+    Logger.api(`AI文字＆右下菱形消去開始: ${file.name}`, {
+      usedSlot: keyInfo.slot,
+      usedKey: keyInfo.masked
+    });
+
+    try {
+      const base64Data = await readFileAsBase64(file);
+      const mimeType = file.type || 'image/jpeg';
+
+      const inpaintInstruction = `You are a master image retouching and inpainting engine.
+Perform precise content-aware inpainting on this collector card image:
+1. Erase and completely remove ALL foreground text, kanji pedigree names, roman alphabet titles, numbers, labels, specs, and badges.
+2. CRITICAL: Erase and completely remove the diamond-shaped emblem/logo/watermark located at the bottom-right corner of the image.
+3. Inpaint and restore those cleared regions seamlessly by extending the underlying background texture: authentic Japanese washi paper grain, delicate golden leaf flecks, and soft watercolor gradients.
+4. Keep the original background colors, lighting, texture, and composition 100% intact.
+Output strictly the pure, clean background image with ZERO text, ZERO characters, and ZERO diamond symbols.`;
+
+      const candidateModels = [
+        'gemini-3.1-flash-image',
+        'gemini-2.5-flash-image',
+        'nano-banana-pro-preview'
+      ];
+
+      let generatedCleanUrl = null;
+      let lastErr = '';
+
+      for (const model of candidateModels) {
+        try {
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+          const payload = {
+            contents: [{
+              parts: [
+                { text: inpaintInstruction },
+                { inlineData: { mimeType: mimeType, data: base64Data } }
+              ]
+            }]
+          };
+
+          const resp = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (resp.ok) {
+            const data = await resp.json();
+            const parts = data.candidates?.[0]?.content?.parts || [];
+            for (const part of parts) {
+              if (part.inlineData && part.inlineData.data) {
+                generatedCleanUrl = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+                break;
+              }
+            }
+            if (generatedCleanUrl) break;
+          } else {
+            const errJson = await resp.json().catch(() => ({}));
+            lastErr = errJson.error ? errJson.error.message : `HTTP ${resp.status}`;
+            Logger.warn(`AI文字消去モデル試行失敗 [${model}]: ${lastErr}`);
+          }
+        } catch (e) {
+          lastErr = e.message;
+          Logger.warn(`AI文字消去例外 [${model}]: ${e.message}`);
+        }
+      }
+
+      // フォールバック: 直接編集APIが非対応/制限の場合、Vision抽出 ➔ クリーン背景生成を実行
+      if (!generatedCleanUrl) {
+        Logger.info('[ERASE_FALLBACK] 直接消去フォールバック: Vision解析 ➔ クリーン背景生成を実行');
+        const visionPrompt = await analyzeBackgroundPromptForInpaint(base64Data, mimeType, apiKey);
+        generatedCleanUrl = await generateCleanBgFromPrompt(visionPrompt, apiKey);
+      }
+
+      if (!generatedCleanUrl) {
+        throw new Error(lastErr || '文字消去背景の生成に失敗しました。');
+      }
+
+      state.lastCleanBgUrl = generatedCleanUrl;
+      const previewImg = document.getElementById('cleanBgPreviewImg');
+      if (previewImg) previewImg.src = state.lastCleanBgUrl;
+
+      if (cleanArea) cleanArea.classList.remove('hidden');
+      if (loadingInline) loadingInline.classList.add('hidden');
+      if (uploadPrompt) uploadPrompt.classList.remove('hidden');
+
+      showLoading(false);
+      Logger.success('AI文字＆右下菱形消去・純粋背景復元完了');
+    } catch (err) {
+      if (loadingInline) loadingInline.classList.add('hidden');
+      if (uploadPrompt) uploadPrompt.classList.remove('hidden');
+      showLoading(false);
+      Logger.error('AI文字消去例外', err.message);
+      alert('文字消去エラー: ' + err.message);
+    }
+  }
+
+  async function analyzeBackgroundPromptForInpaint(base64Data, mimeType, apiKey) {
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const payload = {
+      contents: [{
+        parts: [
+          { text: "Analyze this trading card image. Ignore all text, kanji, numbers, and the bottom-right diamond watermark. Describe only the pure background graphic in detail (washi texture, watercolor gradient, gold leaf). Output one concise English prompt, appending 'clean layout for text, no typography, no diamond watermark, no text'." },
+          { inlineData: { mimeType: mimeType, data: base64Data } }
+        ]
+      }]
+    };
+    const resp = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'luxury Japanese washi paper, gold foil, watercolor gradient, no typography, no diamond watermark';
+    }
+    return 'luxury Japanese washi paper, gold foil, watercolor gradient, no typography, no diamond watermark';
+  }
+
+  async function generateCleanBgFromPrompt(promptText, apiKey) {
+    const candidateModels = ['gemini-3.1-flash-image', 'gemini-2.5-flash-image', 'nano-banana-pro-preview'];
+    for (const model of candidateModels) {
+      try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const payload = {
+          contents: [{
+            parts: [{ text: `Generate high resolution card background: ${promptText}. Pure background only, no text, no letters, no logos, no watermark.` }]
+          }]
+        };
+        const resp = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const parts = data.candidates?.[0]?.content?.parts || [];
+          for (const part of parts) {
+            if (part.inlineData && part.inlineData.data) {
+              return `data:${part.inlineData.mimeType || 'image/jpeg'};base64,${part.inlineData.data}`;
+            }
+          }
+        }
+      } catch (e) {}
+    }
+    return null;
   }
 
   // --- ✨ Gemini AI 文字グラフィック生成エンジン (超高精度クロマキー透過) ---

@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.20.0">
+  <link rel="stylesheet" href="style.css?v=4.21.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -46,7 +46,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.20.0</span>
+            <span class="app-version-badge" id="appVersion">v4.21.0</span>
             <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
           <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
@@ -195,53 +195,84 @@
         </div>
       </section>
 
-      <!-- タブ2: 画像解析 ＆ 文字消し背景復元 -->
+      <!-- タブ2: 画像解析 ＆ 文字・菱形消去スタジオ (v4.21.0 2窓分離構成) -->
       <section id="tab-vision-extract" class="tab-content">
         <div class="section-title-row">
-          <h3>👁️ 画像解析 ＆ 文字消し背景復元</h3>
+          <h3>👁️ 画像解析 ＆ 文字・菱形消去スタジオ</h3>
         </div>
         <p class="section-desc">
-          既存の文字入りカード画像をアップロードすると、Gemini Vision AI がプロンプトを抽出すると同時に、<strong>文字だけを綺麗に消去した「純粋な背景画像」を復元・抽出</strong> します。
+          既存カードから<strong>「背景プロンプトの抽出・辞書化」</strong>と<strong>「文字＆右下菱形マークの消去・純粋背景復元」</strong>を個別に行える専用スタジオです。
         </p>
 
-        <div class="vision-drop-zone" id="visionDropZone">
-          <input type="file" id="visionFileInput" accept="image/*" class="hidden-file-input">
-          <div class="vision-prompt" id="visionUploadPrompt">
-            <span class="vision-icon">📷</span>
-            <span class="vision-title">解析・文字消ししたいカード画像をドロップ</span>
-            <small>（※無料枠APIキーで実行可能）</small>
+        <!-- 🌟 窓1: 👁️ 画像から背景プロンプト抽出（呪文分析・辞書登録専用） -->
+        <div class="control-card mt-3">
+          <div class="control-card-header">
+            <h4>窓1: 👁️ 画像から背景プロンプト抽出</h4>
+            <span class="badge-free-ok">無料キー対応</span>
           </div>
-          <div class="vision-loading hidden" id="visionLoadingInline">
-            <div class="spinner-small"></div>
-            <span id="visionLoadingText">Gemini Vision AI が画像を詳細解析中...</span>
-          </div>
-        </div>
+          <p class="card-subdesc">カード画像をドロップすると、Vision AIが和紙・水彩・金箔の特徴を言語化し、詳細な背景プロンプトを抽出します。</p>
 
-        <div id="cleanBgResultArea" class="clean-bg-result-card hidden mt-3">
-          <div class="clean-bg-header">
-            <h4>✨ 復元された文字なし純粋背景</h4>
-            <button type="button" id="btnApplyCleanBg" class="btn-primary btn-sm">🖼️ この背景をスタジオに適用</button>
-          </div>
-          <div class="clean-bg-preview-wrap">
-            <img id="cleanBgPreviewImg" src="" alt="Clean BG Preview">
-          </div>
-        </div>
-
-        <div id="visionResultArea" class="vision-result-area hidden mt-3">
-          <div class="result-header">
-            <label class="group-label">🎉 抽出された背景プロンプト</label>
-            <div class="result-actions">
-              <button type="button" id="btnApplyExtractedToBuilder" class="btn-primary btn-sm">背景ビルダーに適用</button>
-              <button type="button" id="btnCopyExtractedPrompt" class="btn-secondary btn-sm">コピー</button>
+          <div class="vision-drop-zone" id="promptExtractDropZone">
+            <input type="file" id="promptExtractFileInput" accept="image/*" class="hidden-file-input">
+            <div class="vision-prompt" id="promptExtractUploadPrompt">
+              <span class="vision-icon">📷</span>
+              <span class="vision-title">プロンプトを抽出したいカード画像をドロップ</span>
+              <small>（またはクリックして画像を選択 / ※無料枠APIキーで実行可能）</small>
+            </div>
+            <div class="vision-loading hidden" id="promptExtractLoadingInline">
+              <div class="spinner-small"></div>
+              <span>Gemini Vision AI が画像を詳細解析中...</span>
             </div>
           </div>
-          <div class="extracted-prompt-box">
-            <p id="extractedPromptJa" class="extracted-text-ja"></p>
-            <p id="extractedPromptEn" class="extracted-text-en"></p>
+
+          <div id="visionResultArea" class="vision-result-area hidden mt-3">
+            <div class="result-header">
+              <label class="group-label">🎉 抽出された背景プロンプト</label>
+              <div class="result-actions">
+                <button type="button" id="btnApplyExtractedToBuilder" class="btn-primary btn-sm">背景ビルダーに適用</button>
+                <button type="button" id="btnCopyExtractedPrompt" class="btn-secondary btn-sm">コピー</button>
+              </div>
+            </div>
+            <div class="extracted-prompt-box">
+              <p id="extractedPromptJa" class="extracted-text-ja"></p>
+              <p id="extractedPromptEn" class="extracted-text-en"></p>
+            </div>
+            <button type="button" id="btnSaveToLibrary" class="btn-secondary btn-sm full-width mt-2">
+              ＋ 単語ごとに分割して辞書に保存
+            </button>
           </div>
-          <button type="button" id="btnSaveToLibrary" class="btn-secondary btn-sm full-width mt-2">
-            ＋ 単語ごとに分割して辞書に保存
-          </button>
+        </div>
+
+        <!-- 🌟 窓2: 🧹 画像の文字＆右下菱形マーク消去（純粋背景復元専用） -->
+        <div class="control-card mt-4">
+          <div class="control-card-header">
+            <h4>窓2: 🧹 画像の文字 ＆ 右下菱形マーク消去</h4>
+            <span class="badge-ai-model">AI消しゴム</span>
+          </div>
+          <p class="card-subdesc">カード画像をドロップすると、AIが印字文字（漢字・英字・数字）および【右下の菱形マーク】を直接消去し、元画像の風合いを維持した純粋背景を復元します。</p>
+
+          <div class="vision-drop-zone" id="cleanBgDropZone">
+            <input type="file" id="cleanBgFileInput" accept="image/*" class="hidden-file-input">
+            <div class="vision-prompt" id="cleanBgUploadPrompt">
+              <span class="vision-icon">🧹</span>
+              <span class="vision-title">文字＆右下菱形を消したいカード画像をドロップ</span>
+              <small>（またはクリックして画像を選択 / 有料キー推奨）</small>
+            </div>
+            <div class="vision-loading hidden" id="cleanBgLoadingInline">
+              <div class="spinner-small"></div>
+              <span id="cleanBgLoadingText">AIが文字と右下菱形マークを消去・背景修復中...</span>
+            </div>
+          </div>
+
+          <div id="cleanBgResultArea" class="clean-bg-result-card hidden mt-3">
+            <div class="clean-bg-header">
+              <h4>✨ 文字・右下菱形消去済みの純粋背景</h4>
+              <button type="button" id="btnApplyCleanBg" class="btn-primary btn-sm">🖼️ この背景をスタジオに適用</button>
+            </div>
+            <div class="clean-bg-preview-wrap">
+              <img id="cleanBgPreviewImg" src="" alt="Clean BG Preview">
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1007,6 +1038,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.20.0"></script>
+  <script src="app.js?v=4.21.0"></script>
 </body>
 </html>
