@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.21.0 Dual Window Vision & AI Inpainting Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.22.0 Seamless Background Apply Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.21.0';
+  const APP_VERSION = 'v4.22.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -2310,15 +2310,38 @@
 
     const btnApplyClean = document.getElementById('btnApplyCleanBg');
     if (btnApplyClean) {
-      btnApplyClean.addEventListener('click', () => {
-        if (!state.lastCleanBgUrl) return;
-        state.layers.bg.src = state.lastCleanBgUrl;
-        loadBgImage(state.lastCleanBgUrl, () => {
-          saveState();
-          renderCard();
-          alert('🎉 復元された文字なし背景をスタジオに適用しました！');
-          document.querySelector('.tab-btn[data-tab="tab-ai-letters"]').click();
+      btnApplyClean.addEventListener('click', async () => {
+        if (!state.lastCleanBgUrl) {
+          Logger.warn('[APPLY_CLEAN_BG] 適用対象の復元背景URLが存在しません');
+          alert('適用する復元背景がありません。先に画像をドロップして文字消去を行ってください。');
+          return;
+        }
+
+        Logger.info('[APPLY_CLEAN_BG] 復元された文字なし背景をスタジオに適用開始', {
+          urlLength: state.lastCleanBgUrl.length,
+          isDataUrl: state.lastCleanBgUrl.startsWith('data:')
         });
+
+        try {
+          state.layers.bg.src = state.lastCleanBgUrl;
+          await loadBgImage(state.lastCleanBgUrl);
+          await saveState(true);
+          renderCard();
+
+          Logger.success('🎉 [APPLY_CLEAN_BG] 復元された文字なし背景をスタジオキャンバスに適用しました', {
+            bgSrcType: state.layers.bg.src.startsWith('data:') ? 'base64' : 'url',
+            cardTitle: state.cardTitle || '未設定'
+          });
+
+          alert('🎉 復元された文字なし背景をスタジオに適用しました！文字入れスタジオへ移動します。');
+          const lettersTabBtn = document.querySelector('.tab-btn[data-tab="tab-ai-letters"]');
+          if (lettersTabBtn) {
+            lettersTabBtn.click();
+          }
+        } catch (err) {
+          Logger.error('[APPLY_CLEAN_BG] 背景適用処理エラー', err.message);
+          alert('背景の適用中にエラーが発生しました: ' + err.message);
+        }
       });
     }
 
