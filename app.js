@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.24.0 Dynamic Progress & Inpaint Completion Engine)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.26.0 Unified 3-Main Tabs & Subtab Editor Engine)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.24.0';
+  const APP_VERSION = 'v4.26.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -1951,27 +1951,67 @@
     }
   }
 
+  // --- タブ・サブルート切替制御 (v4.26.0 編集統合＆3大メインタブ) ---
+  function switchTab(tabId, subtabId = null) {
+    // 編集タブ内のサブタブが直接tabIdとして指定された場合の自動解決
+    if (['tab-prompt-builder', 'tab-ai-letters', 'tab-spec-edit'].includes(tabId)) {
+      subtabId = tabId;
+      tabId = 'tab-editor';
+    }
+
+    // 1. メインタブ切替
+    const mainBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+    if (mainBtn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      mainBtn.classList.add('active');
+      const targetTab = document.getElementById(tabId);
+      if (targetTab) targetTab.classList.add('active');
+    }
+
+    // 2. 編集タブ内のサブタブ切替
+    if (tabId === 'tab-editor') {
+      if (!subtabId) {
+        const currentActivePill = document.querySelector('.subtab-pill.active');
+        subtabId = currentActivePill ? currentActivePill.dataset.subtab : 'tab-prompt-builder';
+      }
+
+      const subBtn = document.querySelector(`.subtab-pill[data-subtab="${subtabId}"]`);
+      if (subBtn) {
+        document.querySelectorAll('.subtab-pill').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.subtab-pane').forEach(p => p.classList.remove('active'));
+        subBtn.classList.add('active');
+        const targetPane = document.getElementById(subtabId);
+        if (targetPane) targetPane.classList.add('active');
+      }
+
+      // サブタブに応じたUI自動更新
+      if (subtabId === 'tab-prompt-builder') {
+        setTimeout(() => autoResizePromptTextarea(aiPromptInput), 20);
+      } else if (subtabId === 'tab-ai-letters') {
+        setTimeout(() => {
+          ['brandAiPromptInput', 'kanjiAiPromptInput', 'romajiAiPromptInput'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) autoResizePromptTextarea(el);
+          });
+        }, 20);
+      }
+    }
+  }
+
   // --- イベントリスナー設定 ---
   function setupEventListeners() {
+    // メインタブ切替
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        const targetTab = document.getElementById(btn.dataset.tab);
-        if (targetTab) {
-          targetTab.classList.add('active');
-          if (btn.dataset.tab === 'tab-prompt-builder') {
-            setTimeout(() => autoResizePromptTextarea(aiPromptInput), 20);
-          } else if (btn.dataset.tab === 'tab-ai-letters') {
-            setTimeout(() => {
-              ['brandAiPromptInput', 'kanjiAiPromptInput', 'romajiAiPromptInput'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) autoResizePromptTextarea(el);
-              });
-            }, 20);
-          }
-        }
+        switchTab(btn.dataset.tab);
+      });
+    });
+
+    // 編集サブタブ切替
+    document.querySelectorAll('.subtab-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        switchTab('tab-editor', pill.dataset.subtab);
       });
     });
 
@@ -2482,10 +2522,7 @@
           });
 
           alert('🎉 復元された文字なし背景をスタジオに適用しました！文字入れスタジオへ移動します。');
-          const lettersTabBtn = document.querySelector('.tab-btn[data-tab="tab-ai-letters"]');
-          if (lettersTabBtn) {
-            lettersTabBtn.click();
-          }
+          switchTab('tab-editor', 'tab-ai-letters');
         } catch (err) {
           Logger.error('[APPLY_CLEAN_BG] 背景適用処理エラー', err.message);
           alert('背景の適用中にエラーが発生しました: ' + err.message);
@@ -2501,7 +2538,7 @@
         state.aiPrompt = state.lastExtractedPrompt.ja;
         autoResizePromptTextarea(aiPromptInput);
         saveState();
-        document.querySelector('.tab-btn[data-tab="tab-prompt-builder"]').click();
+        switchTab('tab-editor', 'tab-prompt-builder');
       });
     }
 
@@ -3099,7 +3136,7 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
       showLoading(false);
       Logger.success('🎉 背景画像の生成が完了しました！');
       alert('🎉 背景画像を生成しました！');
-      document.querySelector('.tab-btn[data-tab="tab-ai-letters"]').click();
+      switchTab('tab-editor', 'tab-ai-letters');
     } else {
       showLoading(false);
       Logger.error('背景生成失敗', lastError);
@@ -3260,7 +3297,7 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
     await reloadAllLayerImages();
     await saveState(false);
     renderCard();
-    document.querySelector('.tab-btn[data-tab="tab-ai-letters"]').click();
+    switchTab('tab-editor', 'tab-ai-letters');
     Logger.success(`[ARCHIVE_RESTORE] 「${item.title}」を完全非破壊復元しました。`);
     alert(`「${item.title}」を非破壊復元しました！\n文字が重なることなく、背景・AI文字・スペックを個別に自由に再編集できます。`);
   }
