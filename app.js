@@ -301,12 +301,19 @@
         opacity: 100
       },
       specs: {
+        ownerLabel: {
+          text: 'Owner',
+          font: "'Cinzel', serif",
+          size: 36,
+          y: 74,
+          x: 0
+        },
         owner: {
           label: 'Owner',
           text: '佃 宗行 様',
           font: "'Hiragino Mincho ProN', serif",
           size: 62,
-          y: 77,
+          y: 78,
           x: 0
         },
         serial: {
@@ -1084,7 +1091,22 @@
     setVal('romajiOpacityVal', state.layers.romaji.opacity + '%');
     updateLayerBadge('romajiLayerBadge', !!state.layers.romaji.aiGraphicDataUrl, 'AI欧文生成済', '標準欧文描画中');
 
-    setVal('ownerLabel', state.layers.specs.owner.label);
+    if (!state.layers.specs.ownerLabel) {
+      state.layers.specs.ownerLabel = {
+        text: state.layers.specs.owner.label || 'Owner',
+        font: "'Cinzel', serif",
+        size: 36,
+        y: (state.layers.specs.owner.y ? state.layers.specs.owner.y - 4 : 74),
+        x: 0
+      };
+    }
+    setVal('ownerLabelText', state.layers.specs.ownerLabel.text);
+    setVal('ownerLabelFontSelect', state.layers.specs.ownerLabel.font);
+    setVal('ownerLabelSize', state.layers.specs.ownerLabel.size);
+    setVal('ownerLabelSizeVal', state.layers.specs.ownerLabel.size + 'px');
+    setVal('ownerLabelYOffset', state.layers.specs.ownerLabel.y);
+    setVal('ownerLabelYVal', state.layers.specs.ownerLabel.y + '%');
+
     setVal('ownerName', state.layers.specs.owner.text);
     setVal('ownerFontSelect', state.layers.specs.owner.font);
     setVal('ownerSize', state.layers.specs.owner.size);
@@ -2094,7 +2116,25 @@
     bindSlider('romajiOpacity', (val) => { state.layers.romaji.opacity = parseInt(val, 10); setVal('romajiOpacityVal', val + '%'); });
 
     // スライダーバインド: レイヤー4 (スペック)
-    bindInput('ownerLabel', (val) => { state.layers.specs.owner.label = val; });
+    bindInput('ownerLabelText', (val) => {
+      if (!state.layers.specs.ownerLabel) state.layers.specs.ownerLabel = {};
+      state.layers.specs.ownerLabel.text = val;
+    });
+    bindInput('ownerLabelFontSelect', (val) => {
+      if (!state.layers.specs.ownerLabel) state.layers.specs.ownerLabel = {};
+      state.layers.specs.ownerLabel.font = val;
+    });
+    bindSlider('ownerLabelSize', (val) => {
+      if (!state.layers.specs.ownerLabel) state.layers.specs.ownerLabel = {};
+      state.layers.specs.ownerLabel.size = parseInt(val, 10);
+      setVal('ownerLabelSizeVal', val + 'px');
+    });
+    bindSlider('ownerLabelYOffset', (val) => {
+      if (!state.layers.specs.ownerLabel) state.layers.specs.ownerLabel = {};
+      state.layers.specs.ownerLabel.y = parseInt(val, 10);
+      setVal('ownerLabelYVal', val + '%');
+    });
+
     bindInput('ownerName', (val) => { state.layers.specs.owner.text = val; });
     bindInput('ownerFontSelect', (val) => { state.layers.specs.owner.font = val; });
     bindSlider('ownerSize', (val) => { state.layers.specs.owner.size = parseInt(val, 10); setVal('ownerSizeVal', val + 'px'); });
@@ -2207,8 +2247,20 @@
       state.layers.brand.text = 'LOJING';
       state.layers.brand.redInitial = true;
       state.layers.kanji.text = '蒼';
-      state.layers.romaji.text = 'AOI';
-      state.layers.specs.owner.text = '佃 宗行 様';
+      state.layers.specs.ownerLabel = {
+        text: 'Owner',
+        font: "'Cinzel', serif",
+        size: 36,
+        y: 74,
+        x: 0
+      };
+      state.layers.specs.owner = {
+        text: '佃 宗行 様',
+        font: "'Hiragino Mincho ProN', serif",
+        size: 62,
+        y: 78,
+        x: 0
+      };
       state.layers.specs.serial.text = 'NO.AS-05';
       state.layers.specs.size.text = '♂77mm';
       state.layers.specs.extra.text = '';
@@ -3939,21 +3991,30 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
     const specs = state.layers.specs;
     targetCtx.save();
 
-    if (specs.owner.text) {
+    // 1. オーナーラベル (独立描画)
+    const ownerLabelData = specs.ownerLabel || { text: specs.owner?.label, font: "'Cinzel', serif", size: 36, y: (specs.owner?.y ? specs.owner.y - 4 : 74), x: 0 };
+    const olText = ownerLabelData.text !== undefined ? ownerLabelData.text : (specs.owner?.label || '');
+    if (olText && olText.trim() !== '') {
+      const olY = h * ((ownerLabelData.y !== undefined ? ownerLabelData.y : 74) / 100);
+      const olX = (w / 2) + (ownerLabelData.x || 0);
+      const olSize = ownerLabelData.size || 36;
+      const olFont = ownerLabelData.font || "'Cinzel', serif";
+      targetCtx.font = `600 ${olSize}px ${olFont}`;
+      targetCtx.fillStyle = '#222';
+      targetCtx.textAlign = 'center';
+      targetCtx.textBaseline = 'middle';
+      targetCtx.fillText(olText, olX, olY);
+    }
+
+    // 2. オーナー名 / ブリーダー名 (独立描画)
+    if (specs.owner && specs.owner.text && specs.owner.text.trim() !== '') {
       const oY = h * (specs.owner.y / 100);
       const oX = (w / 2) + (specs.owner.x || 0);
-      if (specs.owner.label) {
-        targetCtx.font = `600 ${Math.round(w * 0.040)}px 'Cinzel', serif`;
-        targetCtx.fillStyle = '#222';
-        targetCtx.textAlign = 'center';
-        targetCtx.textBaseline = 'middle';
-        targetCtx.fillText(specs.owner.label, oX, oY - (specs.owner.size * 0.4));
-      }
       targetCtx.font = `700 ${specs.owner.size}px ${specs.owner.font}`;
       targetCtx.fillStyle = '#111';
       targetCtx.textAlign = 'center';
       targetCtx.textBaseline = 'middle';
-      targetCtx.fillText(specs.owner.text, oX, oY + (specs.owner.size * 0.2));
+      targetCtx.fillText(specs.owner.text, oX, oY);
     }
 
     if (specs.serial.text) {

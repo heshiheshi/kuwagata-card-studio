@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.24.0">
+  <link rel="stylesheet" href="style.css?v=4.25.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -46,7 +46,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.24.0</span>
+            <span class="app-version-badge" id="appVersion">v4.25.0</span>
             <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
           <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
@@ -587,23 +587,52 @@
         </p>
 
         <!-- ① オーナー名 -->
+        <!-- ① オーナーラベル -->
         <div class="control-card">
           <div class="card-header-toggle">
-            <h4>1. オーナー名 / ブリーダー名 (Owner)</h4>
+            <h4>1. オーナーラベル (Owner Label)</h4>
           </div>
           <div class="control-row">
             <div class="input-col flex-1">
-              <label>ラベル</label>
-              <input type="text" id="ownerLabel" value="Owner" placeholder="Owner">
+              <label>ラベル文字列</label>
+              <input type="text" id="ownerLabelText" value="Owner" placeholder="Owner (例: Breeder, Certified By)">
             </div>
-            <div class="input-col flex-2">
+            <div class="input-col flex-1">
+              <label>フォント選択</label>
+              <select id="ownerLabelFontSelect" class="custom-select">
+                <option value="'Cinzel', serif" selected>Cinzel (刻印調・標準)</option>
+                <option value="'Copperplate', serif">Copperplate (重厚クラシック)</option>
+                <option value="'Didot', serif">Didot (ラグジュアリー)</option>
+                <option value="'Helvetica Neue', sans-serif">Helvetica Neue (モダン)</option>
+                <option value="'Hiragino Mincho ProN', serif">ヒラギノ明朝 ProN</option>
+                <option value="'Hiragino Sans', sans-serif">ヒラギノ角ゴ</option>
+              </select>
+            </div>
+          </div>
+          <div class="slider-group-2col mt-2">
+            <div class="slider-item">
+              <div class="slider-label-row"><span>文字サイズ</span><span id="ownerLabelSizeVal">36px</span></div>
+              <input type="range" id="ownerLabelSize" min="16" max="90" value="36" class="custom-range">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label-row"><span>縦位置 (Y)</span><span id="ownerLabelYVal">74%</span></div>
+              <input type="range" id="ownerLabelYOffset" min="50" max="98" value="74" class="custom-range">
+            </div>
+          </div>
+        </div>
+
+        <!-- ② オーナー名 / ブリーダー名 -->
+        <div class="control-card mt-3">
+          <div class="card-header-toggle">
+            <h4>2. オーナー名 / ブリーダー名 (Owner Name)</h4>
+          </div>
+          <div class="control-row">
+            <div class="input-col flex-1">
               <label>オーナー名</label>
               <input type="text" id="ownerName" value="佃 宗行 様" placeholder="佃 宗行 様">
             </div>
-          </div>
-          <div class="control-row mt-2">
             <div class="input-col flex-1">
-              <label>商用安全フォント選択</label>
+              <label>フォント選択</label>
               <select id="ownerFontSelect" class="custom-select">
                 <optgroup label="和文 (Apple標準・商用安全)">
                   <option value="'Hiragino Mincho ProN', serif" selected>ヒラギノ明朝 ProN (高級明朝)</option>
@@ -628,16 +657,16 @@
               <input type="range" id="ownerSize" min="24" max="120" value="62" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>縦位置 (Y)</span><span id="ownerYVal">77%</span></div>
-              <input type="range" id="ownerYOffset" min="50" max="98" value="77" class="custom-range">
+              <div class="slider-label-row"><span>縦位置 (Y)</span><span id="ownerYVal">78%</span></div>
+              <input type="range" id="ownerYOffset" min="50" max="98" value="78" class="custom-range">
             </div>
           </div>
         </div>
 
-        <!-- ② シリアル / 管理No -->
+        <!-- ③ シリアル / 管理No -->
         <div class="control-card mt-3">
           <div class="card-header-toggle">
-            <h4>2. シリアル / 管理No (Serial No.)</h4>
+            <h4>3. シリアル / 管理No (Serial No.)</h4>
           </div>
           <div class="control-row">
             <div class="input-col flex-1">
@@ -667,10 +696,10 @@
           </div>
         </div>
 
-        <!-- ③ 体長・サイズ (強調表示) -->
+        <!-- ④ 体長・サイズ (強調表示) -->
         <div class="control-card mt-3">
           <div class="card-header-toggle">
-            <h4>3. 体長・サイズ (強調表示)</h4>
+            <h4>4. 体長・サイズ (強調表示)</h4>
           </div>
           <div class="control-row">
             <div class="input-col flex-1">
@@ -699,10 +728,10 @@
           </div>
         </div>
 
-        <!-- ④ 追加証明情報 -->
+        <!-- ⑤ 追加証明情報 -->
         <div class="control-card mt-3">
           <div class="card-header-toggle">
-            <h4>4. 追加証明情報 (産地・累代・日付など)</h4>
+            <h4>5. 追加証明情報 (産地・累代・日付など)</h4>
           </div>
           <div class="control-row">
             <div class="input-col flex-1">
@@ -1038,6 +1067,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.24.0"></script>
+  <script src="app.js?v=4.25.0"></script>
 </body>
 </html>
