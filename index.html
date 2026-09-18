@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.27.0">
+  <link rel="stylesheet" href="style.css?v=4.28.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -39,34 +39,16 @@
   </div>
 
   <div class="app-container landscape-studio" id="mainAppContainer">
-    <!-- ヘッダー -->
+    <!-- 超スリムヘッダー (画面縦幅最大化) -->
     <header class="app-header slim-header">
       <div class="header-main-row">
         <div class="brand-title-area" id="mainBrandTitleArea" title="連打で神モード（管理者）アンロック">
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.27.0</span>
+            <span class="app-version-badge" id="appVersion">v4.28.0</span>
             <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
-          <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
-        </div>
-        <div class="header-actions">
-          <!-- 1. 無料キー / 有料キー 切替札 -->
-          <button type="button" class="btn-header-tag free-tag" id="btnQuickToggleKey" title="クリックで無料/有料切り替え">
-            <span class="tag-text" id="keyModeLabel">無料キー</span>
-          </button>
-
-          <!-- 2. 同期管理 札 (4色LEDランプ一体型) -->
-          <button type="button" class="btn-header-tag" id="btnHeaderCloudSync" title="クラウド自動同期 ＆ データ管理">
-            <span class="sync-status-dot online" id="headerSyncDot"></span>
-            <span class="tag-text" id="headerSyncText">同期管理</span>
-          </button>
-
-          <!-- 3. API設定 札 (永久キー保管庫) -->
-          <button type="button" class="btn-header-tag" id="btnOpenApiKeyModal" title="Gemini APIキー設定">
-            <span class="tag-text">API設定</span>
-          </button>
         </div>
       </div>
     </header>
@@ -817,6 +799,99 @@
 
         <div id="archiveGrid" class="archive-cards-grid"></div>
       </section>
+
+      <!-- メイン4: スタジオ環境 ＆ API設定タブ (v4.28.0 統合) -->
+      <section id="tab-settings" class="tab-content">
+        <div class="section-title-row">
+          <h3>⚙️ スタジオ環境 ＆ API設定</h3>
+        </div>
+        <p class="section-desc">
+          Gemini APIキーの管理、無料枠/有料枠のワンタップ切り替え、およびCloudflare KVクラウド自動同期の設定を行えます。
+        </p>
+
+        <!-- 1. APIキー管理カード -->
+        <div class="control-card mt-2">
+          <div class="control-card-header">
+            <h4>🔑 Gemini APIキー管理 ＆ 動作モード</h4>
+          </div>
+          <p class="card-subdesc">
+            Google AI Studioで取得したAPIキーを設定します。無料枠と有料枠のキーを個別に永久保存（BYOK）し、ワンタップで切り替え可能です。
+          </p>
+
+          <div class="settings-actions-grid mt-3">
+            <div class="setting-item-box">
+              <span class="setting-item-title">現在のAPIモード</span>
+              <button type="button" class="btn-header-tag free-tag full-width-tag" id="btnQuickToggleKey" title="クリックで無料/有料切り替え">
+                <span class="tag-text" id="keyModeLabel">無料キー</span>
+                <small style="font-size:9.5px; color:#ffd54f;">（タップで切替）</small>
+              </button>
+            </div>
+
+            <div class="setting-item-box">
+              <span class="setting-item-title">APIキーの詳細設定</span>
+              <button type="button" class="btn-primary btn-sm full-width" id="btnOpenApiKeyModal" title="APIキー入力モーダルを開く">
+                🔑 APIキーを登録・変更
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. クラウド同期 ＆ バックアップ管理カード -->
+        <div class="control-card mt-3">
+          <div class="control-card-header">
+            <h4>☁️ クラウド自動同期 ＆ データ管理</h4>
+            <span class="badge-free-ok">Cloudflare KV直結</span>
+          </div>
+          <p class="card-subdesc">
+            作成したカードや辞書単語をCloudflare KVに暗号化同期します。別端末（PC/スマホ）とのデータ引き継ぎも可能です。
+          </p>
+
+          <div class="settings-actions-grid mt-3">
+            <div class="setting-item-box">
+              <span class="setting-item-title">同期ステータス</span>
+              <button type="button" class="btn-header-tag full-width-tag" id="btnHeaderCloudSync" title="クラウド同期モーダルを開く">
+                <span class="sync-status-dot online" id="headerSyncDot"></span>
+                <span class="tag-text" id="headerSyncText">同期管理</span>
+              </button>
+            </div>
+
+            <div class="setting-item-box">
+              <span class="setting-item-title">即時クラウド同期</span>
+              <button type="button" class="btn-secondary btn-sm full-width" id="btnQuickSyncNow" title="現在データを今すぐクラウドへプッシュ">
+                ☁️ 今すぐクラウドへ保存
+              </button>
+            </div>
+          </div>
+
+          <div class="control-row mt-3">
+            <button type="button" class="btn-secondary btn-sm full-width" id="btnSettingsOpenBackupModal">
+              📁 JSONバックアップの書き出し / 復元画面を開く
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. システム情報カード -->
+        <div class="control-card mt-3">
+          <div class="control-card-header">
+            <h4>ℹ️ システム ＆ ストレージ情報</h4>
+            <span class="app-version-badge">v4.28.0</span>
+          </div>
+          <div class="system-info-list mt-2">
+            <div class="info-row">
+              <span class="info-lbl">動作モード</span>
+              <span class="info-val">スマホ横持ち専用 4:5:1 プロスタジオ</span>
+            </div>
+            <div class="info-row">
+              <span class="info-lbl">データベース</span>
+              <span class="info-val">IndexedDB (StorageVault 完全非破壊)</span>
+            </div>
+            <div class="info-row">
+              <span class="info-lbl">キャンバス解像度</span>
+              <span class="info-val" id="settingsCanvasRes">1500 × 2100 px (300dpi相当)</span>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <!-- 🌟 右1: 固定操作レールメニュー (親指ワンタップ切替) -->
@@ -833,6 +908,10 @@
         <button type="button" class="rail-btn tab-btn" data-tab="tab-archive-export" title="💾 保存・履歴">
           <span class="rail-icon">💾</span>
           <span class="rail-label">保存</span>
+        </button>
+        <button type="button" class="rail-btn tab-btn" data-tab="tab-settings" title="⚙️ スタジオ環境・API設定">
+          <span class="rail-icon">⚙️</span>
+          <span class="rail-label">設定</span>
         </button>
       </div>
 
@@ -1124,6 +1203,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.27.0"></script>
+  <script src="app.js?v=4.28.0"></script>
 </body>
 </html>

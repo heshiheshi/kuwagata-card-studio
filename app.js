@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.27.0 4:5:1 Landscape Pro Studio Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.28.0 4:5:1 Landscape Pro Studio Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.27.0';
+  const APP_VERSION = 'v4.28.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -1494,8 +1494,21 @@
 
     const btnForceUpload = document.getElementById('btnForceUploadCloud');
     const btnForceDownload = document.getElementById('btnForceDownloadCloud');
+    const btnQuickSyncNow = document.getElementById('btnQuickSyncNow');
+    const btnSettingsOpenBackup = document.getElementById('btnSettingsOpenBackupModal');
 
     if (btnHeaderSync) btnHeaderSync.addEventListener('click', () => backupModal.classList.remove('hidden'));
+    if (btnQuickSyncNow) {
+      btnQuickSyncNow.addEventListener('click', () => {
+        Logger.info('⚙️ 設定タブから即時クラウド同期を実行');
+        CloudSyncManager.pushToCloud(false, true);
+      });
+    }
+    if (btnSettingsOpenBackup) {
+      btnSettingsOpenBackup.addEventListener('click', () => {
+        if (backupModal) backupModal.classList.remove('hidden');
+      });
+    }
     [btnClose, btnCloseBottom].forEach(b => {
       if (b) b.addEventListener('click', () => backupModal.classList.add('hidden'));
     });
@@ -1570,10 +1583,10 @@
   function updateKeyToggleUI() {
     if (!btnQuickToggleKey || !keyModeLabel) return;
     if (state.activeKeyMode === 'paid') {
-      btnQuickToggleKey.className = 'btn-header-tag paid-tag';
+      btnQuickToggleKey.className = 'btn-header-tag paid-tag full-width-tag';
       keyModeLabel.textContent = '有料キー';
     } else {
-      btnQuickToggleKey.className = 'btn-header-tag free-tag';
+      btnQuickToggleKey.className = 'btn-header-tag free-tag full-width-tag';
       keyModeLabel.textContent = '無料キー';
     }
   }
