@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.26.0 Unified 3-Main Tabs & Subtab Editor Engine)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.27.0 4:5:1 Landscape Pro Studio Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.26.0';
+  const APP_VERSION = 'v4.27.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -1149,6 +1149,10 @@
     document.querySelectorAll('.ratio-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.ratio === state.aspectRatio);
     });
+    const pw = document.getElementById('previewWrapper');
+    if (pw && state.aspectRatio) {
+      pw.style.aspectRatio = state.aspectRatio.replace(':', ' / ');
+    }
   }
 
   function updateLayerBadge(badgeId, isAi, aiText, normalText) {
@@ -1951,7 +1955,7 @@
     }
   }
 
-  // --- タブ・サブルート切替制御 (v4.26.0 編集統合＆3大メインタブ) ---
+  // --- タブ・サブルート切替制御 (v4.27.0 4:5:1 横画面スタジオ対応) ---
   function switchTab(tabId, subtabId = null) {
     // 編集タブ内のサブタブが直接tabIdとして指定された場合の自動解決
     if (['tab-prompt-builder', 'tab-ai-letters', 'tab-spec-edit'].includes(tabId)) {
@@ -1959,31 +1963,27 @@
       tabId = 'tab-editor';
     }
 
-    // 1. メインタブ切替
-    const mainBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
-    if (mainBtn) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      mainBtn.classList.add('active');
-      const targetTab = document.getElementById(tabId);
-      if (targetTab) targetTab.classList.add('active');
-    }
+    // 1. メインタブ切替 (レールボタン及び全タブボタンの同期)
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === tabId);
+    });
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    const targetTab = document.getElementById(tabId);
+    if (targetTab) targetTab.classList.add('active');
 
-    // 2. 編集タブ内のサブタブ切替
+    // 2. 編集タブ内のサブタブ切替 (レールサブボタン及びピルの同期)
     if (tabId === 'tab-editor') {
       if (!subtabId) {
         const currentActivePill = document.querySelector('.subtab-pill.active');
         subtabId = currentActivePill ? currentActivePill.dataset.subtab : 'tab-prompt-builder';
       }
 
-      const subBtn = document.querySelector(`.subtab-pill[data-subtab="${subtabId}"]`);
-      if (subBtn) {
-        document.querySelectorAll('.subtab-pill').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.subtab-pane').forEach(p => p.classList.remove('active'));
-        subBtn.classList.add('active');
-        const targetPane = document.getElementById(subtabId);
-        if (targetPane) targetPane.classList.add('active');
-      }
+      document.querySelectorAll('.subtab-pill').forEach(b => {
+        b.classList.toggle('active', b.dataset.subtab === subtabId);
+      });
+      document.querySelectorAll('.subtab-pane').forEach(p => p.classList.remove('active'));
+      const targetPane = document.getElementById(subtabId);
+      if (targetPane) targetPane.classList.add('active');
 
       // サブタブに応じたUI自動更新
       if (subtabId === 'tab-prompt-builder') {
@@ -1996,6 +1996,12 @@
           });
         }, 20);
       }
+    }
+
+    // レールサブグループの連動表示調整
+    const railSubGroup = document.getElementById('railSubGroup');
+    if (railSubGroup) {
+      railSubGroup.style.opacity = tabId === 'tab-editor' ? '1' : '0.55';
     }
   }
 
@@ -2014,6 +2020,17 @@
         switchTab('tab-editor', pill.dataset.subtab);
       });
     });
+
+    // 🌟 右1レール: クイックPNG出力ボタン
+    const railBtnQuickSave = document.getElementById('railBtnQuickSave');
+    if (railBtnQuickSave) {
+      railBtnQuickSave.addEventListener('click', () => {
+        const btnDownloadMerged = document.getElementById('btnDownloadMerged');
+        if (btnDownloadMerged) {
+          btnDownloadMerged.click();
+        }
+      });
+    }
 
     if (btnQuickToggleKey) {
       btnQuickToggleKey.addEventListener('click', () => {
@@ -2206,6 +2223,11 @@
         ratioBadge.textContent = `比率: ${btn.dataset.ratio}`;
         resBadge.textContent = `${state.canvasWidth} × ${state.canvasHeight} px`;
         
+        const pw = document.getElementById('previewWrapper');
+        if (pw && state.aspectRatio) {
+          pw.style.aspectRatio = state.aspectRatio.replace(':', ' / ');
+        }
+
         updateAspectRatioInPrompt();
         saveState();
         renderCard();

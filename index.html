@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.26.0">
+  <link rel="stylesheet" href="style.css?v=4.27.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -38,15 +38,15 @@
     </div>
   </div>
 
-  <div class="app-container mobile-optimized" id="mainAppContainer">
+  <div class="app-container landscape-studio" id="mainAppContainer">
     <!-- ヘッダー -->
-    <header class="app-header">
+    <header class="app-header slim-header">
       <div class="header-main-row">
         <div class="brand-title-area" id="mainBrandTitleArea" title="連打で神モード（管理者）アンロック">
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
-            <h1>KUWAGATA PREMIUM CARD STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.26.0</span>
+            <h1>KUWAGATA PREMIUM STUDIO</h1>
+            <span class="app-version-badge" id="appVersion">v4.27.0</span>
             <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
           <p class="subtitle">最高峰クワガタ血統証明書・非破壊マルチレイヤー作成エンジン</p>
@@ -71,65 +71,65 @@
       </div>
     </header>
 
-    <!-- メインコンテンツ (モバイルファースト・縦型レイアウト) -->
-    <main class="app-main">
-      <!-- 🎴 メインカードプレビュー（自然なインライン配置・ガタつきゼロ） -->
-      <section class="preview-section" id="previewSection">
-        <div class="preview-card-wrapper" id="previewWrapper">
-          <canvas id="cardCanvas" width="1500" height="2100"></canvas>
-          <div id="loadingOverlay" class="loading-overlay hidden">
-            <div class="spinner"></div>
-            <span id="loadingText">レンダリング中...</span>
-          </div>
-        </div>
-        <div class="preview-toolbar">
-          <div class="preview-toolbar-row">
-            <div class="ratio-badge" id="ratioBadge">比率: 5:7 (トレカ)</div>
-            <div class="res-badge" id="resBadge">1500 × 2100 px</div>
-            <button type="button" class="btn-refresh" id="btnRerender" title="再描画">🔄 再描画</button>
-          </div>
-          <div class="calibration-row">
-            <button type="button" class="btn-calibration-bg" id="btnToggleCalibration" title="目盛り・ルーラー測定スケールを画面に重ねて表示（クリックでON/OFF切替）">
-              📐 測定スケール
-            </button>
-            <div class="safety-guide-wrap">
-              <label class="custom-toggle-safety" title="印刷安全枠ガイド（セーフティゾーン）の表示切替">
-                <input type="checkbox" id="toggleSafetyGuide">
-                <span class="toggle-slider"></span>
-              </label>
-              <label for="toggleSafetyGuide" class="safety-title-label" title="クリックで安全枠ガイドのON/OFFを切替">
-                <span class="safety-title">安全枠ガイド</span>
-                <span class="safety-state-badge" id="safetyStateBadge">OFF</span>
-              </label>
-              <div class="slider-stepper safety-stepper" id="safetyMarginStepper">
-                <button type="button" class="stepper-btn stepper-dec" id="btnSafetyMarginDec" title="1%減らす">−</button>
-                <input type="number" class="stepper-input" id="safetyMarginInput" min="0" max="15" value="3" title="安全マージン(%)">
-                <button type="button" class="stepper-btn stepper-inc" id="btnSafetyMarginInc" title="1%増やす">+</button>
-                <span class="stepper-unit">%</span>
-              </div>
+    <!-- 📱 縦持ち時の回転推奨インジケーター (横持ちで自動非表示) -->
+    <div id="portraitNoticeBar" class="portrait-notice-bar">
+      <span class="rotate-icon">🔄</span>
+      <div class="rotate-text-wrap">
+        <span class="rotate-title">スマホを横向きに回転してください</span>
+        <span class="rotate-desc">左4:プレビュー ＋ 中5:編集 ＋ 右1:メニューの横持ちプロスタジオに切り替わります</span>
+      </div>
+    </div>
+
+    <!-- 4:5:1 横画面スタジオ・ワークスペース (左4:固定プレビュー / 中5:編集スクロール / 右1:固定レールメニュー) -->
+    <div class="studio-workspace" id="studioWorkspace">
+      <!-- 🌟 左4: 常時固定カードプレビューエリア (スクロールなし) -->
+      <aside class="studio-preview-col" id="studioPreviewCol">
+        <section class="preview-section" id="previewSection">
+          <div class="preview-card-wrapper" id="previewWrapper">
+            <canvas id="cardCanvas" width="1500" height="2100"></canvas>
+            <div id="loadingOverlay" class="loading-overlay hidden">
+              <div class="spinner"></div>
+              <span id="loadingText">レンダリング中...</span>
             </div>
-            <button type="button" class="btn-snap-safe" id="btnClampToSafeZone" title="すべての文字・スペックを現在の安全枠（セーフティゾーン）の内側に自動収容">
-              🧲 枠内に収める
-            </button>
           </div>
-        </div>
-      </section>
+          <div class="preview-toolbar compact-hud">
+            <div class="preview-toolbar-row">
+              <div class="ratio-badge" id="ratioBadge">比率: 5:7 (トレカ)</div>
+              <div class="res-badge" id="resBadge">1500 × 2100 px</div>
+              <button type="button" class="btn-refresh" id="btnRerender" title="再描画">🔄 再描画</button>
+            </div>
+            <div class="calibration-row">
+              <button type="button" class="btn-calibration-bg" id="btnToggleCalibration" title="目盛り・ルーラー測定スケールを画面に重ねて表示（クリックでON/OFF切替）">
+                📐 測定スケール
+              </button>
+              <div class="safety-guide-wrap">
+                <label class="custom-toggle-safety" title="印刷安全枠ガイド（セーフティゾーン）の表示切替">
+                  <input type="checkbox" id="toggleSafetyGuide">
+                  <span class="toggle-slider"></span>
+                </label>
+                <label for="toggleSafetyGuide" class="safety-title-label" title="クリックで安全枠ガイドのON/OFFを切替">
+                  <span class="safety-title">安全枠</span>
+                  <span class="safety-state-badge" id="safetyStateBadge">OFF</span>
+                </label>
+                <div class="slider-stepper safety-stepper" id="safetyMarginStepper">
+                  <button type="button" class="stepper-btn stepper-dec" id="btnSafetyMarginDec" title="1%減らす">−</button>
+                  <input type="number" class="stepper-input" id="safetyMarginInput" min="0" max="15" value="3" title="安全マージン(%)">
+                  <button type="button" class="stepper-btn stepper-inc" id="btnSafetyMarginInc" title="1%増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
+              <button type="button" class="btn-snap-safe" id="btnClampToSafeZone" title="すべての文字・スペックを現在の安全枠（セーフティゾーン）の内側に自動収容">
+                🧲 枠内に収める
+              </button>
+            </div>
+          </div>
+        </section>
+      </aside>
 
-      <!-- 3大機能メインタブ・ナビゲーション (v4.26.0 再編) -->
-      <nav class="tab-navigation">
-        <button type="button" class="tab-btn active" data-tab="tab-editor">
-          <span class="tab-label">🎨 編集</span>
-        </button>
-        <button type="button" class="tab-btn" data-tab="tab-vision-extract">
-          <span class="tab-label">🧹 解析・文字消し</span>
-        </button>
-        <button type="button" class="tab-btn" data-tab="tab-archive-export">
-          <span class="tab-label">💾 保存・履歴</span>
-        </button>
-      </nav>
-
-      <!-- メイン1: 編集タブ (背景画像・アート文字・スペック文字の統合) -->
-      <section id="tab-editor" class="tab-content active">
+      <!-- 🌟 中5: 独立縦スクロール編集ペイン -->
+      <main class="studio-editor-col" id="studioEditorCol">
+        <!-- メイン1: 編集タブ (背景画像・アート文字・スペック文字の統合) -->
+        <section id="tab-editor" class="tab-content active">
         <!-- 編集サブルート切替ピルナビ -->
         <nav class="subtab-navigation" id="editorSubtabNav">
           <button type="button" class="subtab-pill active" data-subtab="tab-prompt-builder">
@@ -819,6 +819,53 @@
       </section>
     </main>
 
+    <!-- 🌟 右1: 固定操作レールメニュー (親指ワンタップ切替) -->
+    <nav class="studio-rail-col" id="studioRailCol">
+      <div class="rail-group rail-main-group" title="メイン機能">
+        <button type="button" class="rail-btn tab-btn active" data-tab="tab-editor" title="🎨 カード編集">
+          <span class="rail-icon">🎨</span>
+          <span class="rail-label">編集</span>
+        </button>
+        <button type="button" class="rail-btn tab-btn" data-tab="tab-vision-extract" title="🧹 解析・文字消し">
+          <span class="rail-icon">🧹</span>
+          <span class="rail-label">解析</span>
+        </button>
+        <button type="button" class="rail-btn tab-btn" data-tab="tab-archive-export" title="💾 保存・履歴">
+          <span class="rail-icon">💾</span>
+          <span class="rail-label">保存</span>
+        </button>
+      </div>
+
+      <div class="rail-divider"></div>
+
+      <!-- 編集サブ切り替え -->
+      <div class="rail-group rail-sub-group" id="railSubGroup" title="編集サブ切り替え">
+        <button type="button" class="rail-sub-btn subtab-pill active" data-subtab="tab-prompt-builder" title="🖼️ 背景画像生成">
+          <span class="rail-icon">🖼️</span>
+          <span class="rail-sub-label">背景</span>
+        </button>
+        <button type="button" class="rail-sub-btn subtab-pill" data-subtab="tab-ai-letters" title="✨ アート文字編集">
+          <span class="rail-icon">✨</span>
+          <span class="rail-sub-label">文字</span>
+        </button>
+        <button type="button" class="rail-sub-btn subtab-pill" data-subtab="tab-spec-edit" title="🎛️ スペック文字編集">
+          <span class="rail-icon">🎛️</span>
+          <span class="rail-sub-label">情報</span>
+        </button>
+      </div>
+
+      <div class="rail-divider"></div>
+
+      <!-- クイック保存アクション -->
+      <div class="rail-group rail-action-group" title="クイック出力">
+        <button type="button" class="rail-action-btn" id="railBtnQuickSave" title="完成カードを高解像度PNG保存">
+          <span class="rail-icon">📥</span>
+          <span class="rail-sub-label">出力</span>
+        </button>
+      </div>
+    </nav>
+  </div><!-- /#studioWorkspace -->
+
     <!-- ローディングオーバーレイ -->
     <div id="loadingOverlay" class="loading-overlay hidden">
       <div class="spinner"></div>
@@ -1077,6 +1124,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.26.0"></script>
+  <script src="app.js?v=4.27.0"></script>
 </body>
 </html>

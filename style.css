@@ -48,24 +48,90 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* アプリ全体コンテナ (モバイルファースト) */
+/* アプリ全体コンテナ (v4.27.0 横画面プロスタジオ対応) */
 .app-container {
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 10px 12px;
-  width: 100%;
+  width: 100vw;
+  max-width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 6px 8px 4px 8px;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 📱 縦持ち時の回転推奨インジケーター */
+.portrait-notice-bar {
+  display: none;
+  background: linear-gradient(90deg, rgba(43, 34, 13, 0.95), rgba(20, 18, 12, 0.95));
+  border: 1px solid rgba(255, 213, 79, 0.6);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  align-items: center;
+  gap: 8px;
+  color: #ffd54f;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  animation: pulseNotice 2s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+.portrait-notice-bar .rotate-icon {
+  font-size: 16px;
+  animation: rotateIcon 2s infinite linear;
+}
+
+.rotate-text-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.rotate-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.rotate-desc {
+  font-size: 9.5px;
+  color: var(--gold-text);
+}
+
+@keyframes rotateIcon {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulseNotice {
+  0%, 100% { border-color: rgba(255, 213, 79, 0.4); }
+  50% { border-color: rgba(255, 213, 79, 0.9); box-shadow: 0 0 12px rgba(255, 213, 79, 0.3); }
 }
 
 /* ==========================================================================
    ヘッダー ＆ 🎴 漆黒・24K純金箔 千社札（木札）タグ
    ========================================================================== */
 .app-header {
-  padding: 6px 0 12px;
+  padding: 4px 0 6px;
   border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 12px;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.app-header.slim-header {
+  padding: 2px 0 4px;
+  margin-bottom: 4px;
+}
+
+.app-header.slim-header .subtitle {
+  display: none;
+}
+
+.app-header.slim-header h1 {
+  font-size: 14px;
 }
 
 .header-main-row {
@@ -297,34 +363,47 @@ body {
 }
 
 /* ==========================================================================
-   プレビューセクション (上部固定表示)
+   プレビューセクション (左4 固定表示)
    ========================================================================== */
 .preview-section {
   background: var(--bg-panel);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 10px;
+  padding: 6px 8px;
   box-shadow: var(--shadow-main);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .preview-card-wrapper {
   position: relative;
-  width: 100%;
-  max-width: 320px;
-  margin: 0 auto;
+  flex: 1;
+  min-height: 0;
+  width: auto;
+  max-width: 100%;
   aspect-ratio: 5 / 7;
+  margin: 0 auto;
   background: #000;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #cardCanvas {
-  width: 100%;
-  height: 100%;
-  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
+  display: block;
 }
 
 .loading-overlay {
@@ -356,10 +435,11 @@ body {
 .preview-toolbar {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
-  padding-top: 8px;
+  gap: 4px;
+  margin-top: 4px;
+  padding-top: 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
 }
 
 .preview-toolbar-row {
@@ -567,37 +647,165 @@ body {
 }
 
 /* ==========================================================================
-   3大機能タブ・ナビゲーション (v4.26.0 再編)
+   4:5:1 横画面スタジオ・ワークスペース (v4.27.0)
    ========================================================================== */
-.tab-navigation {
+.studio-workspace {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  margin: 10px 0;
+  grid-template-columns: minmax(260px, 38fr) minmax(320px, 52fr) 64px;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
-.tab-btn {
-  background: var(--bg-panel);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  padding: 10px 4px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  text-align: center;
+/* 🌟 左4: 常時固定プレビュー列 */
+.studio-preview-col {
   display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 🌟 中5: 独立縦スクロール編集列 */
+.studio-editor-col {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+  box-sizing: border-box;
+}
+
+.studio-editor-col::-webkit-scrollbar {
+  width: 5px;
+}
+.studio-editor-col::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+.studio-editor-col::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.35);
+  border-radius: 4px;
+}
+.studio-editor-col::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 213, 79, 0.6);
+}
+
+/* 🌟 右1: 常時固定操作レールナビゲーション (親指ワンタップ) */
+.studio-rail-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  background: rgba(14, 17, 23, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: var(--radius-md);
+  padding: 6px 3px;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  flex-shrink: 0;
+}
+
+.studio-rail-col::-webkit-scrollbar {
+  display: none;
+}
+
+.rail-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 4px;
+  align-items: center;
+}
+
+.rail-divider {
+  width: 75%;
+  height: 1px;
+  background: rgba(212, 175, 55, 0.22);
+  margin: 3px 0;
+  flex-shrink: 0;
+}
+
+.rail-btn,
+.rail-sub-btn,
+.rail-action-btn {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
+  padding: 7px 2px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 10px;
+  font-weight: 700;
+  min-height: 46px;
+  box-sizing: border-box;
+  text-align: center;
+  line-height: 1.1;
 }
 
-.tab-btn.active {
-  background: linear-gradient(180deg, #2a2416 0%, #171510 100%);
+.rail-btn:hover,
+.rail-sub-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+.rail-btn.active,
+.rail-sub-btn.active {
+  background: linear-gradient(180deg, #38301c 0%, #1e1910 100%);
   border-color: #ffd54f;
   color: var(--gold-text);
-  box-shadow: inset 0 0 8px rgba(212, 175, 55, 0.2);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.35), inset 0 0 6px rgba(212, 175, 55, 0.2);
+}
+
+.rail-icon {
+  font-size: 16px;
+  line-height: 1;
+  margin-bottom: 3px;
+  display: block;
+}
+
+.rail-label,
+.rail-sub-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+
+.rail-action-btn {
+  background: linear-gradient(180deg, rgba(212, 175, 55, 0.25) 0%, rgba(26, 20, 10, 0.8) 100%);
+  border: 1px solid rgba(255, 213, 79, 0.6);
+  color: #ffd54f;
+}
+
+.rail-action-btn:hover {
+  background: #ffd54f;
+  color: #111;
+  box-shadow: 0 0 12px rgba(255, 213, 79, 0.5);
+}
+
+.rail-action-btn:active {
+  transform: scale(0.94);
 }
 
 /* 編集タブ内 サブルート切替ピルナビ */
@@ -605,7 +813,7 @@ body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
-  margin: -2px 0 14px 0;
+  margin: -2px 0 12px 0;
   background: rgba(0, 0, 0, 0.35);
   padding: 4px;
   border-radius: var(--radius-sm);
@@ -653,7 +861,7 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .tab-content.active {
@@ -1876,6 +2084,93 @@ input:checked + .toggle-slider:before {
   padding: 10px;
   font-size: 12.5px;
   font-weight: 700;
+}
+
+/* ==========================================================================
+   📱 画面回転レスポンシブ (縦持ち時の適応 ＆ 横持ち優先スタジオ)
+   ========================================================================== */
+@media screen and (orientation: portrait) and (max-width: 768px) {
+  .portrait-notice-bar {
+    display: flex;
+  }
+  .app-container {
+    height: auto;
+    max-height: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .studio-workspace {
+    grid-template-columns: 1fr;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+  .studio-preview-col {
+    height: auto;
+    max-height: 480px;
+    margin-bottom: 8px;
+  }
+  .preview-card-wrapper {
+    max-height: 380px;
+    height: 380px;
+  }
+  .studio-editor-col {
+    height: auto;
+    overflow: visible;
+    padding-bottom: 70px;
+  }
+  .studio-rail-col {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-around;
+    border-radius: 0;
+    border-top: 1px solid rgba(212, 175, 55, 0.4);
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    background: rgba(10, 12, 16, 0.96);
+    z-index: 1000;
+    padding: 2px 6px;
+  }
+  .rail-group {
+    flex-direction: row;
+    width: auto;
+    gap: 3px;
+  }
+  .rail-divider {
+    width: 1px;
+    height: 24px;
+    margin: 0 2px;
+  }
+  .rail-btn,
+  .rail-sub-btn,
+  .rail-action-btn {
+    min-height: 44px;
+    padding: 3px 6px;
+    font-size: 8.5px;
+  }
+  .rail-icon {
+    font-size: 14px;
+    margin-bottom: 1px;
+  }
+  .localhost-floating-container {
+    bottom: 64px;
+    right: 12px;
+  }
+}
+
+/* 💻 横画面 / デスクトップ時の Localhost ボタン位置調整 */
+@media screen and (orientation: landscape), screen and (min-width: 769px) {
+  .localhost-floating-container {
+    bottom: 12px;
+    left: 12px;
+    right: auto;
+  }
 }
 
 
