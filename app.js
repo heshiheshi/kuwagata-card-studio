@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.23.0 Full-Lifecycle File Reception Engine)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.24.0 Dynamic Progress & Inpaint Completion Engine)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.23.0';
+  const APP_VERSION = 'v4.24.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -2583,13 +2583,19 @@
 
     const cleanArea = document.getElementById('cleanBgResultArea');
     const loadingInline = document.getElementById('cleanBgLoadingInline');
+    const loadingInlineText = document.getElementById('cleanBgLoadingText');
     const uploadPrompt = document.getElementById('cleanBgUploadPrompt');
 
     if (uploadPrompt) uploadPrompt.classList.add('hidden');
     if (loadingInline) loadingInline.classList.remove('hidden');
     if (cleanArea) cleanArea.classList.add('hidden');
 
-    showLoading(true, 'AIが画像から文字および【右下の菱形マーク】を消去・背景修復中...');
+    function updateInpaintProgress(msg) {
+      showLoading(true, msg);
+      if (loadingInlineText) loadingInlineText.textContent = msg;
+    }
+
+    updateInpaintProgress('AI文字消去準備中: 画像データを読み込んでいます...');
     Logger.api(`AI文字＆右下菱形消去開始: ${file.name}`, {
       usedSlot: keyInfo.slot,
       usedKey: keyInfo.masked
@@ -2609,14 +2615,22 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
 
       const candidateModels = [
         'gemini-3.1-flash-image',
-        'gemini-2.5-flash-image',
-        'nano-banana-pro-preview'
+        'gemini-3-pro-image',
+        'nano-banana-pro-preview',
+        'gemini-2.5-flash-image'
       ];
 
       let generatedCleanUrl = null;
       let lastErr = '';
 
-      for (const model of candidateModels) {
+      for (let i = 0; i < candidateModels.length; i++) {
+        const model = candidateModels[i];
+        const stepNum = i + 1;
+        const totalSteps = candidateModels.length;
+
+        updateInpaintProgress(`AI文字消去中 (ステップ ${stepNum}/${totalSteps}: モデル ${model} 接続中)...`);
+        Logger.info(`🎨 [INPAINT_STEP ${stepNum}/${totalSteps}] モデル [${model}] に直接文字・菱形消去リクエスト送信中...`);
+
         try {
           const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
           const payload = {
@@ -2640,26 +2654,33 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
             for (const part of parts) {
               if (part.inlineData && part.inlineData.data) {
                 generatedCleanUrl = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+                Logger.success(`✨ [INPAINT_SUCCESS] モデル [${model}] で文字および右下菱形の直接消去に成功しました！`);
                 break;
               }
             }
             if (generatedCleanUrl) break;
+            Logger.info(`ℹ️ [INPAINT_NOTE] モデル [${model}] はテキスト説明を返却したため、次の描画モデルへ引き継ぎます`);
           } else {
             const errJson = await resp.json().catch(() => ({}));
             lastErr = errJson.error ? errJson.error.message : `HTTP ${resp.status}`;
-            Logger.warn(`AI文字消去モデル試行失敗 [${model}]: ${lastErr}`);
+            Logger.warn(`⚠️ [INPAINT_NEXT] モデル [${model}] 試行スキップ: ${lastErr} ➔ 次のモデルへ移行`);
           }
         } catch (e) {
           lastErr = e.message;
-          Logger.warn(`AI文字消去例外 [${model}]: ${e.message}`);
+          Logger.warn(`⚠️ [INPAINT_ERR] モデル [${model}] 通信例外: ${e.message} ➔ 次のモデルへ移行`);
         }
       }
 
       // フォールバック: 直接編集APIが非対応/制限の場合、Vision抽出 ➔ クリーン背景生成を実行
       if (!generatedCleanUrl) {
-        Logger.info('[ERASE_FALLBACK] 直接消去フォールバック: Vision解析 ➔ クリーン背景生成を実行');
+        updateInpaintProgress('AI文字消去中: Vision解析で元画像の和紙・金箔・配色特徴を詳細抽出中...');
+        Logger.info('👁️ [ERASE_FALLBACK] 直接消去からVision解析 ➔ 高精度クリーン背景再生成エンジンへ引き継ぎます');
+
         const visionPrompt = await analyzeBackgroundPromptForInpaint(base64Data, mimeType, apiKey);
-        generatedCleanUrl = await generateCleanBgFromPrompt(visionPrompt, apiKey);
+        Logger.info(`📝 [VISION_PROMPT_EXTRACTED] 抽出背景プロンプト: ${visionPrompt}`);
+
+        updateInpaintProgress('AI文字消去中: 抽出した和紙・金箔の純粋背景グラフィックを生成中...');
+        generatedCleanUrl = await generateCleanBgFromPrompt(visionPrompt, apiKey, updateInpaintProgress);
       }
 
       if (!generatedCleanUrl) {
@@ -2675,7 +2696,7 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
       if (uploadPrompt) uploadPrompt.classList.remove('hidden');
 
       showLoading(false);
-      Logger.success('AI文字＆右下菱形消去・純粋背景復元完了');
+      Logger.success('🎉 AI文字＆右下菱形消去・純粋背景復元完了');
     } catch (err) {
       if (loadingInline) loadingInline.classList.add('hidden');
       if (uploadPrompt) uploadPrompt.classList.remove('hidden');
@@ -2707,9 +2728,20 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
     return 'luxury Japanese washi paper, gold foil, watercolor gradient, no typography, no diamond watermark';
   }
 
-  async function generateCleanBgFromPrompt(promptText, apiKey) {
-    const candidateModels = ['gemini-3.1-flash-image', 'gemini-2.5-flash-image', 'nano-banana-pro-preview'];
-    for (const model of candidateModels) {
+  async function generateCleanBgFromPrompt(promptText, apiKey, progressCallback) {
+    const candidateModels = [
+      'gemini-3.1-flash-image',
+      'gemini-3-pro-image',
+      'nano-banana-pro-preview',
+      'gemini-2.5-flash-image'
+    ];
+    for (let i = 0; i < candidateModels.length; i++) {
+      const model = candidateModels[i];
+      if (progressCallback) {
+        progressCallback(`純粋背景生成中 (モデル ${i + 1}/${candidateModels.length}: ${model})...`);
+      }
+      Logger.info(`🖼️ [CLEAN_BG_ATTEMPT ${i + 1}/${candidateModels.length}] モデル [${model}] で純粋背景グラフィックを生成中...`);
+
       try {
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
         const payload = {
@@ -2727,11 +2759,17 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
           const parts = data.candidates?.[0]?.content?.parts || [];
           for (const part of parts) {
             if (part.inlineData && part.inlineData.data) {
+              Logger.success(`✨ [CLEAN_BG_SUCCESS] モデル [${model}] で純粋背景グラフィックの生成に成功しました！`);
               return `data:${part.inlineData.mimeType || 'image/jpeg'};base64,${part.inlineData.data}`;
             }
           }
+          Logger.info(`ℹ️ [CLEAN_BG_NOTE] モデル [${model}] はテキスト応答のため、次のモデルへ移行`);
+        } else {
+          Logger.warn(`⚠️ [CLEAN_BG_SKIP] モデル [${model}]: HTTP ${resp.status}`);
         }
-      } catch (e) {}
+      } catch (e) {
+        Logger.warn(`⚠️ [CLEAN_BG_ERR] モデル [${model}]: ${e.message}`);
+      }
     }
     return null;
   }
