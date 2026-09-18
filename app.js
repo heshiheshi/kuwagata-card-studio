@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.22.0 Seamless Background Apply Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.23.0 Full-Lifecycle File Reception Engine)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.22.0';
+  const APP_VERSION = 'v4.23.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -2260,27 +2260,75 @@
     }
   }
 
-  // --- 👁️ Vision AI & AI消しゴム: 窓1（プロンプト抽出）＆ 窓2（文字・菱形消去） (v4.21.0) ---
+  // --- 👁️ Vision AI & AI消しゴム: 窓1（プロンプト抽出）＆ 窓2（文字・菱形消去） (v4.23.0) ---
   function setupVisionDropZone() {
     // 🌟 窓1: 背景プロンプト抽出ゾーン
     const promptZone = document.getElementById('promptExtractDropZone');
     const promptInput = document.getElementById('promptExtractFileInput');
     if (promptZone && promptInput) {
-      promptZone.addEventListener('click', () => promptInput.click());
+      promptZone.addEventListener('click', (e) => {
+        if (e.target === promptInput) return;
+        promptInput.value = '';
+        Logger.info('🖱️ [UI_CLICK] 窓1（プロンプト抽出枠）をクリック ➔ ファイル選択ダイアログを開きます');
+        promptInput.click();
+      });
+
+      promptInput.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
       promptInput.addEventListener('change', (e) => {
-        if (e.target.files && e.target.files[0]) {
-          extractPromptFromImage(e.target.files[0]);
+        const file = e.target.files && e.target.files[0];
+        if (!file) {
+          Logger.warn('[FILE_SELECT] 窓1: ファイルが選択されませんでした（キャンセル）');
+          return;
         }
+        Logger.info(`📁 [FILE_SELECT] 窓1: 画像ファイル選択検知: ${file.name}`, {
+          sizeBytes: file.size,
+          sizeKB: Math.round(file.size / 1024),
+          mimeType: file.type || 'unknown',
+          lastModified: file.lastModified
+        });
+        extractPromptFromImage(file);
+        promptInput.value = '';
       });
+
       ['dragenter', 'dragover'].forEach(n => {
-        promptZone.addEventListener(n, (e) => { e.preventDefault(); promptZone.classList.add('dragover'); });
+        promptZone.addEventListener(n, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          promptZone.classList.add('dragover');
+        });
       });
-      ['dragleave', 'drop'].forEach(n => {
-        promptZone.addEventListener(n, (e) => { e.preventDefault(); promptZone.classList.remove('dragover'); });
+      ['dragleave'].forEach(n => {
+        promptZone.addEventListener(n, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          promptZone.classList.remove('dragover');
+        });
       });
       promptZone.addEventListener('drop', (e) => {
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-          extractPromptFromImage(e.dataTransfer.files[0]);
+        e.preventDefault();
+        e.stopPropagation();
+        promptZone.classList.remove('dragover');
+
+        let file = null;
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          file = e.dataTransfer.files[0];
+        } else if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+          const item = e.dataTransfer.items[0];
+          if (item.kind === 'file') file = item.getAsFile();
+        }
+
+        if (file) {
+          Logger.info(`📥 [FILE_DROP] 窓1: 画像ファイルドロップ検知: ${file.name}`, {
+            sizeBytes: file.size,
+            sizeKB: Math.round(file.size / 1024),
+            mimeType: file.type || 'unknown'
+          });
+          extractPromptFromImage(file);
+        } else {
+          Logger.warn('[FILE_DROP] 窓1: ドロップデータ内に有効な画像ファイルが見つかりませんでした');
         }
       });
     }
@@ -2289,21 +2337,69 @@
     const cleanZone = document.getElementById('cleanBgDropZone');
     const cleanInput = document.getElementById('cleanBgFileInput');
     if (cleanZone && cleanInput) {
-      cleanZone.addEventListener('click', () => cleanInput.click());
+      cleanZone.addEventListener('click', (e) => {
+        if (e.target === cleanInput) return;
+        cleanInput.value = '';
+        Logger.info('🖱️ [UI_CLICK] 窓2（文字消去枠）をクリック ➔ ファイル選択ダイアログを開きます');
+        cleanInput.click();
+      });
+
+      cleanInput.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
       cleanInput.addEventListener('change', (e) => {
-        if (e.target.files && e.target.files[0]) {
-          eraseTextAndDiamondFromImage(e.target.files[0]);
+        const file = e.target.files && e.target.files[0];
+        if (!file) {
+          Logger.warn('[FILE_SELECT] 窓2: ファイルが選択されませんでした（キャンセル）');
+          return;
         }
+        Logger.info(`📁 [FILE_SELECT] 窓2: 画像ファイル選択検知: ${file.name}`, {
+          sizeBytes: file.size,
+          sizeKB: Math.round(file.size / 1024),
+          mimeType: file.type || 'unknown',
+          lastModified: file.lastModified
+        });
+        eraseTextAndDiamondFromImage(file);
+        cleanInput.value = '';
       });
+
       ['dragenter', 'dragover'].forEach(n => {
-        cleanZone.addEventListener(n, (e) => { e.preventDefault(); cleanZone.classList.add('dragover'); });
+        cleanZone.addEventListener(n, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          cleanZone.classList.add('dragover');
+        });
       });
-      ['dragleave', 'drop'].forEach(n => {
-        cleanZone.addEventListener(n, (e) => { e.preventDefault(); cleanZone.classList.remove('dragover'); });
+      ['dragleave'].forEach(n => {
+        cleanZone.addEventListener(n, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          cleanZone.classList.remove('dragover');
+        });
       });
       cleanZone.addEventListener('drop', (e) => {
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-          eraseTextAndDiamondFromImage(e.dataTransfer.files[0]);
+        e.preventDefault();
+        e.stopPropagation();
+        cleanZone.classList.remove('dragover');
+
+        let file = null;
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          file = e.dataTransfer.files[0];
+        } else if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+          const item = e.dataTransfer.items[0];
+          if (item.kind === 'file') file = item.getAsFile();
+        }
+
+        if (file) {
+          Logger.info(`📥 [FILE_DROP] 窓2: 画像ファイルドロップ検知: ${file.name}`, {
+            sizeBytes: file.size,
+            sizeKB: Math.round(file.size / 1024),
+            mimeType: file.type || 'unknown'
+          });
+          eraseTextAndDiamondFromImage(file);
+        } else {
+          Logger.warn('[FILE_DROP] 窓2: ドロップデータ内に有効な画像ファイルが見つかりませんでした');
         }
       });
     }
@@ -3085,19 +3181,69 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
     const fileInput = document.getElementById('bgFileInput');
     if (!dropZone || !fileInput) return;
 
-    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('click', (e) => {
+      if (e.target === fileInput) return;
+      fileInput.value = '';
+      Logger.info('🖱️ [UI_CLICK] 手動背景枠をクリック ➔ ファイル選択ダイアログを開きます');
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
     fileInput.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files[0]) handleImageFile(e.target.files[0]);
+      const file = e.target.files && e.target.files[0];
+      if (!file) {
+        Logger.warn('[FILE_SELECT] 手動背景: ファイルが選択されませんでした（キャンセル）');
+        return;
+      }
+      Logger.info(`📁 [FILE_SELECT] 手動背景: 画像ファイル選択検知: ${file.name}`, {
+        sizeBytes: file.size,
+        sizeKB: Math.round(file.size / 1024),
+        mimeType: file.type || 'unknown'
+      });
+      handleImageFile(file);
+      fileInput.value = '';
     });
 
     ['dragenter', 'dragover'].forEach(n => {
-      dropZone.addEventListener(n, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+      dropZone.addEventListener(n, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('dragover');
+      });
     });
-    ['dragleave', 'drop'].forEach(n => {
-      dropZone.addEventListener(n, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+    ['dragleave'].forEach(n => {
+      dropZone.addEventListener(n, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('dragover');
+      });
     });
     dropZone.addEventListener('drop', (e) => {
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) handleImageFile(e.dataTransfer.files[0]);
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove('dragover');
+
+      let file = null;
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        file = e.dataTransfer.files[0];
+      } else if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+        const item = e.dataTransfer.items[0];
+        if (item.kind === 'file') file = item.getAsFile();
+      }
+
+      if (file) {
+        Logger.info(`📥 [FILE_DROP] 手動背景: 画像ファイルドロップ検知: ${file.name}`, {
+          sizeBytes: file.size,
+          sizeKB: Math.round(file.size / 1024),
+          mimeType: file.type || 'unknown'
+        });
+        handleImageFile(file);
+      } else {
+        Logger.warn('[FILE_DROP] 手動背景: 有効な画像ファイルが見つかりませんでした');
+      }
     });
   }
 
