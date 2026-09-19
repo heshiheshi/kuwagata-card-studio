@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.28.0 4:5:1 Landscape Pro Studio Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.29.0 Universal Dual-Slot Auth & Key Honor Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.28.0';
+  const APP_VERSION = 'v4.29.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -381,7 +381,9 @@
     let key = '';
     let slot = '';
 
-    if (purpose === 'image') {
+    // 🌟 ユーザーの明示的なモード選択（activeKeyMode: 'free' または 'paid'）を絶対最優先！
+    // スロット1（無料キー）でもスロット2（有料キー）でも、ユーザーが選択したキーで全機能（背景生成・文字生成・Vision）を実行
+    if (state.activeKeyMode === 'paid') {
       if (state.paidApiKey) {
         key = state.paidApiKey;
         slot = 'スロット2 (有料キー)';
@@ -391,7 +393,8 @@
       } else {
         slot = '(未設定)';
       }
-    } else if (purpose === 'text') {
+    } else {
+      // デフォルト: 無料キーモード（スロット1を最優先使用）
       if (state.freeApiKey) {
         key = state.freeApiKey;
         slot = 'スロット1 (無料キー)';
@@ -400,28 +403,6 @@
         slot = 'スロット2 (有料キー - スロット1未設定フォールバック)';
       } else {
         slot = '(未設定)';
-      }
-    } else {
-      if (state.activeKeyMode === 'paid') {
-        if (state.paidApiKey) {
-          key = state.paidApiKey;
-          slot = 'スロット2 (有料キー)';
-        } else if (state.freeApiKey) {
-          key = state.freeApiKey;
-          slot = 'スロット1 (無料キー - スロット2未設定フォールバック)';
-        } else {
-          slot = '(未設定)';
-        }
-      } else {
-        if (state.freeApiKey) {
-          key = state.freeApiKey;
-          slot = 'スロット1 (無料キー)';
-        } else if (state.paidApiKey) {
-          key = state.paidApiKey;
-          slot = 'スロット2 (有料キー - スロット1未設定フォールバック)';
-        } else {
-          slot = '(未設定)';
-        }
       }
     }
 
@@ -2656,7 +2637,10 @@
 
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
+        },
         body: JSON.stringify(payload)
       });
 
@@ -2701,7 +2685,7 @@
     const apiKey = keyInfo.key;
     if (!apiKey) {
       apiKeyModal.classList.remove('hidden');
-      alert('AI文字消去を行うために、右上の「API設定」からAPIキーを入力してください（有料キースロット2推奨）。');
+      alert('APIキーが設定されていません。右レール「⚙️ 設定」の「🔑 APIキーを登録・変更」からAPIキーを入力してください。');
       return;
     }
 
@@ -2739,9 +2723,8 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
 
       const candidateModels = [
         'gemini-3.1-flash-image',
-        'gemini-3-pro-image',
-        'nano-banana-pro-preview',
-        'gemini-2.5-flash-image'
+        'gemini-2.5-flash-image',
+        'nano-banana-pro-preview'
       ];
 
       let generatedCleanUrl = null;
@@ -2768,7 +2751,10 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
 
           const resp = await fetch(apiUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey
+            },
             body: JSON.stringify(payload)
           });
 
@@ -2842,7 +2828,10 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
     };
     const resp = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey
+      },
       body: JSON.stringify(payload)
     });
     if (resp.ok) {
@@ -2875,7 +2864,10 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
         };
         const resp = await fetch(apiUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
           body: JSON.stringify(payload)
         });
         if (resp.ok) {
@@ -2904,7 +2896,7 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
     const apiKey = keyInfo.key;
     if (!apiKey) {
       apiKeyModal.classList.remove('hidden');
-      alert('AI文字グラフィックを生成するために、右上の「API設定」のスロット2（有料キー）にAPIキーを入力してください。');
+      alert('APIキーが設定されていません。右レール「⚙️ 設定」の「🔑 APIキーを登録・変更」からAPIキーを入力してください。');
       return;
     }
 
@@ -2961,7 +2953,10 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
 
         const resp = await fetch(apiUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
           body: JSON.stringify(payload)
         });
 
@@ -3085,7 +3080,7 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
     const apiKey = keyInfo.key;
     if (!apiKey) {
       apiKeyModal.classList.remove('hidden');
-      alert('背景画像を生成するために、右上の「API設定」のスロット2（有料キー）にAPIキーを入力してください。');
+      alert('APIキーが設定されていません。右レール「⚙️ 設定」の「🔑 APIキーを登録・変更」からAPIキーを入力してください。');
       return;
     }
 
@@ -3127,7 +3122,10 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
 
         const resp = await fetch(apiUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
           body: JSON.stringify(payload)
         });
 
