@@ -1184,6 +1184,34 @@ body {
   border-color: #ffd54f;
 }
 
+.header-badge-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-reset-font {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reset-font:hover {
+  background: rgba(239, 68, 68, 0.35);
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+.btn-reset-font.hidden {
+  display: none !important;
+}
+
 .control-row {
   display: flex;
   gap: 8px;
@@ -2357,7 +2385,7 @@ input:checked + .toggle-slider:before {
   flex-shrink: 0;
 }
 
-/* 🌫️ エフェクト（白い霧 ＆ 影）トグル・スライダー (v4.31.0) */
+/* 🌫️ エフェクト（白い霧 ＆ 影）トグル・スライダー (v4.32.0) */
 .spec-fx-row {
   display: flex;
   align-items: center;

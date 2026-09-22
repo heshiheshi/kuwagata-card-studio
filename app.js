@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.31.0 Spec Precision & Effect Glow Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.32.0 AI Typography Hierarchy & Free Styling Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.31.0';
+  const APP_VERSION = 'v4.32.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -280,7 +280,11 @@
         x: 0,
         y: 20,
         scale: 100,
-        opacity: 100
+        opacity: 100,
+        color: 'gold',
+        shadow: false,
+        glow: false,
+        glowBlur: 14
       },
       kanji: {
         text: '蒼',
@@ -289,7 +293,11 @@
         x: 0,
         y: 44,
         scale: 100,
-        opacity: 100
+        opacity: 100,
+        color: '#111111',
+        shadow: false,
+        glow: false,
+        glowBlur: 14
       },
       romaji: {
         text: 'AOI',
@@ -298,7 +306,11 @@
         x: 0,
         y: 68,
         scale: 100,
-        opacity: 100
+        opacity: 100,
+        color: 'gold',
+        shadow: false,
+        glow: false,
+        glowBlur: 14
       },
       specs: {
         ownerLabel: {
@@ -964,7 +976,7 @@
     }
   }
 
-  // --- ↩️ 履歴管理・アンドゥマネージャー (HistoryManager - v4.31.0) ---
+  // --- ↩️ 履歴管理・アンドゥマネージャー (HistoryManager - v4.32.0) ---
   const HistoryManager = {
     history: [],
     currentIndex: -1,
@@ -1150,6 +1162,24 @@
               }
             });
           }
+          if (state.layers.brand) {
+            if (!state.layers.brand.color) state.layers.brand.color = 'gold';
+            if (state.layers.brand.shadow === undefined) state.layers.brand.shadow = false;
+            if (state.layers.brand.glow === undefined) state.layers.brand.glow = false;
+            if (state.layers.brand.glowBlur === undefined) state.layers.brand.glowBlur = 14;
+          }
+          if (state.layers.kanji) {
+            if (!state.layers.kanji.color) state.layers.kanji.color = '#111111';
+            if (state.layers.kanji.shadow === undefined) state.layers.kanji.shadow = false;
+            if (state.layers.kanji.glow === undefined) state.layers.kanji.glow = false;
+            if (state.layers.kanji.glowBlur === undefined) state.layers.kanji.glowBlur = 14;
+          }
+          if (state.layers.romaji) {
+            if (!state.layers.romaji.color) state.layers.romaji.color = 'gold';
+            if (state.layers.romaji.shadow === undefined) state.layers.romaji.shadow = false;
+            if (state.layers.romaji.glow === undefined) state.layers.romaji.glow = false;
+            if (state.layers.romaji.glowBlur === undefined) state.layers.romaji.glowBlur = 14;
+          }
         }
         if (saved.aspectRatio) state.aspectRatio = saved.aspectRatio;
         if (saved.canvasWidth) state.canvasWidth = saved.canvasWidth;
@@ -1185,9 +1215,13 @@
     setVal('brandXVal', state.layers.brand.x + 'px');
     setVal('brandScale', state.layers.brand.scale);
     setVal('brandScaleVal', state.layers.brand.scale + '%');
-    setVal('brandOpacity', state.layers.brand.opacity);
-    setVal('brandOpacityVal', state.layers.brand.opacity + '%');
+    const updateResetButton = (btnId, hasAi) => {
+      const btn = document.getElementById(btnId);
+      if (btn) btn.classList.toggle('hidden', !hasAi);
+    };
+
     updateLayerBadge('brandLayerBadge', !!state.layers.brand.aiGraphicDataUrl, 'AI文字生成済', '標準フォント描画中');
+    updateResetButton('btnResetToFontBrand', !!state.layers.brand.aiGraphicDataUrl);
 
     setVal('kanjiText', state.layers.kanji.text);
     setVal('kanjiFont', state.layers.kanji.font);
@@ -1200,6 +1234,7 @@
     setVal('kanjiOpacity', state.layers.kanji.opacity);
     setVal('kanjiOpacityVal', state.layers.kanji.opacity + '%');
     updateLayerBadge('kanjiLayerBadge', !!state.layers.kanji.aiGraphicDataUrl, 'AI毛筆生成済', '標準筆文字描画中');
+    updateResetButton('btnResetToFontKanji', !!state.layers.kanji.aiGraphicDataUrl);
 
     setVal('romajiText', state.layers.romaji.text);
     setVal('romajiFont', state.layers.romaji.font);
@@ -1212,6 +1247,7 @@
     setVal('romajiOpacity', state.layers.romaji.opacity);
     setVal('romajiOpacityVal', state.layers.romaji.opacity + '%');
     updateLayerBadge('romajiLayerBadge', !!state.layers.romaji.aiGraphicDataUrl, 'AI欧文生成済', '標準欧文描画中');
+    updateResetButton('btnResetToFontRomaji', !!state.layers.romaji.aiGraphicDataUrl);
 
     if (!state.layers.specs.ownerLabel) {
       state.layers.specs.ownerLabel = {
@@ -1286,6 +1322,9 @@
       }
     };
 
+    syncSpecColor('brandColor', state.layers.brand?.color, 'gold');
+    syncSpecColor('kanjiColor', state.layers.kanji?.color, '#111111');
+    syncSpecColor('romajiColor', state.layers.romaji?.color, 'gold');
     syncSpecColor('ownerLabelColor', state.layers.specs.ownerLabel?.color, '#222222');
     syncSpecColor('ownerColor', state.layers.specs.owner?.color, '#111111');
     syncSpecColor('serialColor', state.layers.specs.serial?.color, '#2a2a2a');
@@ -1322,6 +1361,9 @@
       setVal(`${targetKey}GlowBlurVal`, blur + 'px');
     };
 
+    syncSpecFx('brand', state.layers.brand);
+    syncSpecFx('kanji', state.layers.kanji);
+    syncSpecFx('romaji', state.layers.romaji);
     syncSpecFx('ownerLabel', state.layers.specs.ownerLabel);
     syncSpecFx('owner', state.layers.specs.owner);
     syncSpecFx('serial', state.layers.specs.serial);
@@ -2418,8 +2460,11 @@
     bindSlider('extraSize', (val) => { state.layers.specs.extra.size = parseInt(val, 10); setVal('extraSizeVal', val + 'px'); });
     bindSlider('extraYOffset', (val) => { state.layers.specs.extra.y = parseInt(val, 10); setVal('extraYVal', val + '%'); });
 
-    // 🎨 スペック文字カラー選択 ＆ プリセット
+    // 🎨 文字カラー選択 ＆ プリセット (AI文字 & スペック文字)
     const specColorKeys = [
+      { id: 'brandColor', getSpec: () => state.layers.brand, def: 'gold' },
+      { id: 'kanjiColor', getSpec: () => state.layers.kanji, def: '#111111' },
+      { id: 'romajiColor', getSpec: () => state.layers.romaji, def: 'gold' },
       { id: 'ownerLabelColor', getSpec: () => state.layers.specs.ownerLabel, def: '#222222' },
       { id: 'ownerColor', getSpec: () => state.layers.specs.owner, def: '#111111' },
       { id: 'serialColor', getSpec: () => state.layers.specs.serial, def: '#2a2a2a' },
@@ -2481,8 +2526,11 @@
       });
     });
 
-    // 🌫️ スペック文字エフェクト（白い霧 ＆ 影 ＆ ぼかし強度）リスナー
+    // 🌫️ 文字エフェクト（白い霧 ＆ 影 ＆ ぼかし強度）リスナー (AI文字 & スペック文字)
     const specItems = [
+      { key: 'brand', getSpec: () => state.layers.brand },
+      { key: 'kanji', getSpec: () => state.layers.kanji },
+      { key: 'romaji', getSpec: () => state.layers.romaji },
       { key: 'ownerLabel', getSpec: () => state.layers.specs.ownerLabel },
       { key: 'owner', getSpec: () => state.layers.specs.owner },
       { key: 'serial', getSpec: () => state.layers.specs.serial },
@@ -2524,6 +2572,23 @@
           setVal(`${key}GlowBlurVal`, val + 'px');
         }
       });
+    });
+
+    // ↺ 標準フォント復元ボタン（AIグラフィック解除）
+    ['Brand', 'Kanji', 'Romaji'].forEach(name => {
+      const lower = name.toLowerCase();
+      const btn = document.getElementById(`btnResetToFont${name}`);
+      if (btn) {
+        btn.addEventListener('click', async () => {
+          HistoryManager.recordState();
+          state.layers[lower].aiGraphicDataUrl = null;
+          await reloadAllLayerImages();
+          syncInputsFromState();
+          saveState();
+          renderCard();
+          Logger.info(`↺ ${name}レイヤーを標準文字描画に復元しました。`);
+        });
+      }
     });
 
     // ↩️ アンドゥ (戻る) ボタン ＆ キーボードショートカット (Cmd+Z / Ctrl+Z)
@@ -2642,7 +2707,23 @@
     document.getElementById('btnResetSample').addEventListener('click', () => {
       state.layers.brand.text = 'LOJING';
       state.layers.brand.redInitial = true;
+      state.layers.brand.color = 'gold';
+      state.layers.brand.shadow = false;
+      state.layers.brand.glow = false;
+      state.layers.brand.glowBlur = 14;
+
       state.layers.kanji.text = '蒼';
+      state.layers.kanji.color = '#111111';
+      state.layers.kanji.shadow = false;
+      state.layers.kanji.glow = false;
+      state.layers.kanji.glowBlur = 14;
+
+      state.layers.romaji.text = 'AOI';
+      state.layers.romaji.color = 'gold';
+      state.layers.romaji.shadow = false;
+      state.layers.romaji.glow = false;
+      state.layers.romaji.glowBlur = 14;
+
       state.layers.specs.ownerLabel = {
         text: 'Owner',
         font: "'Cinzel', serif",
@@ -4351,22 +4432,74 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
       targetCtx.drawImage(loadedBrandImg, centerX - (drawW / 2), centerY - (drawH / 2), drawW, drawH);
     } else {
       const fontSize = Math.round(w * 0.088 * ((layer.scale || 100) / 100));
-      targetCtx.font = `800 ${fontSize}px 'Cinzel', serif`;
-      targetCtx.textAlign = 'center';
-      targetCtx.textBaseline = 'middle';
+      const fontFace = "'Cinzel', serif";
+      const color = layer.color || 'gold';
+      const shadow = !!layer.shadow;
+      const glow = !!layer.glow;
+      const glowBlur = layer.glowBlur !== undefined ? Number(layer.glowBlur) : 14;
 
       if (layer.redInitial && layer.text.length > 1) {
+        targetCtx.font = `800 ${fontSize}px ${fontFace}`;
         const initial = layer.text.charAt(0);
         const rest = layer.text.slice(1);
         const initialWidth = targetCtx.measureText(initial).width;
         const restWidth = targetCtx.measureText(rest).width;
         const totalWidth = initialWidth + restWidth;
         const startX = centerX - (totalWidth / 2);
+        const initialX = startX + (initialWidth / 2);
+        const restX = startX + initialWidth + (restWidth / 2);
 
-        drawRubyInitial(targetCtx, initial, startX + (initialWidth / 2), centerY, fontSize);
-        drawGoldText(targetCtx, rest, startX + initialWidth + (restWidth / 2), centerY, fontSize, "'Cinzel', serif");
+        // 🌫️ 白い霧・光彩の縁取り（全体）
+        if (glow) {
+          targetCtx.save();
+          targetCtx.font = `800 ${fontSize}px ${fontFace}`;
+          targetCtx.textAlign = 'center';
+          targetCtx.textBaseline = 'middle';
+          targetCtx.shadowColor = 'rgba(255, 255, 255, 0.95)';
+          targetCtx.shadowBlur = glowBlur;
+          targetCtx.shadowOffsetX = 0;
+          targetCtx.shadowOffsetY = 0;
+          targetCtx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+          targetCtx.fillText(layer.text, centerX, centerY);
+          targetCtx.fillText(layer.text, centerX, centerY);
+          targetCtx.restore();
+        }
+
+        // 先頭文字（深紅ルビー）
+        targetCtx.save();
+        if (shadow) {
+          targetCtx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+          targetCtx.shadowBlur = Math.max(4, fontSize * 0.1);
+          targetCtx.shadowOffsetX = Math.max(2, fontSize * 0.025);
+          targetCtx.shadowOffsetY = Math.max(2, fontSize * 0.025);
+        }
+        drawRubyInitial(targetCtx, initial, initialX, centerY, fontSize);
+        targetCtx.restore();
+
+        // 残りの文字
+        if (color === 'gold') {
+          drawGoldText(targetCtx, rest, restX, centerY, fontSize, fontFace, shadow);
+        } else {
+          targetCtx.save();
+          targetCtx.font = `800 ${fontSize}px ${fontFace}`;
+          targetCtx.textAlign = 'center';
+          targetCtx.textBaseline = 'middle';
+          if (shadow) {
+            targetCtx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+            targetCtx.shadowBlur = Math.max(4, fontSize * 0.1);
+            targetCtx.shadowOffsetX = Math.max(2, fontSize * 0.025);
+            targetCtx.shadowOffsetY = Math.max(2, fontSize * 0.025);
+          }
+          targetCtx.fillStyle = color;
+          targetCtx.fillText(rest, restX, centerY);
+          targetCtx.restore();
+        }
       } else {
-        drawGoldText(targetCtx, layer.text, centerX, centerY, fontSize, "'Cinzel', serif");
+        drawSpecTextItem(targetCtx, layer.text, centerX, centerY, fontSize, fontFace, '800', color, '0px', {
+          glow,
+          shadow,
+          glowBlur
+        });
       }
     }
     targetCtx.restore();
@@ -4388,10 +4521,17 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
       targetCtx.drawImage(loadedKanjiImg, centerX - (drawW / 2), centerY - (drawH / 2), drawW, drawH);
     } else {
       const fontSize = Math.round(w * 0.28 * ((layer.scale || 100) / 100));
-      targetCtx.font = `800 ${fontSize}px ${layer.font || "'Hiragino Mincho ProN', serif"}`;
-      targetCtx.textAlign = 'center';
-      targetCtx.textBaseline = 'middle';
-      drawKanjiCharacter(targetCtx, layer.text, centerX, centerY, fontSize, layer.font);
+      const fontFace = layer.font || "'Hiragino Mincho ProN', serif";
+      const color = layer.color || '#111111';
+      const shadow = !!layer.shadow;
+      const glow = !!layer.glow;
+      const glowBlur = layer.glowBlur !== undefined ? Number(layer.glowBlur) : 14;
+
+      drawSpecTextItem(targetCtx, layer.text, centerX, centerY, fontSize, fontFace, '800', color, '0px', {
+        glow,
+        shadow,
+        glowBlur
+      });
     }
     targetCtx.restore();
   }
@@ -4412,10 +4552,17 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
       targetCtx.drawImage(loadedRomajiImg, centerX - (drawW / 2), centerY - (drawH / 2), drawW, drawH);
     } else {
       const fontSize = Math.round(w * 0.10 * ((layer.scale || 100) / 100));
-      targetCtx.font = `800 ${fontSize}px ${layer.font || "'Cinzel', serif"}`;
-      targetCtx.textAlign = 'center';
-      targetCtx.textBaseline = 'middle';
-      drawGoldText(targetCtx, layer.text, centerX, centerY, fontSize, layer.font || "'Cinzel', serif");
+      const fontFace = layer.font || "'Cinzel', serif";
+      const color = layer.color || 'gold';
+      const shadow = !!layer.shadow;
+      const glow = !!layer.glow;
+      const glowBlur = layer.glowBlur !== undefined ? Number(layer.glowBlur) : 14;
+
+      drawSpecTextItem(targetCtx, layer.text, centerX, centerY, fontSize, fontFace, '800', color, '0px', {
+        glow,
+        shadow,
+        glowBlur
+      });
     }
     targetCtx.restore();
   }
