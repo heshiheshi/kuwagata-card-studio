@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.32.0 AI Typography Hierarchy & Free Styling Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.33.0 Accordion Rail Navigation Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.32.0';
+  const APP_VERSION = 'v4.33.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -976,7 +976,7 @@
     }
   }
 
-  // --- ↩️ 履歴管理・アンドゥマネージャー (HistoryManager - v4.32.0) ---
+  // --- ↩️ 履歴管理・アンドゥマネージャー (HistoryManager - v4.33.0) ---
   const HistoryManager = {
     history: [],
     currentIndex: -1,
@@ -2203,7 +2203,7 @@
     }
   }
 
-  // --- タブ・サブルート切替制御 (v4.27.0 4:5:1 横画面スタジオ対応) ---
+  // --- タブ・サブルート切替制御 (v4.33.0 編集アコーディオン展開対応) ---
   function switchTab(tabId, subtabId = null) {
     // 編集タブ内のサブタブが直接tabIdとして指定された場合の自動解決
     if (['tab-prompt-builder', 'tab-ai-letters', 'tab-spec-edit'].includes(tabId)) {
@@ -2219,8 +2219,15 @@
     const targetTab = document.getElementById(tabId);
     if (targetTab) targetTab.classList.add('active');
 
-    // 2. 編集タブ内のサブタブ切替 (レールサブボタン及びピルの同期)
+    // 2. 編集タブ内のサブタブ切替 (レールアコーディオン及びサブボタン・ピルの同期)
+    const accordion = document.getElementById('railSubAccordion');
+    const accordionWrapper = document.getElementById('railEditorAccordionWrapper');
+
     if (tabId === 'tab-editor') {
+      // 🌟 アコーディオンをスムーズに開く（すでに開いている場合は維持）
+      if (accordion) accordion.classList.add('open');
+      if (accordionWrapper) accordionWrapper.classList.add('open');
+
       if (!subtabId) {
         const currentActivePill = document.querySelector('.subtab-pill.active');
         subtabId = currentActivePill ? currentActivePill.dataset.subtab : 'tab-prompt-builder';
@@ -2244,12 +2251,10 @@
           });
         }, 20);
       }
-    }
-
-    // レールサブグループの連動表示調整
-    const railSubGroup = document.getElementById('railSubGroup');
-    if (railSubGroup) {
-      railSubGroup.style.opacity = tabId === 'tab-editor' ? '1' : '0.55';
+    } else {
+      // 🌟 「解析」「保存」「設定」など他のタブが選ばれた時はスムーズに折りたたむ
+      if (accordion) accordion.classList.remove('open');
+      if (accordionWrapper) accordionWrapper.classList.remove('open');
     }
   }
 

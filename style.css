@@ -808,6 +808,99 @@ body {
   transform: scale(0.94);
 }
 
+/* ==========================================================================
+   🌟 右1レール: 編集アコーディオン展開メニュー (v4.33.0)
+   ========================================================================== */
+.rail-editor-accordion-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rail-btn-with-chevron {
+  position: relative;
+}
+
+.accordion-chevron {
+  font-size: 8px;
+  line-height: 1;
+  color: #ffd54f;
+  margin-top: 2px;
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s ease;
+  display: inline-block;
+  opacity: 0.85;
+}
+
+.rail-editor-accordion-wrapper:not(.open) .accordion-chevron {
+  transform: rotate(-90deg);
+}
+
+.rail-editor-accordion-wrapper.open .accordion-chevron {
+  transform: rotate(0deg);
+}
+
+.rail-sub-accordion {
+  width: 100%;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.96);
+  pointer-events: none;
+  transition: max-height 0.32s cubic-bezier(0.25, 1, 0.5, 1),
+              opacity 0.24s cubic-bezier(0.25, 1, 0.5, 1),
+              transform 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+              margin 0.28s ease;
+  margin-top: 0;
+}
+
+.rail-sub-accordion.open {
+  max-height: 190px;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  margin-top: 4px;
+}
+
+.rail-sub-accordion-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 3px 0 3px 5px;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.rail-sub-accordion-inner::before {
+  content: '';
+  position: absolute;
+  left: 1px;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(255, 213, 79, 0.8), rgba(212, 175, 55, 0.2));
+  border-radius: 2px;
+}
+
+.rail-sub-btn {
+  min-height: 40px;
+  padding: 4px 2px;
+  background: rgba(18, 22, 30, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  border-radius: 5px;
+}
+
+.rail-sub-btn .rail-icon {
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.rail-sub-btn .rail-sub-label {
+  font-size: 9px;
+  font-weight: 700;
+}
+
 /* 編集タブ内 サブルート切替ピルナビ */
 .subtab-navigation {
   display: grid;
@@ -2385,7 +2478,7 @@ input:checked + .toggle-slider:before {
   flex-shrink: 0;
 }
 
-/* 🌫️ エフェクト（白い霧 ＆ 影）トグル・スライダー (v4.32.0) */
+/* 🌫️ エフェクト（白い霧 ＆ 影）トグル・スライダー (v4.33.0) */
 .spec-fx-row {
   display: flex;
   align-items: center;

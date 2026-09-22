@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.32.0">
+  <link rel="stylesheet" href="style.css?v=4.33.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -45,7 +45,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.32.0</span>
+            <span class="app-version-badge" id="appVersion">v4.33.0</span>
             <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
         </div>
@@ -1190,12 +1190,12 @@
         <div id="archiveGrid" class="archive-cards-grid"></div>
       </section>
 
-      <!-- メイン4: スタジオ環境 ＆ API設定タブ (v4.32.0 統合) -->
+      <!-- メイン4: スタジオ環境 ＆ API設定タブ (v4.33.0 統合) -->
       <section id="tab-settings" class="tab-content">
         <div class="section-title-row">
           <div class="title-with-badge">
             <h3>⚙️ スタジオ環境 ＆ API設定</h3>
-            <span class="app-version-badge">v4.32.0</span>
+            <span class="app-version-badge">v4.33.0</span>
           </div>
         </div>
         <p class="section-desc">
@@ -1267,7 +1267,7 @@
         <div class="control-card mt-3">
           <div class="control-card-header">
             <h4>ℹ️ システム ＆ ストレージ情報</h4>
-            <span class="app-version-badge">v4.32.0</span>
+            <span class="app-version-badge">v4.33.0</span>
           </div>
           <div class="system-info-list mt-2">
             <div class="info-row">
@@ -1290,10 +1290,31 @@
     <!-- 🌟 右1: 固定操作レールメニュー (親指ワンタップ切替) -->
     <nav class="studio-rail-col" id="studioRailCol">
       <div class="rail-group rail-main-group" title="メイン機能">
-        <button type="button" class="rail-btn tab-btn active" data-tab="tab-editor" title="🎨 カード編集">
-          <span class="rail-icon">🎨</span>
-          <span class="rail-label">編集</span>
-        </button>
+        <div class="rail-editor-accordion-wrapper open" id="railEditorAccordionWrapper">
+          <button type="button" class="rail-btn rail-btn-with-chevron tab-btn active" data-tab="tab-editor" id="railBtnEditor" title="🎨 カード編集">
+            <span class="rail-icon">🎨</span>
+            <span class="rail-label">編集</span>
+            <span class="accordion-chevron">▾</span>
+          </button>
+          <!-- 編集サブ切り替えアコーディオン -->
+          <div class="rail-sub-accordion open" id="railSubAccordion" title="編集サブ切り替え">
+            <div class="rail-sub-accordion-inner">
+              <button type="button" class="rail-sub-btn subtab-pill active" data-subtab="tab-prompt-builder" title="🖼️ 背景画像生成">
+                <span class="rail-icon">🖼️</span>
+                <span class="rail-sub-label">背景</span>
+              </button>
+              <button type="button" class="rail-sub-btn subtab-pill" data-subtab="tab-ai-letters" title="✨ アート文字編集">
+                <span class="rail-icon">✨</span>
+                <span class="rail-sub-label">文字</span>
+              </button>
+              <button type="button" class="rail-sub-btn subtab-pill" data-subtab="tab-spec-edit" title="🎛️ スペック文字編集">
+                <span class="rail-icon">🎛️</span>
+                <span class="rail-sub-label">情報</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <button type="button" class="rail-btn tab-btn" data-tab="tab-vision-extract" title="🧹 解析・文字消し">
           <span class="rail-icon">🧹</span>
           <span class="rail-label">解析</span>
@@ -1305,24 +1326,6 @@
         <button type="button" class="rail-btn tab-btn" data-tab="tab-settings" title="⚙️ スタジオ環境・API設定">
           <span class="rail-icon">⚙️</span>
           <span class="rail-label">設定</span>
-        </button>
-      </div>
-
-      <div class="rail-divider"></div>
-
-      <!-- 編集サブ切り替え -->
-      <div class="rail-group rail-sub-group" id="railSubGroup" title="編集サブ切り替え">
-        <button type="button" class="rail-sub-btn subtab-pill active" data-subtab="tab-prompt-builder" title="🖼️ 背景画像生成">
-          <span class="rail-icon">🖼️</span>
-          <span class="rail-sub-label">背景</span>
-        </button>
-        <button type="button" class="rail-sub-btn subtab-pill" data-subtab="tab-ai-letters" title="✨ アート文字編集">
-          <span class="rail-icon">✨</span>
-          <span class="rail-sub-label">文字</span>
-        </button>
-        <button type="button" class="rail-sub-btn subtab-pill" data-subtab="tab-spec-edit" title="🎛️ スペック文字編集">
-          <span class="rail-icon">🎛️</span>
-          <span class="rail-sub-label">情報</span>
         </button>
       </div>
 
@@ -1600,6 +1603,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.32.0"></script>
+  <script src="app.js?v=4.33.0"></script>
 </body>
 </html>
