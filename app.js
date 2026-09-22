@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.29.0 Universal Dual-Slot Auth & Key Honor Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.30.0 Universal Dual-Slot Auth & Key Honor Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.29.0';
+  const APP_VERSION = 'v4.30.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -306,7 +306,8 @@
           font: "'Cinzel', serif",
           size: 36,
           y: 74,
-          x: 0
+          x: 0,
+          color: '#222222'
         },
         owner: {
           label: 'Owner',
@@ -314,28 +315,32 @@
           font: "'Hiragino Mincho ProN', serif",
           size: 62,
           y: 78,
-          x: 0
+          x: 0,
+          color: '#111111'
         },
         serial: {
           text: 'NO.AS-05',
           font: "'Cinzel', serif",
           size: 38,
           y: 83,
-          x: 0
+          x: 0,
+          color: '#2a2a2a'
         },
         size: {
           text: '♂77mm',
           font: "'Hiragino Mincho ProN', serif",
           size: 58,
           y: 88,
-          x: 0
+          x: 0,
+          color: '#111111'
         },
         extra: {
           text: '',
           font: "'Hiragino Mincho ProN', serif",
           size: 32,
           y: 93,
-          x: 0
+          x: 0,
+          color: '#444444'
         }
       }
     }
@@ -786,6 +791,7 @@
     
     await reloadAllLayerImages();
     renderCard();
+    HistoryManager.commit();
   }
 
   // --- 🧪 Localhost Floating Suite & 👑 神モード10回タップ専用PIN認証 ---
@@ -943,6 +949,105 @@
     }
   }
 
+  // --- ↩️ 履歴管理・アンドゥマネージャー (HistoryManager - v4.30.0) ---
+  const HistoryManager = {
+    history: [],
+    currentIndex: -1,
+    maxDepth: 30,
+    isUndoing: false,
+    timer: null,
+
+    captureSnapshot() {
+      return {
+        aspectRatio: state.aspectRatio,
+        canvasWidth: state.canvasWidth,
+        canvasHeight: state.canvasHeight,
+        layers: JSON.parse(JSON.stringify(state.layers))
+      };
+    },
+
+    commit(snapshot) {
+      if (this.isUndoing) return;
+      const snap = snapshot || this.captureSnapshot();
+      if (this.currentIndex >= 0 && this.currentIndex < this.history.length) {
+        if (JSON.stringify(this.history[this.currentIndex]) === JSON.stringify(snap)) {
+          return;
+        }
+      }
+      // 不要になった未来履歴を切り捨て
+      this.history = this.history.slice(0, this.currentIndex + 1);
+      this.history.push(snap);
+      if (this.history.length > this.maxDepth) {
+        this.history.shift();
+      } else {
+        this.currentIndex++;
+      }
+      this.updateButtons();
+    },
+
+    pushDebounced(ms = 350) {
+      if (this.isUndoing) return;
+      if (this.timer) clearTimeout(this.timer);
+      this.timer = setTimeout(() => {
+        this.timer = null;
+        this.commit();
+      }, ms);
+    },
+
+    flushDebounce() {
+      if (this.timer) {
+        clearTimeout(this.timer);
+        this.timer = null;
+        this.commit();
+      }
+    },
+
+    async undo() {
+      // 保留中のデバウンス変更があれば確定させる
+      this.flushDebounce();
+
+      if (this.currentIndex <= 0) {
+        Logger.info('↩️ [UNDO] これ以上戻る操作履歴がありません');
+        this.updateButtons();
+        return;
+      }
+
+      this.isUndoing = true;
+      try {
+        this.currentIndex--;
+        const targetState = this.history[this.currentIndex];
+        if (targetState) {
+          state.aspectRatio = targetState.aspectRatio;
+          state.canvasWidth = targetState.canvasWidth;
+          state.canvasHeight = targetState.canvasHeight;
+          state.layers = JSON.parse(JSON.stringify(targetState.layers));
+
+          await reloadAllLayerImages();
+          syncInputsFromState();
+          renderCard();
+          await saveState(false);
+          Logger.info(`↩️ [UNDO] 直前の操作状態に戻しました (履歴位置: ${this.currentIndex + 1}/${this.history.length})`);
+        }
+      } catch (err) {
+        Logger.error('↩️ [UNDO] 復元エラー', err.message);
+      } finally {
+        this.isUndoing = false;
+        this.updateButtons();
+      }
+    },
+
+    updateButtons() {
+      const canUndo = this.currentIndex > 0;
+      ['btnUndo', 'railBtnUndo'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.disabled = !canUndo;
+          el.classList.toggle('disabled', !canUndo);
+        }
+      });
+    }
+  };
+
   // 🌟 StorageVault (IndexedDB) への完全保存
   async function saveState(triggerCloud = true) {
     try {
@@ -971,6 +1076,10 @@
       await StorageVault.set('kuwagata_deleted_chip_ids_v4', Array.from(state.deletedChipIds));
 
       saveApiKeyVault();
+
+      if (!HistoryManager.isUndoing) {
+        HistoryManager.pushDebounced(350);
+      }
 
       Logger.storage(`[INDEXED_DB_SAVE] 大容量データベース保存成功 (Cards: ${state.cardArchive.length}件, Chips: ${state.chips.length}件)`);
 
@@ -1009,7 +1118,17 @@
 
       const saved = await StorageVault.get('kuwagata_card_studio_state_v4');
       if (saved) {
-        if (saved.layers) state.layers = saved.layers;
+        if (saved.layers) {
+          state.layers = saved.layers;
+          if (state.layers.specs) {
+            const specs = state.layers.specs;
+            if (specs.ownerLabel && !specs.ownerLabel.color) specs.ownerLabel.color = '#222222';
+            if (specs.owner && !specs.owner.color) specs.owner.color = '#111111';
+            if (specs.serial && !specs.serial.color) specs.serial.color = '#2a2a2a';
+            if (specs.size && !specs.size.color) specs.size.color = '#111111';
+            if (specs.extra && !specs.extra.color) specs.extra.color = '#444444';
+          }
+        }
         if (saved.aspectRatio) state.aspectRatio = saved.aspectRatio;
         if (saved.canvasWidth) state.canvasWidth = saved.canvasWidth;
         if (saved.canvasHeight) state.canvasHeight = saved.canvasHeight;
@@ -1078,7 +1197,8 @@
         font: "'Cinzel', serif",
         size: 36,
         y: (state.layers.specs.owner.y ? state.layers.specs.owner.y - 4 : 74),
-        x: 0
+        x: 0,
+        color: '#222222'
       };
     }
     setVal('ownerLabelText', state.layers.specs.ownerLabel.text);
@@ -1115,6 +1235,37 @@
     setVal('extraSizeVal', state.layers.specs.extra.size + 'px');
     setVal('extraYOffset', state.layers.specs.extra.y);
     setVal('extraYVal', state.layers.specs.extra.y + '%');
+
+    // 🎨 スペック文字カラー同期
+    const syncSpecColor = (id, color, defColor) => {
+      const activeColor = color || defColor;
+      const colorInput = document.getElementById(id);
+      if (colorInput) {
+        if (activeColor === 'gold') {
+          colorInput.value = '#d4af37';
+        } else if (/^#[0-9a-fA-F]{6}$/.test(activeColor)) {
+          colorInput.value = activeColor;
+        } else {
+          colorInput.value = defColor;
+        }
+      }
+      const chipGroup = document.querySelector(`.color-preset-chips[data-target="${id}"]`);
+      if (chipGroup) {
+        chipGroup.querySelectorAll('.btn-color-chip').forEach(c => {
+          if (activeColor === 'gold') {
+            c.classList.toggle('active', c.dataset.color === 'gold');
+          } else {
+            c.classList.toggle('active', c.dataset.color.toLowerCase() === activeColor.toLowerCase());
+          }
+        });
+      }
+    };
+
+    syncSpecColor('ownerLabelColor', state.layers.specs.ownerLabel?.color, '#222222');
+    syncSpecColor('ownerColor', state.layers.specs.owner?.color, '#111111');
+    syncSpecColor('serialColor', state.layers.specs.serial?.color, '#2a2a2a');
+    syncSpecColor('sizeColor', state.layers.specs.size?.color, '#111111');
+    syncSpecColor('extraColor', state.layers.specs.extra?.color, '#444444');
 
     // 📐 印刷安全枠ガイド入力の同期
     setCheck('toggleSafetyGuide', !!state.showSafetyGuide);
@@ -2206,6 +2357,89 @@
     bindSlider('extraSize', (val) => { state.layers.specs.extra.size = parseInt(val, 10); setVal('extraSizeVal', val + 'px'); });
     bindSlider('extraYOffset', (val) => { state.layers.specs.extra.y = parseInt(val, 10); setVal('extraYVal', val + '%'); });
 
+    // 🎨 スペック文字カラー選択 ＆ プリセット
+    const specColorKeys = [
+      { id: 'ownerLabelColor', getSpec: () => state.layers.specs.ownerLabel, def: '#222222' },
+      { id: 'ownerColor', getSpec: () => state.layers.specs.owner, def: '#111111' },
+      { id: 'serialColor', getSpec: () => state.layers.specs.serial, def: '#2a2a2a' },
+      { id: 'sizeColor', getSpec: () => state.layers.specs.size, def: '#111111' },
+      { id: 'extraColor', getSpec: () => state.layers.specs.extra, def: '#444444' }
+    ];
+
+    specColorKeys.forEach(({ id, getSpec, def }) => {
+      const colorInput = document.getElementById(id);
+      if (colorInput) {
+        const handleColorChange = (e) => {
+          const spec = getSpec();
+          if (spec) {
+            spec.color = e.target.value;
+            const chipGroup = document.querySelector(`.color-preset-chips[data-target="${id}"]`);
+            if (chipGroup) {
+              chipGroup.querySelectorAll('.btn-color-chip').forEach(c => {
+                c.classList.toggle('active', c.dataset.color.toLowerCase() === spec.color.toLowerCase());
+              });
+            }
+            saveState();
+            renderCard();
+          }
+        };
+        colorInput.addEventListener('input', handleColorChange);
+        colorInput.addEventListener('change', handleColorChange);
+      }
+    });
+
+    document.querySelectorAll('.color-preset-chips .btn-color-chip').forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        e.preventDefault();
+        const container = chip.closest('.color-preset-chips');
+        if (!container) return;
+        const targetId = container.dataset.target;
+        const specKeyObj = specColorKeys.find(k => k.id === targetId);
+        if (!specKeyObj) return;
+
+        const spec = specKeyObj.getSpec();
+        if (!spec) return;
+
+        const selectedColor = chip.dataset.color;
+        spec.color = selectedColor;
+
+        container.querySelectorAll('.btn-color-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+
+        const colorInput = document.getElementById(targetId);
+        if (colorInput) {
+          if (selectedColor === 'gold') {
+            colorInput.value = '#d4af37';
+          } else if (/^#[0-9a-fA-F]{6}$/.test(selectedColor)) {
+            colorInput.value = selectedColor;
+          }
+        }
+
+        saveState();
+        renderCard();
+      });
+    });
+
+    // ↩️ アンドゥ (戻る) ボタン ＆ キーボードショートカット (Cmd+Z / Ctrl+Z)
+    const handleUndo = (e) => {
+      if (e) e.preventDefault();
+      HistoryManager.undo();
+    };
+    const btnUndo = document.getElementById('btnUndo');
+    if (btnUndo) btnUndo.addEventListener('click', handleUndo);
+    const railBtnUndo = document.getElementById('railBtnUndo');
+    if (railBtnUndo) railBtnUndo.addEventListener('click', handleUndo);
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        const activeTag = document.activeElement ? document.activeElement.tagName : '';
+        if (activeTag === 'INPUT' && document.activeElement.type === 'text') return;
+        if (activeTag === 'TEXTAREA') return;
+        e.preventDefault();
+        HistoryManager.undo();
+      }
+    });
+
     document.querySelectorAll('.ratio-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('active'));
@@ -2308,18 +2542,23 @@
         font: "'Cinzel', serif",
         size: 36,
         y: 74,
-        x: 0
+        x: 0,
+        color: '#222222'
       };
       state.layers.specs.owner = {
         text: '佃 宗行 様',
         font: "'Hiragino Mincho ProN', serif",
         size: 62,
         y: 78,
-        x: 0
+        x: 0,
+        color: '#111111'
       };
       state.layers.specs.serial.text = 'NO.AS-05';
+      state.layers.specs.serial.color = '#2a2a2a';
       state.layers.specs.size.text = '♂77mm';
+      state.layers.specs.size.color = '#111111';
       state.layers.specs.extra.text = '';
+      state.layers.specs.extra.color = '#444444';
       syncInputsFromState();
       saveState();
       renderCard();
@@ -4057,65 +4296,83 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
     targetCtx.restore();
   }
 
+  function drawSpecTextItem(targetCtx, text, x, y, size, fontFace, fontWeight, color, letterSpacing = '0px') {
+    if (!text || String(text).trim() === '') return;
+    if (color === 'gold') {
+      drawGoldText(targetCtx, text, x, y, size, fontFace);
+      return;
+    }
+    targetCtx.save();
+    targetCtx.font = `${fontWeight || '700'} ${size}px ${fontFace || "'Cinzel', serif"}`;
+    if (letterSpacing && letterSpacing !== '0px') {
+      targetCtx.letterSpacing = letterSpacing;
+    }
+    targetCtx.textAlign = 'center';
+    targetCtx.textBaseline = 'middle';
+
+    const colLower = (color || '').toLowerCase();
+    const isLight = colLower === '#ffffff' || colLower === '#fff' || colLower === 'white' || colLower === '#f8f8f8';
+    if (isLight) {
+      targetCtx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+      targetCtx.shadowBlur = Math.max(3, size * 0.08);
+      targetCtx.shadowOffsetX = 1;
+      targetCtx.shadowOffsetY = 2;
+    } else {
+      targetCtx.shadowColor = 'transparent';
+      targetCtx.shadowBlur = 0;
+    }
+
+    targetCtx.fillStyle = color || '#111111';
+    targetCtx.fillText(text, x, y);
+    targetCtx.restore();
+  }
+
   function drawSpecsLayer(targetCtx, w, h) {
     const specs = state.layers.specs;
     targetCtx.save();
 
     // 1. オーナーラベル (独立描画)
-    const ownerLabelData = specs.ownerLabel || { text: specs.owner?.label, font: "'Cinzel', serif", size: 36, y: (specs.owner?.y ? specs.owner.y - 4 : 74), x: 0 };
+    const ownerLabelData = specs.ownerLabel || { text: specs.owner?.label, font: "'Cinzel', serif", size: 36, y: (specs.owner?.y ? specs.owner.y - 4 : 74), x: 0, color: '#222222' };
     const olText = ownerLabelData.text !== undefined ? ownerLabelData.text : (specs.owner?.label || '');
     if (olText && olText.trim() !== '') {
       const olY = h * ((ownerLabelData.y !== undefined ? ownerLabelData.y : 74) / 100);
       const olX = (w / 2) + (ownerLabelData.x || 0);
       const olSize = ownerLabelData.size || 36;
       const olFont = ownerLabelData.font || "'Cinzel', serif";
-      targetCtx.font = `600 ${olSize}px ${olFont}`;
-      targetCtx.fillStyle = '#222';
-      targetCtx.textAlign = 'center';
-      targetCtx.textBaseline = 'middle';
-      targetCtx.fillText(olText, olX, olY);
+      const olColor = ownerLabelData.color || '#222222';
+      drawSpecTextItem(targetCtx, olText, olX, olY, olSize, olFont, '600', olColor);
     }
 
     // 2. オーナー名 / ブリーダー名 (独立描画)
     if (specs.owner && specs.owner.text && specs.owner.text.trim() !== '') {
       const oY = h * (specs.owner.y / 100);
       const oX = (w / 2) + (specs.owner.x || 0);
-      targetCtx.font = `700 ${specs.owner.size}px ${specs.owner.font}`;
-      targetCtx.fillStyle = '#111';
-      targetCtx.textAlign = 'center';
-      targetCtx.textBaseline = 'middle';
-      targetCtx.fillText(specs.owner.text, oX, oY);
+      const oColor = specs.owner.color || '#111111';
+      drawSpecTextItem(targetCtx, specs.owner.text, oX, oY, specs.owner.size, specs.owner.font, '700', oColor);
     }
 
-    if (specs.serial.text) {
+    // 3. 個体識別番号 / シリアル (独立描画)
+    if (specs.serial && specs.serial.text) {
       const sY = h * (specs.serial.y / 100);
       const sX = (w / 2) + (specs.serial.x || 0);
-      targetCtx.font = `700 ${specs.serial.size}px ${specs.serial.font}`;
-      targetCtx.fillStyle = '#2a2a2a';
-      targetCtx.letterSpacing = '1px';
-      targetCtx.textAlign = 'center';
-      targetCtx.textBaseline = 'middle';
-      targetCtx.fillText(specs.serial.text, sX, sY);
+      const sColor = specs.serial.color || '#2a2a2a';
+      drawSpecTextItem(targetCtx, specs.serial.text, sX, sY, specs.serial.size, specs.serial.font, '700', sColor, '1px');
     }
 
-    if (specs.size.text) {
+    // 4. サイズ (独立描画)
+    if (specs.size && specs.size.text) {
       const zY = h * (specs.size.y / 100);
       const zX = (w / 2) + (specs.size.x || 0);
-      targetCtx.font = `800 ${specs.size.size}px ${specs.size.font}`;
-      targetCtx.fillStyle = '#111';
-      targetCtx.textAlign = 'center';
-      targetCtx.textBaseline = 'middle';
-      targetCtx.fillText(specs.size.text, zX, zY);
+      const zColor = specs.size.color || '#111111';
+      drawSpecTextItem(targetCtx, specs.size.text, zX, zY, specs.size.size, specs.size.font, '800', zColor);
     }
 
-    if (specs.extra.text) {
+    // 5. 追加証明情報 (独立描画)
+    if (specs.extra && specs.extra.text) {
       const eY = h * (specs.extra.y / 100);
       const eX = (w / 2) + (specs.extra.x || 0);
-      targetCtx.font = `600 ${specs.extra.size}px ${specs.extra.font}`;
-      targetCtx.fillStyle = '#444';
-      targetCtx.textAlign = 'center';
-      targetCtx.textBaseline = 'middle';
-      targetCtx.fillText(specs.extra.text, eX, eY);
+      const eColor = specs.extra.color || '#444444';
+      drawSpecTextItem(targetCtx, specs.extra.text, eX, eY, specs.extra.size, specs.extra.font, '600', eColor);
     }
 
     targetCtx.restore();

@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.29.0">
+  <link rel="stylesheet" href="style.css?v=4.30.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -46,7 +46,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.29.0</span>
+            <span class="app-version-badge" id="appVersion">v4.30.0</span>
             <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
         </div>
@@ -78,6 +78,7 @@
             <div class="preview-toolbar-row">
               <div class="ratio-badge" id="ratioBadge">比率: 5:7 (トレカ)</div>
               <div class="res-badge" id="resBadge">1500 × 2100 px</div>
+              <button type="button" class="btn-undo disabled" id="btnUndo" title="直前の操作に戻す（アンドゥ）" disabled>↩️ 戻る</button>
               <button type="button" class="btn-refresh" id="btnRerender" title="再描画">🔄 再描画</button>
             </div>
             <div class="calibration-row">
@@ -496,7 +497,6 @@
           macOS / iOS に最初から確実に内蔵されている<strong>「商用利用が完全に保証された標準フォント」</strong>のみを厳選。項目ごとにフォントと位置・大きさを個別に微調整できます。
         </p>
 
-        <!-- ① オーナー名 -->
         <!-- ① オーナーラベル -->
         <div class="control-card">
           <div class="card-header-toggle">
@@ -521,12 +521,40 @@
           </div>
           <div class="slider-group-2col mt-2">
             <div class="slider-item">
-              <div class="slider-label-row"><span>文字サイズ</span><span id="ownerLabelSizeVal">36px</span></div>
+              <div class="slider-label-row">
+                <span>文字サイズ</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="ownerLabelSize" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="ownerLabelSizeVal" data-target="ownerLabelSize" min="16" max="90" value="36">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="ownerLabelSize" title="1増やす">+</button>
+                  <span class="stepper-unit">px</span>
+                </div>
+              </div>
               <input type="range" id="ownerLabelSize" min="16" max="90" value="36" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>縦位置 (Y)</span><span id="ownerLabelYVal">74%</span></div>
+              <div class="slider-label-row">
+                <span>縦位置 (Y)</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="ownerLabelYOffset" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="ownerLabelYVal" data-target="ownerLabelYOffset" min="50" max="98" value="74">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="ownerLabelYOffset" title="1増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
               <input type="range" id="ownerLabelYOffset" min="50" max="98" value="74" class="custom-range">
+            </div>
+          </div>
+          <div class="spec-color-row mt-2">
+            <span class="spec-color-label">文字色</span>
+            <div class="spec-color-controls">
+              <input type="color" id="ownerLabelColor" class="spec-color-picker" value="#222222" title="自由な文字色を選択">
+              <div class="color-preset-chips" data-target="ownerLabelColor">
+                <button type="button" class="btn-color-chip active" data-color="#222222" title="漆黒ブラック"><span class="chip-color-dot" style="background:#222222;"></span>黒</button>
+                <button type="button" class="btn-color-chip" data-color="gold" title="24K純金ゴールド"><span class="chip-color-dot" style="background:linear-gradient(135deg, #f5d57a, #c9983e, #8e631d);"></span>金</button>
+                <button type="button" class="btn-color-chip" data-color="#841315" title="深紅ルビー"><span class="chip-color-dot" style="background:#841315;"></span>紅</button>
+                <button type="button" class="btn-color-chip" data-color="#ffffff" title="純白ホワイト"><span class="chip-color-dot" style="background:#ffffff; border:1px solid #777;"></span>白</button>
+              </div>
             </div>
           </div>
         </div>
@@ -563,12 +591,40 @@
           </div>
           <div class="slider-group-2col mt-2">
             <div class="slider-item">
-              <div class="slider-label-row"><span>文字サイズ</span><span id="ownerSizeVal">62px</span></div>
+              <div class="slider-label-row">
+                <span>文字サイズ</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="ownerSize" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="ownerSizeVal" data-target="ownerSize" min="24" max="120" value="62">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="ownerSize" title="1増やす">+</button>
+                  <span class="stepper-unit">px</span>
+                </div>
+              </div>
               <input type="range" id="ownerSize" min="24" max="120" value="62" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>縦位置 (Y)</span><span id="ownerYVal">78%</span></div>
+              <div class="slider-label-row">
+                <span>縦位置 (Y)</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="ownerYOffset" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="ownerYVal" data-target="ownerYOffset" min="50" max="98" value="78">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="ownerYOffset" title="1増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
               <input type="range" id="ownerYOffset" min="50" max="98" value="78" class="custom-range">
+            </div>
+          </div>
+          <div class="spec-color-row mt-2">
+            <span class="spec-color-label">文字色</span>
+            <div class="spec-color-controls">
+              <input type="color" id="ownerColor" class="spec-color-picker" value="#111111" title="自由な文字色を選択">
+              <div class="color-preset-chips" data-target="ownerColor">
+                <button type="button" class="btn-color-chip active" data-color="#111111" title="漆黒ブラック"><span class="chip-color-dot" style="background:#111111;"></span>黒</button>
+                <button type="button" class="btn-color-chip" data-color="gold" title="24K純金ゴールド"><span class="chip-color-dot" style="background:linear-gradient(135deg, #f5d57a, #c9983e, #8e631d);"></span>金</button>
+                <button type="button" class="btn-color-chip" data-color="#841315" title="深紅ルビー"><span class="chip-color-dot" style="background:#841315;"></span>紅</button>
+                <button type="button" class="btn-color-chip" data-color="#ffffff" title="純白ホワイト"><span class="chip-color-dot" style="background:#ffffff; border:1px solid #777;"></span>白</button>
+              </div>
             </div>
           </div>
         </div>
@@ -596,12 +652,40 @@
           </div>
           <div class="slider-group-2col mt-2">
             <div class="slider-item">
-              <div class="slider-label-row"><span>文字サイズ</span><span id="serialSizeVal">38px</span></div>
+              <div class="slider-label-row">
+                <span>文字サイズ</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="serialSize" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="serialSizeVal" data-target="serialSize" min="18" max="90" value="38">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="serialSize" title="1増やす">+</button>
+                  <span class="stepper-unit">px</span>
+                </div>
+              </div>
               <input type="range" id="serialSize" min="18" max="90" value="38" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>縦位置 (Y)</span><span id="serialYVal">83%</span></div>
+              <div class="slider-label-row">
+                <span>縦位置 (Y)</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="serialYOffset" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="serialYVal" data-target="serialYOffset" min="50" max="98" value="83">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="serialYOffset" title="1増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
               <input type="range" id="serialYOffset" min="50" max="98" value="83" class="custom-range">
+            </div>
+          </div>
+          <div class="spec-color-row mt-2">
+            <span class="spec-color-label">文字色</span>
+            <div class="spec-color-controls">
+              <input type="color" id="serialColor" class="spec-color-picker" value="#2a2a2a" title="自由な文字色を選択">
+              <div class="color-preset-chips" data-target="serialColor">
+                <button type="button" class="btn-color-chip active" data-color="#2a2a2a" title="漆黒ブラック"><span class="chip-color-dot" style="background:#2a2a2a;"></span>黒</button>
+                <button type="button" class="btn-color-chip" data-color="gold" title="24K純金ゴールド"><span class="chip-color-dot" style="background:linear-gradient(135deg, #f5d57a, #c9983e, #8e631d);"></span>金</button>
+                <button type="button" class="btn-color-chip" data-color="#841315" title="深紅ルビー"><span class="chip-color-dot" style="background:#841315;"></span>紅</button>
+                <button type="button" class="btn-color-chip" data-color="#ffffff" title="純白ホワイト"><span class="chip-color-dot" style="background:#ffffff; border:1px solid #777;"></span>白</button>
+              </div>
             </div>
           </div>
         </div>
@@ -628,12 +712,40 @@
           </div>
           <div class="slider-group-2col mt-2">
             <div class="slider-item">
-              <div class="slider-label-row"><span>文字サイズ</span><span id="sizeSizeVal">58px</span></div>
+              <div class="slider-label-row">
+                <span>文字サイズ</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="sizeSize" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="sizeSizeVal" data-target="sizeSize" min="24" max="140" value="58">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="sizeSize" title="1増やす">+</button>
+                  <span class="stepper-unit">px</span>
+                </div>
+              </div>
               <input type="range" id="sizeSize" min="24" max="140" value="58" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>縦位置 (Y)</span><span id="sizeYVal">88%</span></div>
+              <div class="slider-label-row">
+                <span>縦位置 (Y)</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="sizeYOffset" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="sizeYVal" data-target="sizeYOffset" min="50" max="98" value="88">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="sizeYOffset" title="1増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
               <input type="range" id="sizeYOffset" min="50" max="98" value="88" class="custom-range">
+            </div>
+          </div>
+          <div class="spec-color-row mt-2">
+            <span class="spec-color-label">文字色</span>
+            <div class="spec-color-controls">
+              <input type="color" id="sizeColor" class="spec-color-picker" value="#111111" title="自由な文字色を選択">
+              <div class="color-preset-chips" data-target="sizeColor">
+                <button type="button" class="btn-color-chip active" data-color="#111111" title="漆黒ブラック"><span class="chip-color-dot" style="background:#111111;"></span>黒</button>
+                <button type="button" class="btn-color-chip" data-color="gold" title="24K純金ゴールド"><span class="chip-color-dot" style="background:linear-gradient(135deg, #f5d57a, #c9983e, #8e631d);"></span>金</button>
+                <button type="button" class="btn-color-chip" data-color="#841315" title="深紅ルビー"><span class="chip-color-dot" style="background:#841315;"></span>紅</button>
+                <button type="button" class="btn-color-chip" data-color="#ffffff" title="純白ホワイト"><span class="chip-color-dot" style="background:#ffffff; border:1px solid #777;"></span>白</button>
+              </div>
             </div>
           </div>
         </div>
@@ -659,12 +771,40 @@
           </div>
           <div class="slider-group-2col mt-2">
             <div class="slider-item">
-              <div class="slider-label-row"><span>文字サイズ</span><span id="extraSizeVal">32px</span></div>
+              <div class="slider-label-row">
+                <span>文字サイズ</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="extraSize" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="extraSizeVal" data-target="extraSize" min="16" max="70" value="32">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="extraSize" title="1増やす">+</button>
+                  <span class="stepper-unit">px</span>
+                </div>
+              </div>
               <input type="range" id="extraSize" min="16" max="70" value="32" class="custom-range">
             </div>
             <div class="slider-item">
-              <div class="slider-label-row"><span>縦位置 (Y)</span><span id="extraYVal">93%</span></div>
+              <div class="slider-label-row">
+                <span>縦位置 (Y)</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="extraYOffset" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="extraYVal" data-target="extraYOffset" min="50" max="98" value="93">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="extraYOffset" title="1増やす">+</button>
+                  <span class="stepper-unit">%</span>
+                </div>
+              </div>
               <input type="range" id="extraYOffset" min="50" max="98" value="93" class="custom-range">
+            </div>
+          </div>
+          <div class="spec-color-row mt-2">
+            <span class="spec-color-label">文字色</span>
+            <div class="spec-color-controls">
+              <input type="color" id="extraColor" class="spec-color-picker" value="#444444" title="自由な文字色を選択">
+              <div class="color-preset-chips" data-target="extraColor">
+                <button type="button" class="btn-color-chip active" data-color="#444444" title="漆黒ブラック"><span class="chip-color-dot" style="background:#444444;"></span>黒</button>
+                <button type="button" class="btn-color-chip" data-color="gold" title="24K純金ゴールド"><span class="chip-color-dot" style="background:linear-gradient(135deg, #f5d57a, #c9983e, #8e631d);"></span>金</button>
+                <button type="button" class="btn-color-chip" data-color="#841315" title="深紅ルビー"><span class="chip-color-dot" style="background:#841315;"></span>紅</button>
+                <button type="button" class="btn-color-chip" data-color="#ffffff" title="純白ホワイト"><span class="chip-color-dot" style="background:#ffffff; border:1px solid #777;"></span>白</button>
+              </div>
             </div>
           </div>
         </div>
@@ -800,7 +940,7 @@
         <div id="archiveGrid" class="archive-cards-grid"></div>
       </section>
 
-      <!-- メイン4: スタジオ環境 ＆ API設定タブ (v4.29.0 統合) -->
+      <!-- メイン4: スタジオ環境 ＆ API設定タブ (v4.30.0 統合) -->
       <section id="tab-settings" class="tab-content">
         <div class="section-title-row">
           <h3>⚙️ スタジオ環境 ＆ API設定</h3>
@@ -874,7 +1014,7 @@
         <div class="control-card mt-3">
           <div class="control-card-header">
             <h4>ℹ️ システム ＆ ストレージ情報</h4>
-            <span class="app-version-badge">v4.29.0</span>
+            <span class="app-version-badge">v4.30.0</span>
           </div>
           <div class="system-info-list mt-2">
             <div class="info-row">
@@ -935,8 +1075,12 @@
 
       <div class="rail-divider"></div>
 
-      <!-- クイック保存アクション -->
-      <div class="rail-group rail-action-group" title="クイック出力">
+      <!-- クイック操作・出力アクション -->
+      <div class="rail-group rail-action-group" title="操作・出力">
+        <button type="button" class="rail-action-btn disabled" id="railBtnUndo" title="直前の操作に戻す（アンドゥ）" disabled>
+          <span class="rail-icon">↩️</span>
+          <span class="rail-sub-label">戻る</span>
+        </button>
         <button type="button" class="rail-action-btn" id="railBtnQuickSave" title="完成カードを高解像度PNG保存">
           <span class="rail-icon">📥</span>
           <span class="rail-sub-label">出力</span>
@@ -1203,6 +1347,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.29.0"></script>
+  <script src="app.js?v=4.30.0"></script>
 </body>
 </html>

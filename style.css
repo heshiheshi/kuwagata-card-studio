@@ -2242,5 +2242,121 @@ input:checked + .toggle-slider:before {
   }
 }
 
+/* ↩️ アンドゥ (戻る) ボタン */
+.btn-undo {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #eee;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.btn-undo:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.btn-undo:disabled,
+.btn-undo.disabled,
+.rail-action-btn:disabled,
+.rail-action-btn.disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+/* 🎨 スペック文字カラー選択 ＆ プリセット */
+.spec-color-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm, 4px);
+  padding: 6px 8px;
+}
+
+.spec-color-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted, #aaa);
+}
+
+.spec-color-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spec-color-picker {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  cursor: pointer;
+  background: transparent;
+  outline: none;
+}
+
+.spec-color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.spec-color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+.color-preset-chips {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-color-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-color-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-color-chip.active {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: var(--border-gold, #d4af37);
+  color: var(--gold-text, #f5d57a);
+  font-weight: 700;
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
+}
+
+.chip-color-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+
 
 
