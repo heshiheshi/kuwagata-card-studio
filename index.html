@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.30.0">
+  <link rel="stylesheet" href="style.css?v=4.31.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -24,9 +24,8 @@
         <p class="auth-sub">最高峰クワガタ血統証明カード作成スタジオ</p>
       </div>
 
-      <form id="authGateForm" class="auth-form">
-        <div class="form-group">
-          <label for="authPassInput">合言葉（パスワード）を入力してください</label>
+      <form id="authGateForm" class="auth-form" onsubmit="return false;">
+        <div class="auth-input-wrap">
           <input type="password" id="authPassInput" placeholder="Passcode..." autocomplete="current-password" required>
         </div>
         <div id="authErrorMsg" class="auth-error-msg hidden">合言葉が正しくありません</div>
@@ -46,7 +45,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.30.0</span>
+            <span class="app-version-badge" id="appVersion">v4.31.0</span>
             <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
         </div>
@@ -557,6 +556,31 @@
               </div>
             </div>
           </div>
+          <div class="spec-fx-row mt-2">
+            <span class="spec-fx-label">エフェクト</span>
+            <div class="spec-fx-controls">
+              <button type="button" class="btn-fx-toggle" id="ownerLabelGlowBtn" data-target="ownerLabel" data-fx="glow" title="文字の周囲に白い霧・光彩の縁取りを付与">
+                <span class="fx-icon">🌫️</span> 白い霧 <span class="fx-state-tag">OFF</span>
+              </button>
+              <button type="button" class="btn-fx-toggle" id="ownerLabelShadowBtn" data-target="ownerLabel" data-fx="shadow" title="文字の背後に立体的な影（ドロップシャドウ）を付与">
+                <span class="fx-icon">🌑</span> 影 <span class="fx-state-tag">OFF</span>
+              </button>
+            </div>
+          </div>
+          <div class="spec-glow-slider-row mt-2 hidden" id="ownerLabelGlowRow">
+            <div class="slider-item">
+              <div class="slider-label-row">
+                <span>🌫️ 白霧ぼかし強度</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="ownerLabelGlowBlur" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="ownerLabelGlowBlurVal" data-target="ownerLabelGlowBlur" min="0" max="40" value="14">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="ownerLabelGlowBlur" title="1増やす">+</button>
+                  <span class="stepper-unit">px</span>
+                </div>
+              </div>
+              <input type="range" id="ownerLabelGlowBlur" min="0" max="40" value="14" class="custom-range">
+            </div>
+          </div>
         </div>
 
         <!-- ② オーナー名 / ブリーダー名 -->
@@ -627,6 +651,31 @@
               </div>
             </div>
           </div>
+          <div class="spec-fx-row mt-2">
+            <span class="spec-fx-label">エフェクト</span>
+            <div class="spec-fx-controls">
+              <button type="button" class="btn-fx-toggle" id="ownerGlowBtn" data-target="owner" data-fx="glow" title="文字の周囲に白い霧・光彩の縁取りを付与">
+                <span class="fx-icon">🌫️</span> 白い霧 <span class="fx-state-tag">OFF</span>
+              </button>
+              <button type="button" class="btn-fx-toggle" id="ownerShadowBtn" data-target="owner" data-fx="shadow" title="文字の背後に立体的な影（ドロップシャドウ）を付与">
+                <span class="fx-icon">🌑</span> 影 <span class="fx-state-tag">OFF</span>
+              </button>
+            </div>
+          </div>
+          <div class="spec-glow-slider-row mt-2 hidden" id="ownerGlowRow">
+            <div class="slider-item">
+              <div class="slider-label-row">
+                <span>🌫️ 白霧ぼかし強度</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="ownerGlowBlur" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="ownerGlowBlurVal" data-target="ownerGlowBlur" min="0" max="40" value="14">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="ownerGlowBlur" title="1増やす">+</button>
+                  <span class="stepper-unit">px</span>
+                </div>
+              </div>
+              <input type="range" id="ownerGlowBlur" min="0" max="40" value="14" class="custom-range">
+            </div>
+          </div>
         </div>
 
         <!-- ③ シリアル / 管理No -->
@@ -686,6 +735,31 @@
                 <button type="button" class="btn-color-chip" data-color="#841315" title="深紅ルビー"><span class="chip-color-dot" style="background:#841315;"></span>紅</button>
                 <button type="button" class="btn-color-chip" data-color="#ffffff" title="純白ホワイト"><span class="chip-color-dot" style="background:#ffffff; border:1px solid #777;"></span>白</button>
               </div>
+            </div>
+          </div>
+          <div class="spec-fx-row mt-2">
+            <span class="spec-fx-label">エフェクト</span>
+            <div class="spec-fx-controls">
+              <button type="button" class="btn-fx-toggle" id="serialGlowBtn" data-target="serial" data-fx="glow" title="文字の周囲に白い霧・光彩の縁取りを付与">
+                <span class="fx-icon">🌫️</span> 白い霧 <span class="fx-state-tag">OFF</span>
+              </button>
+              <button type="button" class="btn-fx-toggle" id="serialShadowBtn" data-target="serial" data-fx="shadow" title="文字の背後に立体的な影（ドロップシャドウ）を付与">
+                <span class="fx-icon">🌑</span> 影 <span class="fx-state-tag">OFF</span>
+              </button>
+            </div>
+          </div>
+          <div class="spec-glow-slider-row mt-2 hidden" id="serialGlowRow">
+            <div class="slider-item">
+              <div class="slider-label-row">
+                <span>🌫️ 白霧ぼかし強度</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="serialGlowBlur" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="serialGlowBlurVal" data-target="serialGlowBlur" min="0" max="40" value="14">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="serialGlowBlur" title="1増やす">+</button>
+                  <span class="stepper-unit">px</span>
+                </div>
+              </div>
+              <input type="range" id="serialGlowBlur" min="0" max="40" value="14" class="custom-range">
             </div>
           </div>
         </div>
@@ -748,6 +822,31 @@
               </div>
             </div>
           </div>
+          <div class="spec-fx-row mt-2">
+            <span class="spec-fx-label">エフェクト</span>
+            <div class="spec-fx-controls">
+              <button type="button" class="btn-fx-toggle" id="sizeGlowBtn" data-target="size" data-fx="glow" title="文字の周囲に白い霧・光彩の縁取りを付与">
+                <span class="fx-icon">🌫️</span> 白い霧 <span class="fx-state-tag">OFF</span>
+              </button>
+              <button type="button" class="btn-fx-toggle" id="sizeShadowBtn" data-target="size" data-fx="shadow" title="文字の背後に立体的な影（ドロップシャドウ）を付与">
+                <span class="fx-icon">🌑</span> 影 <span class="fx-state-tag">OFF</span>
+              </button>
+            </div>
+          </div>
+          <div class="spec-glow-slider-row mt-2 hidden" id="sizeGlowRow">
+            <div class="slider-item">
+              <div class="slider-label-row">
+                <span>🌫️ 白霧ぼかし強度</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="sizeGlowBlur" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="sizeGlowBlurVal" data-target="sizeGlowBlur" min="0" max="40" value="14">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="sizeGlowBlur" title="1増やす">+</button>
+                  <span class="stepper-unit">px</span>
+                </div>
+              </div>
+              <input type="range" id="sizeGlowBlur" min="0" max="40" value="14" class="custom-range">
+            </div>
+          </div>
         </div>
 
         <!-- ⑤ 追加証明情報 -->
@@ -805,6 +904,31 @@
                 <button type="button" class="btn-color-chip" data-color="#841315" title="深紅ルビー"><span class="chip-color-dot" style="background:#841315;"></span>紅</button>
                 <button type="button" class="btn-color-chip" data-color="#ffffff" title="純白ホワイト"><span class="chip-color-dot" style="background:#ffffff; border:1px solid #777;"></span>白</button>
               </div>
+            </div>
+          </div>
+          <div class="spec-fx-row mt-2">
+            <span class="spec-fx-label">エフェクト</span>
+            <div class="spec-fx-controls">
+              <button type="button" class="btn-fx-toggle" id="extraGlowBtn" data-target="extra" data-fx="glow" title="文字の周囲に白い霧・光彩の縁取りを付与">
+                <span class="fx-icon">🌫️</span> 白い霧 <span class="fx-state-tag">OFF</span>
+              </button>
+              <button type="button" class="btn-fx-toggle" id="extraShadowBtn" data-target="extra" data-fx="shadow" title="文字の背後に立体的な影（ドロップシャドウ）を付与">
+                <span class="fx-icon">🌑</span> 影 <span class="fx-state-tag">OFF</span>
+              </button>
+            </div>
+          </div>
+          <div class="spec-glow-slider-row mt-2 hidden" id="extraGlowRow">
+            <div class="slider-item">
+              <div class="slider-label-row">
+                <span>🌫️ 白霧ぼかし強度</span>
+                <div class="slider-stepper">
+                  <button type="button" class="stepper-btn stepper-dec" data-target="extraGlowBlur" title="1減らす">−</button>
+                  <input type="number" class="stepper-input" id="extraGlowBlurVal" data-target="extraGlowBlur" min="0" max="40" value="14">
+                  <button type="button" class="stepper-btn stepper-inc" data-target="extraGlowBlur" title="1増やす">+</button>
+                  <span class="stepper-unit">px</span>
+                </div>
+              </div>
+              <input type="range" id="extraGlowBlur" min="0" max="40" value="14" class="custom-range">
             </div>
           </div>
         </div>
@@ -940,7 +1064,7 @@
         <div id="archiveGrid" class="archive-cards-grid"></div>
       </section>
 
-      <!-- メイン4: スタジオ環境 ＆ API設定タブ (v4.30.0 統合) -->
+      <!-- メイン4: スタジオ環境 ＆ API設定タブ (v4.31.0 統合) -->
       <section id="tab-settings" class="tab-content">
         <div class="section-title-row">
           <h3>⚙️ スタジオ環境 ＆ API設定</h3>
@@ -1014,7 +1138,7 @@
         <div class="control-card mt-3">
           <div class="control-card-header">
             <h4>ℹ️ システム ＆ ストレージ情報</h4>
-            <span class="app-version-badge">v4.30.0</span>
+            <span class="app-version-badge">v4.31.0</span>
           </div>
           <div class="system-info-list mt-2">
             <div class="info-row">
@@ -1347,6 +1471,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.30.0"></script>
+  <script src="app.js?v=4.31.0"></script>
 </body>
 </html>

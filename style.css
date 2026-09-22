@@ -2357,6 +2357,84 @@ input:checked + .toggle-slider:before {
   flex-shrink: 0;
 }
 
+/* 🌫️ エフェクト（白い霧 ＆ 影）トグル・スライダー (v4.31.0) */
+.spec-fx-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm, 4px);
+  padding: 6px 8px;
+}
+
+.spec-fx-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted, #aaa);
+}
+
+.spec-fx-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-fx-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-fx-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.btn-fx-toggle.active {
+  background: rgba(212, 175, 55, 0.18);
+  border-color: var(--border-gold, #d4af37);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.28);
+}
+
+.btn-fx-toggle .fx-state-tag {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #888;
+  font-weight: 700;
+}
+
+.btn-fx-toggle.active .fx-state-tag {
+  background: rgba(212, 175, 55, 0.45);
+  color: #ffe699;
+}
+
+.spec-glow-slider-row {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(212, 175, 55, 0.3);
+  border-radius: var(--radius-sm, 4px);
+  padding: 6px 8px;
+  transition: all 0.2s ease;
+}
+
+.spec-glow-slider-row.hidden {
+  display: none !important;
+}
+
 
 
 

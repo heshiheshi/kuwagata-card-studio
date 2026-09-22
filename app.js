@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.30.0 Universal Dual-Slot Auth & Key Honor Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.31.0 Spec Precision & Effect Glow Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.30.0';
+  const APP_VERSION = 'v4.31.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -307,7 +307,10 @@
           size: 36,
           y: 74,
           x: 0,
-          color: '#222222'
+          color: '#222222',
+          shadow: false,
+          glow: false,
+          glowBlur: 14
         },
         owner: {
           label: 'Owner',
@@ -316,7 +319,10 @@
           size: 62,
           y: 78,
           x: 0,
-          color: '#111111'
+          color: '#111111',
+          shadow: false,
+          glow: false,
+          glowBlur: 14
         },
         serial: {
           text: 'NO.AS-05',
@@ -324,7 +330,10 @@
           size: 38,
           y: 83,
           x: 0,
-          color: '#2a2a2a'
+          color: '#2a2a2a',
+          shadow: false,
+          glow: false,
+          glowBlur: 14
         },
         size: {
           text: '♂77mm',
@@ -332,7 +341,10 @@
           size: 58,
           y: 88,
           x: 0,
-          color: '#111111'
+          color: '#111111',
+          shadow: false,
+          glow: false,
+          glowBlur: 14
         },
         extra: {
           text: '',
@@ -340,7 +352,10 @@
           size: 32,
           y: 93,
           x: 0,
-          color: '#444444'
+          color: '#444444',
+          shadow: false,
+          glow: false,
+          glowBlur: 14
         }
       }
     }
@@ -949,7 +964,7 @@
     }
   }
 
-  // --- ↩️ 履歴管理・アンドゥマネージャー (HistoryManager - v4.30.0) ---
+  // --- ↩️ 履歴管理・アンドゥマネージャー (HistoryManager - v4.31.0) ---
   const HistoryManager = {
     history: [],
     currentIndex: -1,
@@ -1127,6 +1142,13 @@
             if (specs.serial && !specs.serial.color) specs.serial.color = '#2a2a2a';
             if (specs.size && !specs.size.color) specs.size.color = '#111111';
             if (specs.extra && !specs.extra.color) specs.extra.color = '#444444';
+            ['ownerLabel', 'owner', 'serial', 'size', 'extra'].forEach(k => {
+              if (specs[k]) {
+                if (specs[k].shadow === undefined) specs[k].shadow = false;
+                if (specs[k].glow === undefined) specs[k].glow = false;
+                if (specs[k].glowBlur === undefined) specs[k].glowBlur = 14;
+              }
+            });
           }
         }
         if (saved.aspectRatio) state.aspectRatio = saved.aspectRatio;
@@ -1198,7 +1220,10 @@
         size: 36,
         y: (state.layers.specs.owner.y ? state.layers.specs.owner.y - 4 : 74),
         x: 0,
-        color: '#222222'
+        color: '#222222',
+        shadow: false,
+        glow: false,
+        glowBlur: 14
       };
     }
     setVal('ownerLabelText', state.layers.specs.ownerLabel.text);
@@ -1266,6 +1291,42 @@
     syncSpecColor('serialColor', state.layers.specs.serial?.color, '#2a2a2a');
     syncSpecColor('sizeColor', state.layers.specs.size?.color, '#111111');
     syncSpecColor('extraColor', state.layers.specs.extra?.color, '#444444');
+
+    // 🌫️ スペック文字エフェクト同期（白い霧 ＆ 影 ＆ ぼかし強度）
+    const syncSpecFx = (targetKey, spec) => {
+      if (!spec) return;
+      const isGlow = !!spec.glow;
+      const isShadow = !!spec.shadow;
+      const blur = spec.glowBlur !== undefined ? spec.glowBlur : 14;
+
+      const glowBtn = document.getElementById(`${targetKey}GlowBtn`);
+      if (glowBtn) {
+        glowBtn.classList.toggle('active', isGlow);
+        const tag = glowBtn.querySelector('.fx-state-tag');
+        if (tag) tag.textContent = isGlow ? 'ON' : 'OFF';
+      }
+
+      const shadowBtn = document.getElementById(`${targetKey}ShadowBtn`);
+      if (shadowBtn) {
+        shadowBtn.classList.toggle('active', isShadow);
+        const tag = shadowBtn.querySelector('.fx-state-tag');
+        if (tag) tag.textContent = isShadow ? 'ON' : 'OFF';
+      }
+
+      const glowRow = document.getElementById(`${targetKey}GlowRow`);
+      if (glowRow) {
+        glowRow.classList.toggle('hidden', !isGlow);
+      }
+
+      setVal(`${targetKey}GlowBlur`, blur);
+      setVal(`${targetKey}GlowBlurVal`, blur + 'px');
+    };
+
+    syncSpecFx('ownerLabel', state.layers.specs.ownerLabel);
+    syncSpecFx('owner', state.layers.specs.owner);
+    syncSpecFx('serial', state.layers.specs.serial);
+    syncSpecFx('size', state.layers.specs.size);
+    syncSpecFx('extra', state.layers.specs.extra);
 
     // 📐 印刷安全枠ガイド入力の同期
     setCheck('toggleSafetyGuide', !!state.showSafetyGuide);
@@ -2420,6 +2481,51 @@
       });
     });
 
+    // 🌫️ スペック文字エフェクト（白い霧 ＆ 影 ＆ ぼかし強度）リスナー
+    const specItems = [
+      { key: 'ownerLabel', getSpec: () => state.layers.specs.ownerLabel },
+      { key: 'owner', getSpec: () => state.layers.specs.owner },
+      { key: 'serial', getSpec: () => state.layers.specs.serial },
+      { key: 'size', getSpec: () => state.layers.specs.size },
+      { key: 'extra', getSpec: () => state.layers.specs.extra }
+    ];
+
+    document.querySelectorAll('.btn-fx-toggle').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetKey = btn.dataset.target;
+        const fxType = btn.dataset.fx; // 'glow' or 'shadow'
+        const item = specItems.find(i => i.key === targetKey);
+        if (!item) return;
+        const spec = item.getSpec();
+        if (!spec) return;
+
+        spec[fxType] = !spec[fxType];
+
+        btn.classList.toggle('active', !!spec[fxType]);
+        const tag = btn.querySelector('.fx-state-tag');
+        if (tag) tag.textContent = spec[fxType] ? 'ON' : 'OFF';
+
+        if (fxType === 'glow') {
+          const glowRow = document.getElementById(`${targetKey}GlowRow`);
+          if (glowRow) glowRow.classList.toggle('hidden', !spec.glow);
+        }
+
+        saveState();
+        renderCard();
+      });
+    });
+
+    specItems.forEach(({ key, getSpec }) => {
+      bindSlider(`${key}GlowBlur`, (val) => {
+        const spec = getSpec();
+        if (spec) {
+          spec.glowBlur = parseInt(val, 10);
+          setVal(`${key}GlowBlurVal`, val + 'px');
+        }
+      });
+    });
+
     // ↩️ アンドゥ (戻る) ボタン ＆ キーボードショートカット (Cmd+Z / Ctrl+Z)
     const handleUndo = (e) => {
       if (e) e.preventDefault();
@@ -2543,7 +2649,10 @@
         size: 36,
         y: 74,
         x: 0,
-        color: '#222222'
+        color: '#222222',
+        shadow: false,
+        glow: false,
+        glowBlur: 14
       };
       state.layers.specs.owner = {
         text: '佃 宗行 様',
@@ -2551,14 +2660,29 @@
         size: 62,
         y: 78,
         x: 0,
-        color: '#111111'
+        color: '#111111',
+        shadow: false,
+        glow: false,
+        glowBlur: 14
       };
       state.layers.specs.serial.text = 'NO.AS-05';
       state.layers.specs.serial.color = '#2a2a2a';
+      state.layers.specs.serial.shadow = false;
+      state.layers.specs.serial.glow = false;
+      state.layers.specs.serial.glowBlur = 14;
+
       state.layers.specs.size.text = '♂77mm';
       state.layers.specs.size.color = '#111111';
+      state.layers.specs.size.shadow = false;
+      state.layers.specs.size.glow = false;
+      state.layers.specs.size.glowBlur = 14;
+
       state.layers.specs.extra.text = '';
       state.layers.specs.extra.color = '#444444';
+      state.layers.specs.extra.shadow = false;
+      state.layers.specs.extra.glow = false;
+      state.layers.specs.extra.glowBlur = 14;
+
       syncInputsFromState();
       saveState();
       renderCard();
@@ -4296,12 +4420,42 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
     targetCtx.restore();
   }
 
-  function drawSpecTextItem(targetCtx, text, x, y, size, fontFace, fontWeight, color, letterSpacing = '0px') {
+  function drawSpecTextItem(targetCtx, text, x, y, size, fontFace, fontWeight, color, letterSpacing = '0px', options = {}) {
     if (!text || String(text).trim() === '') return;
+    const isGlow = !!options.glow;
+    const isShadow = !!options.shadow;
+    const glowBlur = options.glowBlur !== undefined ? Number(options.glowBlur) : 14;
+
+    // 1. 🌫️ 白い霧・光彩の縁取り（ホワイトグロー）描画
+    if (isGlow) {
+      targetCtx.save();
+      targetCtx.font = `${fontWeight || '700'} ${size}px ${fontFace || "'Cinzel', serif"}`;
+      if (letterSpacing && letterSpacing !== '0px') {
+        targetCtx.letterSpacing = letterSpacing;
+      }
+      targetCtx.textAlign = 'center';
+      targetCtx.textBaseline = 'middle';
+
+      // 霧のように広がるソフトホワイト光彩
+      targetCtx.shadowColor = 'rgba(255, 255, 255, 0.95)';
+      targetCtx.shadowBlur = glowBlur;
+      targetCtx.shadowOffsetX = 0;
+      targetCtx.shadowOffsetY = 0;
+
+      // 下層に半透明白で2回描画して霧の密度を高める
+      targetCtx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+      targetCtx.fillText(text, x, y);
+      targetCtx.fillText(text, x, y);
+      targetCtx.restore();
+    }
+
+    // 2. 👑 24K純金文字の描画
     if (color === 'gold') {
-      drawGoldText(targetCtx, text, x, y, size, fontFace);
+      drawGoldText(targetCtx, text, x, y, size, fontFace, isShadow);
       return;
     }
+
+    // 3. 通常テキスト（シャドウ付き・なし）描画
     targetCtx.save();
     targetCtx.font = `${fontWeight || '700'} ${size}px ${fontFace || "'Cinzel', serif"}`;
     if (letterSpacing && letterSpacing !== '0px') {
@@ -4310,16 +4464,25 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
     targetCtx.textAlign = 'center';
     targetCtx.textBaseline = 'middle';
 
-    const colLower = (color || '').toLowerCase();
-    const isLight = colLower === '#ffffff' || colLower === '#fff' || colLower === 'white' || colLower === '#f8f8f8';
-    if (isLight) {
-      targetCtx.shadowColor = 'rgba(0, 0, 0, 0.55)';
-      targetCtx.shadowBlur = Math.max(3, size * 0.08);
-      targetCtx.shadowOffsetX = 1;
-      targetCtx.shadowOffsetY = 2;
+    if (isShadow) {
+      targetCtx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+      targetCtx.shadowBlur = Math.max(4, size * 0.1);
+      targetCtx.shadowOffsetX = Math.max(2, size * 0.025);
+      targetCtx.shadowOffsetY = Math.max(3, size * 0.04);
     } else {
-      targetCtx.shadowColor = 'transparent';
-      targetCtx.shadowBlur = 0;
+      const colLower = (color || '').toLowerCase();
+      const isLight = colLower === '#ffffff' || colLower === '#fff' || colLower === 'white' || colLower === '#f8f8f8';
+      if (isLight && !isGlow) {
+        targetCtx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+        targetCtx.shadowBlur = Math.max(3, size * 0.08);
+        targetCtx.shadowOffsetX = 1;
+        targetCtx.shadowOffsetY = 2;
+      } else {
+        targetCtx.shadowColor = 'transparent';
+        targetCtx.shadowBlur = 0;
+        targetCtx.shadowOffsetX = 0;
+        targetCtx.shadowOffsetY = 0;
+      }
     }
 
     targetCtx.fillStyle = color || '#111111';
@@ -4332,7 +4495,7 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
     targetCtx.save();
 
     // 1. オーナーラベル (独立描画)
-    const ownerLabelData = specs.ownerLabel || { text: specs.owner?.label, font: "'Cinzel', serif", size: 36, y: (specs.owner?.y ? specs.owner.y - 4 : 74), x: 0, color: '#222222' };
+    const ownerLabelData = specs.ownerLabel || { text: specs.owner?.label, font: "'Cinzel', serif", size: 36, y: (specs.owner?.y ? specs.owner.y - 4 : 74), x: 0, color: '#222222', shadow: false, glow: false, glowBlur: 14 };
     const olText = ownerLabelData.text !== undefined ? ownerLabelData.text : (specs.owner?.label || '');
     if (olText && olText.trim() !== '') {
       const olY = h * ((ownerLabelData.y !== undefined ? ownerLabelData.y : 74) / 100);
@@ -4340,7 +4503,8 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
       const olSize = ownerLabelData.size || 36;
       const olFont = ownerLabelData.font || "'Cinzel', serif";
       const olColor = ownerLabelData.color || '#222222';
-      drawSpecTextItem(targetCtx, olText, olX, olY, olSize, olFont, '600', olColor);
+      const olOptions = { shadow: ownerLabelData.shadow, glow: ownerLabelData.glow, glowBlur: ownerLabelData.glowBlur };
+      drawSpecTextItem(targetCtx, olText, olX, olY, olSize, olFont, '600', olColor, '0px', olOptions);
     }
 
     // 2. オーナー名 / ブリーダー名 (独立描画)
@@ -4348,7 +4512,8 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
       const oY = h * (specs.owner.y / 100);
       const oX = (w / 2) + (specs.owner.x || 0);
       const oColor = specs.owner.color || '#111111';
-      drawSpecTextItem(targetCtx, specs.owner.text, oX, oY, specs.owner.size, specs.owner.font, '700', oColor);
+      const oOptions = { shadow: specs.owner.shadow, glow: specs.owner.glow, glowBlur: specs.owner.glowBlur };
+      drawSpecTextItem(targetCtx, specs.owner.text, oX, oY, specs.owner.size, specs.owner.font, '700', oColor, '0px', oOptions);
     }
 
     // 3. 個体識別番号 / シリアル (独立描画)
@@ -4356,7 +4521,8 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
       const sY = h * (specs.serial.y / 100);
       const sX = (w / 2) + (specs.serial.x || 0);
       const sColor = specs.serial.color || '#2a2a2a';
-      drawSpecTextItem(targetCtx, specs.serial.text, sX, sY, specs.serial.size, specs.serial.font, '700', sColor, '1px');
+      const sOptions = { shadow: specs.serial.shadow, glow: specs.serial.glow, glowBlur: specs.serial.glowBlur };
+      drawSpecTextItem(targetCtx, specs.serial.text, sX, sY, specs.serial.size, specs.serial.font, '700', sColor, '1px', sOptions);
     }
 
     // 4. サイズ (独立描画)
@@ -4364,7 +4530,8 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
       const zY = h * (specs.size.y / 100);
       const zX = (w / 2) + (specs.size.x || 0);
       const zColor = specs.size.color || '#111111';
-      drawSpecTextItem(targetCtx, specs.size.text, zX, zY, specs.size.size, specs.size.font, '800', zColor);
+      const zOptions = { shadow: specs.size.shadow, glow: specs.size.glow, glowBlur: specs.size.glowBlur };
+      drawSpecTextItem(targetCtx, specs.size.text, zX, zY, specs.size.size, specs.size.font, '800', zColor, '0px', zOptions);
     }
 
     // 5. 追加証明情報 (独立描画)
@@ -4372,20 +4539,23 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
       const eY = h * (specs.extra.y / 100);
       const eX = (w / 2) + (specs.extra.x || 0);
       const eColor = specs.extra.color || '#444444';
-      drawSpecTextItem(targetCtx, specs.extra.text, eX, eY, specs.extra.size, specs.extra.font, '600', eColor);
+      const eOptions = { shadow: specs.extra.shadow, glow: specs.extra.glow, glowBlur: specs.extra.glowBlur };
+      drawSpecTextItem(targetCtx, specs.extra.text, eX, eY, specs.extra.size, specs.extra.font, '600', eColor, '0px', eOptions);
     }
 
     targetCtx.restore();
   }
 
-  function drawGoldText(targetCtx, text, x, y, size, fontFace) {
+  function drawGoldText(targetCtx, text, x, y, size, fontFace, extraShadow = false) {
     targetCtx.save();
     targetCtx.font = `800 ${size}px ${fontFace || "'Cinzel', serif"}`;
     targetCtx.textAlign = 'center';
     targetCtx.textBaseline = 'middle';
 
-    targetCtx.shadowColor = 'rgba(0, 0, 0, 0.45)';
-    targetCtx.shadowBlur = Math.max(4, size * 0.1);
+    const shadowBlur = extraShadow ? Math.max(8, size * 0.18) : Math.max(4, size * 0.1);
+    const shadowAlpha = extraShadow ? 0.85 : 0.45;
+    targetCtx.shadowColor = `rgba(0, 0, 0, ${shadowAlpha})`;
+    targetCtx.shadowBlur = shadowBlur;
     targetCtx.shadowOffsetX = Math.max(2, size * 0.02);
     targetCtx.shadowOffsetY = Math.max(3, size * 0.04);
 
