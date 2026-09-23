@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.35.0 Full-Range Vertical Positioning Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.36.0 Selective Layer Restoration Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.35.0';
+  const APP_VERSION = 'v4.36.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -976,7 +976,7 @@
     }
   }
 
-  // --- ↩️ 履歴管理・アンドゥマネージャー (HistoryManager - v4.35.0) ---
+  // --- ↩️ 履歴管理・アンドゥマネージャー (HistoryManager - v4.36.0) ---
   const HistoryManager = {
     history: [],
     currentIndex: -1,
@@ -2203,7 +2203,7 @@
     }
   }
 
-  // --- タブ・サブルート切替制御 (v4.35.0 編集アコーディオン展開対応) ---
+  // --- タブ・サブルート切替制御 (v4.36.0 編集アコーディオン展開対応) ---
   function switchTab(tabId, subtabId = null) {
     // 編集タブ内のサブタブが直接tabIdとして指定された場合の自動解決
     if (['tab-prompt-builder', 'tab-ai-letters', 'tab-spec-edit'].includes(tabId)) {
@@ -3723,19 +3723,55 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
     }
 
     archiveGrid.innerHTML = activeCards.map((item) => `
-      <div class="archive-card-item">
-        <img src="${item.thumbnail}" class="archive-thumb" alt="thumb">
+      <div class="archive-card-item" data-id="${item.id}">
+        <div class="archive-thumb-wrap">
+          <img src="${item.thumbnail}" class="archive-thumb" alt="thumb">
+          <!-- 🌟 復元選択メニュー (案2 ＆ 案(a) オーバーレイ展開) -->
+          <div class="archive-restore-menu hidden" id="restoreMenu_${item.id}">
+            <div class="restore-menu-header">復元対象を選択</div>
+            <button type="button" class="restore-menu-item" data-action="restore-part" data-mode="all" data-id="${item.id}">
+              <span class="restore-item-icon">🌟</span>
+              <span class="restore-item-label">すべて復元</span>
+            </button>
+            <button type="button" class="restore-menu-item" data-action="restore-part" data-mode="bg" data-id="${item.id}">
+              <span class="restore-item-icon">🖼️</span>
+              <span class="restore-item-label">背景のみ</span>
+            </button>
+            <button type="button" class="restore-menu-item" data-action="restore-part" data-mode="ai" data-id="${item.id}">
+              <span class="restore-item-icon">✨</span>
+              <span class="restore-item-label">文字のみ (AI)</span>
+            </button>
+            <button type="button" class="restore-menu-item" data-action="restore-part" data-mode="spec" data-id="${item.id}">
+              <span class="restore-item-icon">🎛️</span>
+              <span class="restore-item-label">情報のみ (スペック)</span>
+            </button>
+          </div>
+        </div>
         <div class="archive-title">${Logger.escapeHtml(item.title)}</div>
         <div class="archive-meta">
           ${Logger.escapeHtml(item.ownerName || '未指定')} | ${Logger.escapeHtml(item.sizeText || '')}<br>
           ${item.createdAt}
         </div>
         <div class="archive-actions">
-          <button type="button" class="btn-primary btn-sm" data-action="restore" data-id="${item.id}">復元・編集</button>
+          <button type="button" class="btn-primary btn-sm btn-restore-dropdown" data-action="toggle-restore" data-id="${item.id}">
+            <span>復元</span>
+            <span class="dropdown-chevron">▾</span>
+          </button>
           <button type="button" class="btn-secondary btn-sm" data-action="delete" data-id="${item.id}" style="color:#ef5350;">削除</button>
         </div>
       </div>
     `).join('');
+
+    // メニュー外タップで開いている復元メニューを閉じるハンドラー
+    if (!window._archiveMenuGlobalHandlerAttached) {
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.archive-restore-menu') && !e.target.closest('.btn-restore-dropdown')) {
+          document.querySelectorAll('.archive-restore-menu').forEach(m => m.classList.add('hidden'));
+          document.querySelectorAll('.btn-restore-dropdown').forEach(b => b.classList.remove('active'));
+        }
+      });
+      window._archiveMenuGlobalHandlerAttached = true;
+    }
 
     archiveGrid.querySelectorAll('button[data-action]').forEach(btn => {
       btn.addEventListener('click', async (e) => {
@@ -3745,8 +3781,25 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
         const target = state.cardArchive.find(c => c.id === id);
         if (!target) return;
 
-        if (action === 'restore') {
-          restoreFromArchive(target);
+        if (action === 'toggle-restore') {
+          const menu = document.getElementById(`restoreMenu_${id}`);
+          if (!menu) return;
+          const isCurrentlyOpen = !menu.classList.contains('hidden');
+
+          // 他の全メニューを閉じる
+          document.querySelectorAll('.archive-restore-menu').forEach(m => m.classList.add('hidden'));
+          document.querySelectorAll('.btn-restore-dropdown').forEach(b => b.classList.remove('active'));
+
+          if (!isCurrentlyOpen) {
+            menu.classList.remove('hidden');
+            btn.classList.add('active');
+          }
+        } else if (action === 'restore-part') {
+          const mode = btn.dataset.mode || 'all';
+          // メニューを閉じる
+          document.querySelectorAll('.archive-restore-menu').forEach(m => m.classList.add('hidden'));
+          document.querySelectorAll('.btn-restore-dropdown').forEach(b => b.classList.remove('active'));
+          await restoreFromArchive(target, mode);
         } else if (action === 'delete') {
           deleteCard(id);
         }
@@ -3766,22 +3819,83 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
     }
   }
 
-  async function restoreFromArchive(item) {
-    if (item.stateData) {
-      state.aspectRatio = item.stateData.aspectRatio || state.aspectRatio;
-      state.canvasWidth = item.stateData.canvasWidth || 1500;
-      state.canvasHeight = item.stateData.canvasHeight || 2100;
-      if (item.stateData.layers) {
-        state.layers = item.stateData.layers;
+  // --- 🌟 カード履歴の部分/全体個別復元エンジン (v4.36.0 案2: 4分割復元対応) ---
+  async function restoreFromArchive(item, mode = 'all') {
+    if (!item || !item.stateData) return;
+
+    // ↩️ アンドゥ履歴に現在の状態を安全コミット（元に戻せるように保護）
+    HistoryManager.commit();
+
+    const saved = item.stateData;
+    const layers = saved.layers || {};
+
+    let feedbackTitle = '';
+    let feedbackDetail = '';
+    let targetTab = 'tab-editor';
+    let targetSubtab = 'tab-ai-letters';
+
+    if (mode === 'all') {
+      // 🌟 1. すべて復元
+      state.aspectRatio = saved.aspectRatio || state.aspectRatio;
+      state.canvasWidth = saved.canvasWidth || 1500;
+      state.canvasHeight = saved.canvasHeight || 2100;
+      if (layers.bg) state.layers.bg = JSON.parse(JSON.stringify(layers.bg));
+      if (layers.brand) state.layers.brand = JSON.parse(JSON.stringify(layers.brand));
+      if (layers.kanji) state.layers.kanji = JSON.parse(JSON.stringify(layers.kanji));
+      if (layers.romaji) state.layers.romaji = JSON.parse(JSON.stringify(layers.romaji));
+      if (layers.specs) state.layers.specs = JSON.parse(JSON.stringify(layers.specs));
+
+      feedbackTitle = `「${item.title}」のすべてを復元しました`;
+      feedbackDetail = '背景・AI文字・スペック情報の全レイヤーを完全非破壊復元しました。';
+      targetSubtab = 'tab-ai-letters';
+
+    } else if (mode === 'bg') {
+      // 🖼️ 2. 背景のみ復元（文字やスペック情報は100%維持）
+      if (layers.bg) {
+        state.layers.bg = JSON.parse(JSON.stringify(layers.bg));
+        if (saved.aspectRatio) state.aspectRatio = saved.aspectRatio;
+        if (saved.canvasWidth) state.canvasWidth = saved.canvasWidth;
+        if (saved.canvasHeight) state.canvasHeight = saved.canvasHeight;
       }
+      feedbackTitle = `「${item.title}」の背景を復元しました`;
+      feedbackDetail = '現在の文字やスペック設定はそのまま維持されています。';
+      targetSubtab = 'tab-prompt-builder';
+
+    } else if (mode === 'ai') {
+      // ✨ 3. 文字のみ (AI文字) 復元（背景やスペック情報は100%維持）
+      if (layers.brand) state.layers.brand = JSON.parse(JSON.stringify(layers.brand));
+      if (layers.kanji) state.layers.kanji = JSON.parse(JSON.stringify(layers.kanji));
+      if (layers.romaji) state.layers.romaji = JSON.parse(JSON.stringify(layers.romaji));
+
+      feedbackTitle = `「${item.title}」のAI文字を復元しました`;
+      feedbackDetail = '現在の背景やスペック設定はそのまま維持されています。';
+      targetSubtab = 'tab-ai-letters';
+
+    } else if (mode === 'spec') {
+      // 🎛️ 4. 情報のみ (スペック) 復元（背景やAI文字は100%維持）
+      if (layers.specs) {
+        state.layers.specs = JSON.parse(JSON.stringify(layers.specs));
+      }
+
+      feedbackTitle = `「${item.title}」のスペック情報を復元しました`;
+      feedbackDetail = '現在の背景やAI文字設定はそのまま維持されています。';
+      targetSubtab = 'tab-spec-edit';
     }
+
     syncInputsFromState();
     await reloadAllLayerImages();
     await saveState(false);
     renderCard();
-    switchTab('tab-editor', 'tab-ai-letters');
-    Logger.success(`[ARCHIVE_RESTORE] 「${item.title}」を完全非破壊復元しました。`);
-    alert(`「${item.title}」を非破壊復元しました！\n文字が重なることなく、背景・AI文字・スペックを個別に自由に再編集できます。`);
+    switchTab(targetTab, targetSubtab);
+
+    Logger.success(`[ARCHIVE_RESTORE:${mode.toUpperCase()}] ${feedbackTitle}`, {
+      cardId: item.id,
+      cardTitle: item.title,
+      restoreMode: mode,
+      targetSubtab: targetSubtab
+    });
+
+    alert(`${feedbackTitle}！\n${feedbackDetail}`);
   }
 
   // --- 手動背景ドロップゾーン ---
