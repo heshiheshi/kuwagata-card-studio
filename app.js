@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.34.0 Extended Font & Typography Scale Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.35.0 Full-Range Vertical Positioning Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.34.0';
+  const APP_VERSION = 'v4.35.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -976,7 +976,7 @@
     }
   }
 
-  // --- ↩️ 履歴管理・アンドゥマネージャー (HistoryManager - v4.34.0) ---
+  // --- ↩️ 履歴管理・アンドゥマネージャー (HistoryManager - v4.35.0) ---
   const HistoryManager = {
     history: [],
     currentIndex: -1,
@@ -2203,7 +2203,7 @@
     }
   }
 
-  // --- タブ・サブルート切替制御 (v4.34.0 編集アコーディオン展開対応) ---
+  // --- タブ・サブルート切替制御 (v4.35.0 編集アコーディオン展開対応) ---
   function switchTab(tabId, subtabId = null) {
     // 編集タブ内のサブタブが直接tabIdとして指定された場合の自動解決
     if (['tab-prompt-builder', 'tab-ai-letters', 'tab-spec-edit'].includes(tabId)) {
