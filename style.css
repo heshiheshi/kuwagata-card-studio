@@ -520,80 +520,68 @@ body {
   gap: 6px;
 }
 
-.safety-title-label {
+/* 🖨️ ピル型 安全枠トグルボタン (v4.37.0 改善案A) */
+.btn-safety-toggle {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3.5px 9px;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  cursor: pointer;
+  gap: 5px;
+  transition: all 0.18s ease;
   user-select: none;
+  white-space: nowrap;
 }
 
-.safety-title-label:hover .safety-title {
+.btn-safety-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--border-gold);
   color: #ffffff;
+  transform: translateY(-1px);
 }
 
-.safety-state-badge {
-  font-size: 8.5px;
-  font-weight: 800;
-  padding: 1.5px 4px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-muted);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.15s ease;
-  font-family: monospace, sans-serif;
+.btn-safety-toggle.active {
+  background: linear-gradient(135deg, rgba(255, 213, 79, 0.28), rgba(255, 45, 85, 0.25));
+  border-color: #ffd54f;
+  color: #fff7d6;
+  box-shadow: 0 0 8px rgba(255, 213, 79, 0.45);
+}
+
+.safety-toggle-icon {
+  font-size: 10px;
   line-height: 1;
 }
 
-.safety-state-badge.active {
+.safety-toggle-text {
+  font-size: 10px;
+  font-weight: 700;
+  color: inherit;
+}
+
+.safety-toggle-badge {
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 1.5px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-family: monospace, sans-serif;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.btn-safety-toggle.active .safety-toggle-badge {
   background: #ffd54f;
   color: #111111;
   border-color: #ffd54f;
-  box-shadow: 0 0 6px rgba(255, 213, 79, 0.5);
-}
-
-.custom-toggle-safety {
-  position: relative;
-  display: inline-block;
-  width: 32px;
-  height: 18px;
-}
-.custom-toggle-safety input { opacity: 0; width: 0; height: 0; }
-.custom-toggle-safety .toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background: #2a2a2a;
-  transition: 0.2s;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-.custom-toggle-safety .toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 12px;
-  width: 12px;
-  left: 2px;
-  bottom: 2px;
-  background: white;
-  transition: 0.2s;
-  border-radius: 50%;
-}
-.custom-toggle-safety input:checked + .toggle-slider {
-  background: #ffd54f;
-  border-color: #ffd54f;
-}
-.custom-toggle-safety input:checked + .toggle-slider:before {
-  transform: translateX(14px);
-  background: #111;
-}
-
-.safety-title {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--gold-text);
-  white-space: nowrap;
-  transition: color 0.15s ease;
+  font-weight: 900;
+  box-shadow: 0 0 6px rgba(255, 213, 79, 0.6);
 }
 
 .safety-stepper {
@@ -809,7 +797,7 @@ body {
 }
 
 /* ==========================================================================
-   🌟 右1レール: 編集アコーディオン展開メニュー (v4.36.0)
+   🌟 右1レール: 編集アコーディオン展開メニュー (v4.37.0)
    ========================================================================== */
 .rail-editor-accordion-wrapper {
   width: 100%;
@@ -1579,7 +1567,7 @@ input:checked + .toggle-slider:before {
   display: block;
 }
 
-/* 🌟 アーカイブ個別復元オーバーレイ展開メニュー (v4.36.0 案2＆案(a)) */
+/* 🌟 アーカイブ個別復元オーバーレイ展開メニュー (v4.37.0 案2＆案(a)) */
 .archive-restore-menu {
   position: absolute;
   inset: 0;
@@ -2585,7 +2573,7 @@ input:checked + .toggle-slider:before {
   flex-shrink: 0;
 }
 
-/* 🌫️ エフェクト（白い霧 ＆ 影）トグル・スライダー (v4.36.0) */
+/* 🌫️ エフェクト（白い霧 ＆ 影）トグル・スライダー (v4.37.0) */
 .spec-fx-row {
   display: flex;
   align-items: center;

@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.36.0 Selective Layer Restoration Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.37.0 Robust Pill Safety Guide HUD Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.36.0';
+  const APP_VERSION = 'v4.37.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -976,7 +976,7 @@
     }
   }
 
-  // --- ↩️ 履歴管理・アンドゥマネージャー (HistoryManager - v4.36.0) ---
+  // --- ↩️ 履歴管理・アンドゥマネージャー (HistoryManager - v4.37.0) ---
   const HistoryManager = {
     history: [],
     currentIndex: -1,
@@ -1370,8 +1370,7 @@
     syncSpecFx('size', state.layers.specs.size);
     syncSpecFx('extra', state.layers.specs.extra);
 
-    // 📐 印刷安全枠ガイド入力の同期
-    setCheck('toggleSafetyGuide', !!state.showSafetyGuide);
+    // 📐 印刷安全枠ガイド入力の同期 (v4.37.0 ピル型ボタンスイッチ)
     setVal('safetyMarginInput', state.safetyMargin !== undefined ? state.safetyMargin : 3);
     updateSafetyStateBadge(!!state.showSafetyGuide);
     const btnCalib = document.getElementById('btnToggleCalibration') || document.getElementById('btnSetCalibrationBg');
@@ -1403,10 +1402,15 @@
   }
 
   function updateSafetyStateBadge(isOn) {
-    const badge = document.getElementById('safetyStateBadge');
+    const btn = document.getElementById('btnToggleSafety');
+    const badge = document.getElementById('safetyToggleBadge');
+    const margin = (state.safetyMargin !== undefined ? state.safetyMargin : 3);
+    if (btn) {
+      btn.classList.toggle('active', !!isOn);
+      btn.title = isOn ? `安全枠ガイド表示中 (外周${margin}%)。クリックで非表示にします` : '印刷安全枠ガイド（セーフティゾーン）の表示切替';
+    }
     if (badge) {
-      badge.textContent = isOn ? 'ON' : 'OFF';
-      badge.classList.toggle('active', !!isOn);
+      badge.textContent = isOn ? `ON (${margin}%)` : 'OFF';
     }
   }
 
@@ -2203,7 +2207,7 @@
     }
   }
 
-  // --- タブ・サブルート切替制御 (v4.36.0 編集アコーディオン展開対応) ---
+  // --- タブ・サブルート切替制御 (v4.37.0 編集アコーディオン展開対応) ---
   function switchTab(tabId, subtabId = null) {
     // 編集タブ内のサブタブが直接tabIdとして指定された場合の自動解決
     if (['tab-prompt-builder', 'tab-ai-letters', 'tab-spec-edit'].includes(tabId)) {
@@ -2659,10 +2663,11 @@
       btnClampSafe.addEventListener('click', () => clampLayersToSafeZone());
     }
 
-    const toggleSafetyGuide = document.getElementById('toggleSafetyGuide');
-    if (toggleSafetyGuide) {
-      toggleSafetyGuide.addEventListener('change', (e) => {
-        state.showSafetyGuide = e.target.checked;
+    const btnToggleSafety = document.getElementById('btnToggleSafety');
+    if (btnToggleSafety) {
+      btnToggleSafety.addEventListener('click', (e) => {
+        e.preventDefault();
+        state.showSafetyGuide = !state.showSafetyGuide;
         updateSafetyStateBadge(state.showSafetyGuide);
         saveState(false);
         renderCard();
@@ -2677,6 +2682,7 @@
         if (isNaN(val)) val = 0;
         val = Math.max(0, Math.min(15, val));
         state.safetyMargin = val;
+        updateSafetyStateBadge(state.showSafetyGuide);
         saveState(false);
         if (state.showSafetyGuide) renderCard();
       });
@@ -2687,6 +2693,7 @@
       btnSafetyMarginDec.addEventListener('click', () => {
         state.safetyMargin = Math.max(0, (state.safetyMargin !== undefined ? state.safetyMargin : 3) - 1);
         if (safetyMarginInput) safetyMarginInput.value = state.safetyMargin;
+        updateSafetyStateBadge(state.showSafetyGuide);
         saveState(false);
         if (state.showSafetyGuide) renderCard();
       });
@@ -2697,6 +2704,7 @@
       btnSafetyMarginInc.addEventListener('click', () => {
         state.safetyMargin = Math.min(15, (state.safetyMargin !== undefined ? state.safetyMargin : 3) + 1);
         if (safetyMarginInput) safetyMarginInput.value = state.safetyMargin;
+        updateSafetyStateBadge(state.showSafetyGuide);
         saveState(false);
         if (state.showSafetyGuide) renderCard();
       });
@@ -4456,8 +4464,7 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
 
     // 安全枠ガイドを自動ON
     state.showSafetyGuide = true;
-    const toggle = document.getElementById('toggleSafetyGuide');
-    if (toggle) toggle.checked = true;
+    updateSafetyStateBadge(true);
 
     syncInputsFromState();
     saveState(false);
