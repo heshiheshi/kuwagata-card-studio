@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="style.css?v=4.37.0">
+  <link rel="stylesheet" href="style.css?v=4.38.0">
 </head>
 <body>
   <!-- ===================================================================
@@ -45,7 +45,7 @@
           <div class="brand-title-row">
             <span class="emblem-mark">𓆣</span>
             <h1>KUWAGATA PREMIUM STUDIO</h1>
-            <span class="app-version-badge" id="appVersion">v4.37.0</span>
+            <span class="app-version-badge" id="appVersion">v4.38.0</span>
             <span class="tap-counter-badge hidden" id="tapCounterBadge">1/10</span>
           </div>
         </div>
@@ -1187,12 +1187,12 @@
         <div id="archiveGrid" class="archive-cards-grid"></div>
       </section>
 
-      <!-- メイン4: スタジオ環境 ＆ API設定タブ (v4.37.0 統合) -->
+      <!-- メイン4: スタジオ環境 ＆ API設定タブ (v4.38.0 統合) -->
       <section id="tab-settings" class="tab-content">
         <div class="section-title-row">
           <div class="title-with-badge">
             <h3>⚙️ スタジオ環境 ＆ API設定</h3>
-            <span class="app-version-badge">v4.37.0</span>
+            <span class="app-version-badge">v4.38.0</span>
           </div>
         </div>
         <p class="section-desc">
@@ -1236,6 +1236,29 @@
             作成したカードや辞書単語をCloudflare KVに暗号化同期します。別端末（PC/スマホ）とのデータ引き継ぎも可能です。
           </p>
 
+          <!-- ☁️ クラウド使用量メーター (v4.38.0 改善案②) -->
+          <div class="cloud-storage-meter-box mt-3" id="cloudStorageMeterBox">
+            <div class="storage-meter-header">
+              <div class="storage-meter-label-wrap">
+                <span class="storage-meter-icon">☁️</span>
+                <span class="storage-meter-title">Cloudflare KV 無料枠容量</span>
+              </div>
+              <span class="storage-meter-status-badge badge-normal" id="cloudStorageStatusBadge">正常 (空きあり)</span>
+            </div>
+            <div class="storage-meter-bar-track">
+              <div class="storage-meter-bar-fill" id="cloudStorageBarFill" style="width: 0%;"></div>
+            </div>
+            <div class="storage-meter-details">
+              <div class="storage-detail-usage">
+                <strong id="cloudStorageUsedMB">0.0 MB</strong> / 10.0 MB <span class="storage-pct" id="cloudStoragePct">(0%)</span>
+              </div>
+              <div class="storage-detail-counts" id="cloudStorageCountsText">カード 0件 / 単語 0件</div>
+            </div>
+            <div class="storage-meter-warning-tip hidden" id="cloudStorageWarningTip">
+              ⚠️ 無料枠の上限（10MB）を超過しています。クラウド送信は安全のため一時停止されます。
+            </div>
+          </div>
+
           <div class="settings-actions-grid mt-3">
             <div class="setting-item-box">
               <span class="setting-item-title">同期ステータス</span>
@@ -1264,7 +1287,7 @@
         <div class="control-card mt-3">
           <div class="control-card-header">
             <h4>ℹ️ システム ＆ ストレージ情報</h4>
-            <span class="app-version-badge">v4.37.0</span>
+            <span class="app-version-badge">v4.38.0</span>
           </div>
           <div class="system-info-list mt-2">
             <div class="info-row">
@@ -1450,6 +1473,30 @@
               <h4>☁️ Cloudflare KV 王道同期エンジン (localhost/本番自動直結 ＆ 誤上書き防止)</h4>
               <p>Mac・iPhone間で、<strong>「単語辞書」「非破壊カード履歴」が安全に同期</strong>されます。削除したデータが復活することはありません。</p>
             </div>
+
+            <!-- ☁️ モーダル内 クラウド容量メーター -->
+            <div class="cloud-storage-meter-box mt-2" id="modalStorageMeterBox">
+              <div class="storage-meter-header">
+                <div class="storage-meter-label-wrap">
+                  <span class="storage-meter-icon">☁️</span>
+                  <span class="storage-meter-title">Cloudflare KV 無料枠容量</span>
+                </div>
+                <span class="storage-meter-status-badge badge-normal" id="modalStorageStatusBadge">正常 (空きあり)</span>
+              </div>
+              <div class="storage-meter-bar-track">
+                <div class="storage-meter-bar-fill" id="modalStorageBarFill" style="width: 0%;"></div>
+              </div>
+              <div class="storage-meter-details">
+                <div class="storage-detail-usage">
+                  <strong id="modalStorageUsedMB">0.0 MB</strong> / 10.0 MB <span class="storage-pct" id="modalStoragePct">(0%)</span>
+                </div>
+                <div class="storage-detail-counts" id="modalStorageCountsText">カード 0件 / 単語 0件</div>
+              </div>
+              <div class="storage-meter-warning-tip hidden" id="modalStorageWarningTip">
+                ⚠️ 無料枠の上限（10MB）を超過しています。クラウド送信は安全のため一時停止されます。
+              </div>
+            </div>
+
             <div style="display:flex; gap:8px; margin-top:8px;">
               <button type="button" class="btn-primary btn-sm" id="btnForceUploadCloud">⬆️ クラウドへ手動上書き送信</button>
               <button type="button" class="btn-secondary btn-sm" id="btnForceDownloadCloud">⬇️ クラウドから最新を強制取得</button>
@@ -1600,6 +1647,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.37.0"></script>
+  <script src="app.js?v=4.38.0"></script>
 </body>
 </html>

@@ -1,12 +1,12 @@
 /**
- * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.37.0 Robust Pill Safety Guide HUD Edition)
+ * KUWAGATA PREMIUM CARD STUDIO - APPLICATION ENGINE (v4.38.0 Cloud Storage Meter & Quota Guard Edition)
  * Zero-Limit StorageVault (IndexedDB), Multi-Layer Compositor, Deep Diagnostic Logging & Orthodox Sync
  */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = 'v4.37.0';
+  const APP_VERSION = 'v4.38.0';
   const VALID_PASSCODES = ['lojing2026', 'kuwagata2026', '7777'];
 
   // 🌟 localhost/本番環境の自動判定（localhost時は本番Cloudflare KVへ直結）
@@ -556,6 +556,94 @@
       };
     },
 
+    // ☁️ クラウドストレージ容量メーターの更新 (v4.38.0 改善案②)
+    updateStorageMeter(providedSizeKB = null, providedPayload = null) {
+      try {
+        const payload = providedPayload || this.getSanitizedPayload();
+        let sizeKB = providedSizeKB;
+        if (sizeKB === null || typeof sizeKB !== 'number') {
+          const jsonStr = JSON.stringify(payload);
+          sizeKB = Math.round(jsonStr.length / 1024);
+        }
+
+        const MAX_FREE_LIMIT_KB = 10000; // Cloudflare KV 1キー無料枠上限 約10MB
+        const sizeMB = (sizeKB / 1024).toFixed(1);
+        const rawPct = Math.round((sizeKB / MAX_FREE_LIMIT_KB) * 100);
+        const fillPct = Math.min(100, rawPct);
+        const cardCount = payload.cardArchive ? payload.cardArchive.length : 0;
+        const chipCount = payload.chips ? payload.chips.length : 0;
+
+        let statusMode = 'normal';
+        let badgeLabel = '正常 (空きあり)';
+        let barClass = '';
+        let isDanger = false;
+        let isWarning = false;
+
+        if (sizeKB > MAX_FREE_LIMIT_KB) {
+          statusMode = 'danger';
+          badgeLabel = '⚠️ 無料枠超過 (10MB)';
+          barClass = 'bar-danger';
+          isDanger = true;
+        } else if (sizeKB >= 7500) {
+          statusMode = 'warning';
+          badgeLabel = 'まもなく上限';
+          barClass = 'bar-warning';
+          isWarning = true;
+        }
+
+        const targets = [
+          {
+            box: document.getElementById('cloudStorageMeterBox'),
+            badge: document.getElementById('cloudStorageStatusBadge'),
+            bar: document.getElementById('cloudStorageBarFill'),
+            used: document.getElementById('cloudStorageUsedMB'),
+            pct: document.getElementById('cloudStoragePct'),
+            counts: document.getElementById('cloudStorageCountsText'),
+            tip: document.getElementById('cloudStorageWarningTip')
+          },
+          {
+            box: document.getElementById('modalStorageMeterBox'),
+            badge: document.getElementById('modalStorageStatusBadge'),
+            bar: document.getElementById('modalStorageBarFill'),
+            used: document.getElementById('modalStorageUsedMB'),
+            pct: document.getElementById('modalStoragePct'),
+            counts: document.getElementById('modalStorageCountsText'),
+            tip: document.getElementById('modalStorageWarningTip')
+          }
+        ];
+
+        targets.forEach(t => {
+          if (t.box) {
+            t.box.classList.toggle('danger', isDanger);
+          }
+          if (t.badge) {
+            t.badge.className = `storage-meter-status-badge badge-${statusMode}`;
+            t.badge.textContent = badgeLabel;
+          }
+          if (t.bar) {
+            t.bar.style.width = `${fillPct}%`;
+            t.bar.className = `storage-meter-bar-fill ${barClass}`.trim();
+          }
+          if (t.used) {
+            t.used.textContent = `${sizeMB} MB`;
+          }
+          if (t.pct) {
+            t.pct.textContent = `(${rawPct}%)`;
+          }
+          if (t.counts) {
+            t.counts.textContent = `カード ${cardCount}件 / 単語 ${chipCount}件`;
+          }
+          if (t.tip) {
+            t.tip.classList.toggle('hidden', !isDanger);
+          }
+        });
+
+        return { sizeKB, sizeMB, rawPct, isDanger, isWarning, payload };
+      } catch (e) {
+        return null;
+      }
+    },
+
     // 🌟 操作時即時同期（※初回プル完了前や、初期未変更時の空送信は完全ブロック）
     async pushToCloud(silent = true, isExplicitForce = false) {
       if (!isExplicitForce) {
@@ -583,6 +671,42 @@
       const payload = this.getSanitizedPayload();
       const payloadJson = JSON.stringify(payload);
       const sizeKB = Math.round(payloadJson.length / 1024);
+      const sizeMB = (sizeKB / 1024).toFixed(1);
+      const MAX_FREE_LIMIT_KB = 10000; // Cloudflare KV 1キー無料枠上限 約10MB
+
+      // メーター更新
+      this.updateStorageMeter(sizeKB, payload);
+
+      // 🛡️ 無料枠（10MB）事前容量チェック (v4.38.0 改善案①)
+      if (sizeKB > MAX_FREE_LIMIT_KB) {
+        this.isSyncing = false;
+        this.hasPendingChanges = false;
+        this.updateIndicator('error', `無料枠超過 (${sizeMB}MB / 10MB)`);
+        Logger.warn('[SYNC_PUSH_QUOTA_EXCEEDED] クラウド無料枠上限（10MB）を超過したため送信を安全停止しました', {
+          currentSizeKB: sizeKB,
+          currentSizeMB: sizeMB,
+          limitMB: 10.0,
+          cardsCount: payload.cardArchive.length,
+          chipsCount: payload.chips.length
+        });
+
+        const alertMsg = [
+          '⚠️【クラウド容量上限（無料枠10MB）を超過しています】\n',
+          `・現在のデータ量: ${sizeMB} MB (${sizeKB.toLocaleString()} KB)`,
+          `・無料枠の保存上限: 10.0 MB (約10,000 KB)`,
+          `・内訳: カード履歴 ${payload.cardArchive.length} 件 / 単語辞書 ${payload.chips.length} 件\n`,
+          '高解像度のカード画像（非破壊レイヤー）が蓄積されたため、Cloudflare KVの無料枠上限（10MB）を超えており、サーバーエラー（HTTP 503）を防ぐため送信を安全に一時停止しました。\n',
+          '※ お使いのMac・端末内（ブラウザ）にはすべてのカードが安全に保管されています。\n',
+          '【対処方法】',
+          '① 「アルバム」タブから不要なカード履歴を数件削除して空き容量を増やす',
+          '② または「設定 ➔ JSONバックアップ」でファイルとしてPCへ保存・退避する'
+        ].join('\n');
+
+        if (!silent) {
+          alert(alertMsg);
+        }
+        return;
+      }
 
       Logger.sync(`[SYNC_PUSH] クラウド送信開始 (Cards: ${payload.cardArchive.length}件, Chips: ${payload.chips.length}件, Payload: ${sizeKB}KB)`);
 
@@ -613,9 +737,17 @@
       } catch (err) {
         this.hasPendingChanges = true;
         this.updateIndicator('error', '通信待機中（次回自動再送）');
-        Logger.error('[SYNC_PUSH_ERROR] クラウド送信失敗', err.message);
+        Logger.error('[SYNC_PUSH_ERROR] クラウド送信失敗', {
+          error: err.message,
+          payloadKB: sizeKB,
+          payloadMB: sizeMB
+        });
         if (!silent) {
-          alert('クラウド送信エラー: ' + err.message);
+          if (sizeKB >= 8000) {
+            alert(`クラウド送信エラー: ${err.message}\n\n※ 送信データサイズ（${sizeMB} MB）がCloudflare無料枠の上限（10MB）に近いため、サーバー側で容量オーバーまたは処理タイムアウトとなった可能性があります。不要なカードを削除して空き容量を増やしてから再試行してください。`);
+          } else {
+            alert('クラウド送信エラー: ' + err.message);
+          }
         }
       } finally {
         this.isSyncing = false;
@@ -785,7 +917,14 @@
   async function init() {
     setupAuthGate();
     loadApiKeyVault();
-    Logger.info(`Kuwagata Card Studio ${APP_VERSION} (Direct Cloud Connect) を起動しました。`);
+    Logger.info(`Kuwagata Card Studio ${APP_VERSION} (Direct Cloud Connect & Quota Guard) を起動しました。`, {
+      version: APP_VERSION,
+      host: window.location.host,
+      isLocalDev: IS_LOCAL_DEV,
+      userAgent: navigator.userAgent,
+      screen: `${window.innerWidth}x${window.innerHeight} (dpr: ${window.devicePixelRatio || 1})`,
+      timestamp: new Date().toISOString()
+    });
     
     // 🌟 IndexedDBからローカルデータを読み込み
     await loadSavedState();
@@ -811,6 +950,7 @@
     
     // 🌟 クラウド初期確認（空データ誤送信ブロック付き・バックグラウンド非同期）
     CloudSyncManager.init();
+    CloudSyncManager.updateStorageMeter();
     
     if (document.fonts) {
       await document.fonts.ready;
@@ -1736,7 +1876,12 @@
     const btnQuickSyncNow = document.getElementById('btnQuickSyncNow');
     const btnSettingsOpenBackup = document.getElementById('btnSettingsOpenBackupModal');
 
-    if (btnHeaderSync) btnHeaderSync.addEventListener('click', () => backupModal.classList.remove('hidden'));
+    if (btnHeaderSync) {
+      btnHeaderSync.addEventListener('click', () => {
+        CloudSyncManager.updateStorageMeter();
+        backupModal.classList.remove('hidden');
+      });
+    }
     if (btnQuickSyncNow) {
       btnQuickSyncNow.addEventListener('click', () => {
         Logger.info('⚙️ 設定タブから即時クラウド同期を実行');
@@ -1745,6 +1890,7 @@
     }
     if (btnSettingsOpenBackup) {
       btnSettingsOpenBackup.addEventListener('click', () => {
+        CloudSyncManager.updateStorageMeter();
         if (backupModal) backupModal.classList.remove('hidden');
       });
     }
@@ -2259,6 +2405,11 @@
       // 🌟 「解析」「保存」「設定」など他のタブが選ばれた時はスムーズに折りたたむ
       if (accordion) accordion.classList.remove('open');
       if (accordionWrapper) accordionWrapper.classList.remove('open');
+    }
+
+    // ☁️ 設定タブを開いた際はクラウド容量メーターをリアルタイム再計算
+    if (tabId === 'tab-settings') {
+      CloudSyncManager.updateStorageMeter();
     }
   }
 
@@ -3711,6 +3862,7 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
     state.cardArchive.unshift(archiveItem);
     await saveState(true);
     renderArchiveGrid();
+    CloudSyncManager.updateStorageMeter();
     Logger.success(`[ARCHIVE_SAVE] 非破壊レイヤー保存完了: ${archiveItem.title}`);
     alert(`「${archiveItem.title}」をカード履歴アルバムに非破壊保存しました！\n（※IndexedDB大容量データベースに安全保持され、リロードしても絶対に消えません）`);
   }
@@ -3823,6 +3975,7 @@ Output strictly the pure, clean background image with ZERO text, ZERO characters
       state.cardArchive = state.cardArchive.filter(c => c.id !== cardId);
       await saveState(true);
       renderArchiveGrid();
+      CloudSyncManager.updateStorageMeter();
       Logger.success(`[ARCHIVE_DELETE] カード履歴を削除しました (墓石登録・即時送信): ${target.title}`);
     }
   }
